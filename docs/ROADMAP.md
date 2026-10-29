@@ -17,7 +17,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 ### M0.1 Scaffold
 - [x] Cargo workspace with `crates/luna-core`; `rust-toolchain.toml` (Rust 1.99, edition 2024)
 - [x] Tauri 2 + React 19 + TS (strict) + Vite + Tailwind 4 + shadcn/ui (Button only so far); pnpm; `src-tauri` in the Cargo workspace
-- [ ] App identifier `com.digitallybird.lunarun` (PRD Q2), product name `lunaRun` from a single constant
+- [x] App identifier `com.digitallybird.lunarun` (PRD Q2), product name `lunaRun` from a single constant (`luna-core`; `tauri.conf.json` is checked against it by a test)
 - [ ] Choose router + TS type generation (`ts-rs` or `specta`); record both in DECISIONS.md
 - [ ] ESLint, Prettier, `cargo fmt`, `clippy` configs; `.editorconfig`
 - [ ] i18n setup (e.g. `i18next`), English strings file
