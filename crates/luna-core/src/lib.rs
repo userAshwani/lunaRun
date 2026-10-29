@@ -1,6 +1,13 @@
 //! lunaRun core: all business logic lives here and never depends on Tauri.
 //! See docs/ARCHITECTURE.md for the module layout.
 
+pub mod error;
+pub mod paths;
+pub mod state;
+
+pub use error::{ErrorCode, LunaError, Result};
+pub use paths::LunaHome;
+
 /// Product name. Kept in one place so a rename (PRD Q1) is cheap.
 /// `src-tauri/tests/config_consistency.rs` fails if `tauri.conf.json` disagrees.
 pub const PRODUCT_NAME: &str = "lunaRun";

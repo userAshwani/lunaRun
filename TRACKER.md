@@ -12,8 +12,8 @@
 | | |
 |---|---|
 | **Current phase** | Phase 0, Foundation (`v0.0.x`) |
-| **Current milestone** | M0.1 Scaffold (in progress, 6 of 8 tasks done) |
-| **Next step** | `luna-core` foundation modules: `paths.rs` (LUNA_HOME + guarded `safe_remove`), `error.rs` (`LunaError`), `state.rs` (atomic JSON) |
+| **Current milestone** | M0.1 Scaffold (in progress, 7 of 8 tasks done) |
+| **Next step** | First end-to-end IPC command `app_info()` (version, OS, arch, LUNA_HOME) shown on the Diagnostics page. This closes M0.1. It creates `src/lib/ipc.ts`, the first generated `AppInfo` binding and the first capability entry. Decide there how the UI calls commands (plain `invoke` + TanStack Query, per ARCHITECTURE §1). |
 | **Released versions** | none yet (first tag `v0.0.1` closes Phase 0) |
 | **App state** | Runs. Light-theme dashboard shell with sidebar and placeholder pages. No real functionality yet. |
 
@@ -24,7 +24,8 @@ with **no Claude/AI attribution** in commits. See "Owner's standing workflow" in
 
 | Commit | What |
 |---|---|
-| *(this commit)* | UI/UX redesign: light default theme, Inter font, design tokens, grouped sidebar, dashboard with stat cards and get-started card, shared components (Card, PageHeader, EmptyState, StatCard). CLAUDE.md: UI/UX standard + tracker rules. This TRACKER.md. |
+| *(this commit)* | `luna-core` foundation: `error.rs`, `paths.rs`, `state.rs` with 31 tests. ts-rs bindings `ErrorCode.ts` and `LunaError.ts`. |
+| `4bd9ed7` | UI/UX redesign: light default theme, Inter font, design tokens, grouped sidebar, dashboard with stat cards and get-started card, shared components (Card, PageHeader, EmptyState, StatCard). CLAUDE.md: UI/UX standard + tracker rules. This TRACKER.md. |
 | `9cac1d2` | App shell: sidebar nav, hash routing, six placeholder pages, theme switcher |
 | `8c25690` | i18n (`i18next`, typed keys, English strings) |
 | `38269f7` | ESLint, Prettier, Vitest, clippy/rustfmt configs; `pnpm lint/typecheck/test` |
@@ -40,7 +41,7 @@ Full checklists with requirement IDs: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 | Milestone | Status | Summary |
 |---|---|---|
-| **M0.1 Scaffold** | 🟡 in progress | **Left:** `luna-core` modules (`paths`, `error`, `state`) with tests; `app_info()` command shown on the Diagnostics page |
+| **M0.1 Scaffold** | 🟡 in progress | **Left:** `app_info()` command shown on the Diagnostics page |
 | **M0.2 CI/CD** | ⬜ | `ci.yml`, `release.yml`, `scripts/bump-version.ts`, issue/PR templates, Dependabot; **tag `v0.0.1`** and test installers on Windows + macOS |
 | **M1.1** Download & extract | ⬜ | resumable downloads, SHA-256, zip-slip-safe extraction, job system |
 | **M1.2** Registry | ⬜ | registry parser, fetch/cache/fallback, generator script |
@@ -71,6 +72,9 @@ Decisions already made are in [docs/DECISIONS.md](docs/DECISIONS.md) (D-001 … 
 - **First `pnpm tauri build` is slow** (about 8 min cold, about 4 min incremental, LTO). For UI work use `pnpm dev` + a headless browser instead.
 - **Windows signing:** none yet. Installers will trigger SmartScreen until signed.
 - **Private repo:** release downloads and the auto-updater only work for signed-in collaborators until it is public. Actions minutes are limited (macOS ×10).
+- **Symlink test did not really run here:** `safe_remove_unlinks_symlinks_without_touching_the_target` returns early on this Windows account (creating symlinks needs admin). It will run for real on Linux/macOS once CI exists (M0.2). Do not assume Windows symlink behaviour is covered.
+- `ErrorCode` currently holds only the codes used so far (`NOT_FOUND`, `PERMISSION_DENIED`, `IO`, `PATH_OUTSIDE_ROOT`, `INVALID_PATH`, `STATE_CORRUPT`, `STATE_SCHEMA_TOO_NEW`, `INTERNAL`). Add the ones from ARCHITECTURE §6 (`PORT_IN_USE`, `CHECKSUM_MISMATCH`, …) when their feature lands.
+- `state::load` returns `Recovered` when a file is corrupt but does not write defaults back. Callers decide when to `save`. Surface `Recovered` / `Migrated` outcomes in Diagnostics (M1.8).
 - Theme choice is stored in `localStorage` for now. It moves to `settings.json` when the settings backend exists.
 - Dashboard counters are honest zeros until the backend exists. Replace with live queries in M1.3/M1.4/M1.7.
 - One unexplained observation: the very first real-window screenshot opened on *Projects* instead of Dashboard. It did not reproduce. Re-check if it appears again.

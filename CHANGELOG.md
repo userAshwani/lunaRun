@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `luna-core` foundation: typed `LunaError` with stable codes (TypeScript bindings generated), `LunaHome` with guarded `safe_remove`, and atomic, schema-versioned JSON state with corruption recovery and migrations.
 - UI design system: light-first theme, Inter font, design tokens, grouped sidebar, dashboard overview, shared Card, PageHeader, EmptyState and StatCard components.
 - Project tracker (`TRACKER.md`) for session handoff.
 - App shell: sidebar navigation, hash routing, placeholder pages and a light/dark/system theme switcher.
