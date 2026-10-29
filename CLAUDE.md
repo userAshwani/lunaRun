@@ -60,7 +60,10 @@ cargo clippy --workspace -- -D warnings
 cargo fmt --all
 ```
 
-(Phase 0 creates these scripts. Keep this section in sync if they change.)
+(`pnpm lint` and `pnpm test` do not exist yet, they arrive with the lint-config task. Keep this section in sync if scripts change.)
+
+**Windows note:** in a fresh terminal `cargo` and `pnpm` must be on `PATH` (`%USERPROFILE%.cargobin`, `%APPDATA%
+pm`). The first `pnpm tauri build` compiles ~500 crates and takes several minutes; later builds are incremental.
 
 ## Golden rules (non-negotiable)
 

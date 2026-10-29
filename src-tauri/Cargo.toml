@@ -1,0 +1,27 @@
+[package]
+name = "lunarun"
+description = "lunaRun desktop app: thin Tauri adapter over luna-core."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+# The `_lib` suffix keeps the lib name distinct from the bin name (Windows linker issue, cargo#8519).
+name = "lunarun_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+luna-core = { path = "../crates/luna-core" }
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Release-size tuning lives in the workspace root (profiles are only read from the root manifest).

@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
-# src-tauri is added to members by the "Tauri + React scaffold" task (M0.1).
-members = ["crates/luna-core"]
+members = ["crates/luna-core", "src-tauri"]
 
 [workspace.package]
 version = "0.0.0"
@@ -16,3 +15,10 @@ unsafe_op_in_unsafe_fn = "warn"
 [workspace.lints.clippy]
 unwrap_used = "warn"
 expect_used = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
