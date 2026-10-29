@@ -94,3 +94,9 @@ pm`). The first `pnpm tauri build` compiles ~500 crates and takes several minute
 - Don't add a dependency to do something a few lines of code can do.
 - Don't start the next step or milestone without the owner saying "start work".
 - Don't add Claude/AI attribution to commits or PRs.
+
+## i18n quick reference
+
+- English strings live in `src/i18n/locales/en.ts`. Use `const { t } = useTranslation()` and `t("feature.key")`. Keys are type-checked, so a typo fails `pnpm typecheck`.
+- Add a key to `en.ts` first. Group by feature. Use `{{interpolation}}`, never concatenate translated fragments.
+- A new language is a new file in `locales/` typed as `Translation` plus an entry in `src/i18n/index.ts`.

@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- i18n with typed translation keys and an English strings file.
 - ESLint (strict type-checked), Prettier, Vitest + Testing Library, clippy and rustfmt configs, and `pnpm lint`, `typecheck`, `test` scripts.
 - Decisions D-011 (React Router, hash mode) and D-012 (ts-rs for generated IPC types); `.cargo/config.toml` export dir.
 - Product name and bundle identifier constants in `luna-core`, with a test keeping `tauri.conf.json` in sync.
