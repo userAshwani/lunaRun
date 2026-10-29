@@ -1,0 +1,3 @@
+# Defaults, stated explicitly so the style is visible to contributors.
+edition = "2024"
+max_width = 100

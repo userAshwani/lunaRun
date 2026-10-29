@@ -1,0 +1,3 @@
+# CLAUDE.md rule 10: no unwrap/expect in non-test code. Tests may panic with a message.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

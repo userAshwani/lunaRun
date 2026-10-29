@@ -1,0 +1,11 @@
+dist
+target
+node_modules
+pnpm-lock.yaml
+Cargo.lock
+src-tauri
+crates
+src/bindings
+docs
+*.md
+LICENSE
