@@ -15,8 +15,8 @@ works with a LUNA_HOME path containing a space · `CHANGELOG.md` "Unreleased" up
 Goal: an empty app that builds, tests and **releases installers for all 3 OSes from a tag**. Prove the pipeline before building features.
 
 ### M0.1 Scaffold
-- [ ] Cargo workspace: `crates/luna-core`, `src-tauri`; `rust-toolchain.toml`
-- [ ] Tauri 2 + React + TS (strict) + Vite + Tailwind + shadcn/ui; pnpm
+- [x] Cargo workspace with `crates/luna-core`; `rust-toolchain.toml` (Rust 1.99, edition 2024)
+- [ ] Tauri 2 + React + TS (strict) + Vite + Tailwind + shadcn/ui; pnpm; add `src-tauri` to the Cargo workspace
 - [ ] App identifier `com.digitallybird.lunarun` (PRD Q2), product name `lunaRun` from a single constant
 - [ ] Choose router + TS type generation (`ts-rs` or `specta`); record both in DECISIONS.md
 - [ ] ESLint, Prettier, `cargo fmt`, `clippy` configs; `.editorconfig`
