@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+target/
+src-tauri/gen/schemas/
+*.tsbuildinfo
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.example
+# detection test fixtures contain fake .env files on purpose
+!crates/luna-core/tests/fixtures/**/.env
+!crates/luna-core/tests/fixtures/**/.env.*
+*.key
+*.pem
+*.p12
+
+# Local lunaRun data when testing with LUNA_HOME inside the repo
+.luna-home/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
