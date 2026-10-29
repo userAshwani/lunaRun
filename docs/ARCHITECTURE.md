@@ -12,7 +12,7 @@ Related: [PRD](PRD.md) · [DECISIONS](DECISIONS.md) · [RUNTIMES](RUNTIMES.md) �
 | Frontend | **React + TypeScript (strict) + Vite** | Mainstream, well known to contributors and to AI agents. |
 | UI kit | Tailwind CSS + shadcn/ui (Radix primitives) + lucide-react icons | Accessible primitives, no heavy UI framework. |
 | Frontend data | TanStack Query (wrapping Tauri `invoke`) + small Zustand store for UI-only state | Caching, refetch, optimistic updates. |
-| Routing | TanStack Router or React Router (pick one in Phase 0 and record it) | |
+| Routing | React Router (hash router), see D-011 | Simple, mainstream; no URL bar in a desktop app. |
 | Package manager | **pnpm**; Node **24 LTS** for building the frontend | |
 | Tests | `cargo test` (core), Vitest + Testing Library (frontend), Playwright later for E2E | |
 | Lint/format | `cargo fmt`, `cargo clippy -D warnings`, ESLint, Prettier | |
@@ -222,7 +222,7 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 `service:state {id, state, pid?, port?}`, `service:log {id, stream, line, ts}` (batched, throttled ≤ 10/s),
 `registry:updated`, `project:changed {id}` (Phase 2 file watcher).
 
-TypeScript types for these MUST be generated from Rust (`ts-rs` or `specta`, decide in Phase 0) so the
+TypeScript types for these MUST be generated from Rust with `ts-rs` (D-012, output in `src/bindings/`) so the
 two sides cannot drift.
 
 ## 7. Security model

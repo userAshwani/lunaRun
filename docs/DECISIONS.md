@@ -47,3 +47,18 @@ Short architecture decision records. Add new ones at the bottom: `D-0NN`, date, 
 
 ### D-010 — Never write into user projects without consent (2026-10-29, accepted)
 **Decision:** Detection is read-only. Any write (`.env`, `.lunarun.json`) is an explicit user action with a preview and a backup.
+
+### D-011 — Frontend router: React Router, hash mode (2026-10-29, accepted)
+**Context:** The app has about six sidebar pages and no URL bar, SEO or server rendering. Candidates: React Router 8, TanStack Router 1.x, wouter.
+**Decision:** `react-router` (declarative mode) with a **hash** router (`createHashRouter`). The hash keeps the current page across a dev reload and works under Tauri's custom protocol without server-side fallback rules.
+**Why not TanStack Router:** its main benefit (type-safe routes via code generation) adds a build step and concepts we don't need for this few routes. React Router is the most widely known, which helps contributors and AI agents.
+**Consequences:** Route paths are plain strings, kept in one `src/app/routes.ts` module to avoid typos. Revisit if routing grows (nested data loading, many params).
+
+### D-012 — Rust → TypeScript types: ts-rs (2026-10-29, accepted)
+**Context:** IPC types must not be hand-duplicated (CLAUDE.md rule 11). `ts-rs` 12.0.1 is stable. `specta` / `tauri-specta` are still on 2.0 release candidates (`2.0.0-rc.x`), and their 1.x stable lines target Tauri v1.
+**Decision:** `ts-rs`. IPC structs/enums in `luna-core` derive `Serialize + Deserialize + TS` with `#[serde(rename_all = "camelCase")]` and `#[ts(export)]`. Generated files land in `src/bindings/` and are **committed**. `.cargo/config.toml` sets `TS_RS_EXPORT_DIR`. Files regenerate on `cargo test`. CI fails if `git diff --exit-code src/bindings` shows a difference (added with the CI task).
+**Conventions** (verified by a spike):
+- `u64`/`i64` become `bigint` in TS, but Tauri's JSON gives a plain `number`. Annotate such fields with `#[ts(type = "number")]` (byte counts, timestamps).
+- Tagged enums use `#[serde(tag = "kind", rename_all = "camelCase")]` so TS gets a discriminated union.
+- `src/lib/ipc.ts` holds thin typed `invoke` wrappers, one per command, importing only from `src/bindings/`.
+**Consequences:** Command names and argument shapes are still written twice (Rust handler, TS wrapper), but payload types cannot drift. If that becomes painful, revisit `tauri-specta` once it reaches a stable 2.0 (supersede this record).

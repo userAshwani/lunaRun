@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Decisions D-011 (React Router, hash mode) and D-012 (ts-rs for generated IPC types); `.cargo/config.toml` export dir.
 - Product name and bundle identifier constants in `luna-core`, with a test keeping `tauri.conf.json` in sync.
 - Tauri 2 desktop shell with React, strict TypeScript, Vite, Tailwind CSS 4 and shadcn/ui; placeholder window.
 - Cargo workspace with the `luna-core` crate and a pinned Rust toolchain.

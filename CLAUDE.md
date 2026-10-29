@@ -77,7 +77,7 @@ pm`). The first `pnpm tauri build` compiles ~500 crates and takes several minute
 8. **Cross-platform paths:** `PathBuf` only, no hard-coded separators. OS-specific code behind `#[cfg(target_os)]` modules with a shared interface. Test with paths containing spaces and non-ASCII characters. (NFR-07)
 9. **Persist state atomically** (temp file → fsync → rename) with a `schema` field. (NFR-08)
 10. **Typed errors:** return `LunaError { code, message, details }` with stable codes. The UI maps codes to i18n strings. No `unwrap()`/`expect()` in non-test code except for truly impossible states (with a comment).
-11. **Rust ↔ TS types are generated** (ts-rs/specta). Never hand-write duplicate IPC types.
+11. **Rust ↔ TS types are generated** with `ts-rs` into `src/bindings/` (D-012: camelCase, `u64` → `#[ts(type = "number")]`). Never hand-write duplicate IPC types and never edit generated files.
 12. **All UI strings go through i18n.**
 
 ## Code style
