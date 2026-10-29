@@ -6,12 +6,15 @@ const STORAGE_KEY = "lunarun.theme";
 
 const THEMES: readonly Theme[] = ["light", "dark", "system"];
 
+// Light is the default; dark and system are opt-in (CLAUDE.md UI/UX standard).
+const DEFAULT_THEME: Theme = "light";
+
 function readStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return THEMES.find((theme) => theme === stored) ?? "system";
+    return THEMES.find((theme) => theme === stored) ?? DEFAULT_THEME;
   } catch {
-    return "system"; // storage can be blocked or unavailable
+    return DEFAULT_THEME; // storage can be blocked or unavailable
   }
 }
 

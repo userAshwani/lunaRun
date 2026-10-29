@@ -25,6 +25,15 @@ afterEach(() => {
 });
 
 describe("app shell", () => {
+  it("groups the sidebar and shows the app version", () => {
+    renderAt("/");
+    const nav = screen.getByRole("navigation", { name: "Main navigation" });
+    for (const group of ["Workspace", "Environment", "System"]) {
+      expect(within(nav).getByText(group)).toBeInTheDocument();
+    }
+    expect(screen.getByText(/^Version \d+\.\d+\.\d+/)).toBeInTheDocument();
+  });
+
   it("shows every sidebar page and marks the current one", () => {
     renderAt("/runtimes");
     const nav = screen.getByRole("navigation", { name: "Main navigation" });
@@ -71,10 +80,16 @@ describe("theme", () => {
     expect(document.documentElement).toHaveClass("dark");
   });
 
+  it("defaults to light, never dark", () => {
+    renderAt("/");
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(document.documentElement).not.toHaveClass("dark");
+  });
+
   it("ignores an invalid stored value", () => {
     localStorage.setItem("lunarun.theme", "purple");
     renderAt("/");
-    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
   });
 
   it("still works when storage is blocked", async () => {

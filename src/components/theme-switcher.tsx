@@ -9,11 +9,16 @@ const OPTIONS: readonly { id: Theme; icon: LucideIcon }[] = [
   { id: "system", icon: Monitor },
 ];
 
+/** Segmented control for Light / Dark / System. */
 export function ThemeSwitcher() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   return (
-    <div role="radiogroup" aria-label={t("theme.label")} className="flex rounded-md border p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={t("theme.label")}
+      className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1"
+    >
       {OPTIONS.map(({ id, icon: Icon }) => (
         <button
           key={id}
@@ -26,8 +31,8 @@ export function ThemeSwitcher() {
             setTheme(id);
           }}
           className={cn(
-            "flex flex-1 items-center justify-center rounded-sm p-1.5 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50",
-            theme === id && "bg-accent text-accent-foreground",
+            "flex items-center justify-center rounded-md py-1.5 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50",
+            theme === id && "bg-card text-foreground shadow-xs",
           )}
         >
           <Icon className="size-4" aria-hidden />

@@ -7,6 +7,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- UI design system: light-first theme, Inter font, design tokens, grouped sidebar, dashboard overview, shared Card, PageHeader, EmptyState and StatCard components.
+- Project tracker (`TRACKER.md`) for session handoff.
 - App shell: sidebar navigation, hash routing, placeholder pages and a light/dark/system theme switcher.
 - i18n with typed translation keys and an English strings file.
 - ESLint (strict type-checked), Prettier, Vitest + Testing Library, clippy and rustfmt configs, and `pnpm lint`, `typecheck`, `test` scripts.

@@ -1,16 +1,22 @@
 import { useTranslation } from "react-i18next";
-import type { PageId } from "@/app/routes";
+import { NAV_ITEMS, type PageId } from "@/app/routes";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 /** Stand-in used by feature pages until they are built. */
 export function PlaceholderPage({ page }: { page: PageId }) {
   const { t } = useTranslation();
+  const item = NAV_ITEMS.find((entry) => entry.id === page);
   return (
-    <section>
-      <h1 className="text-2xl font-semibold">{t(`nav.${page}`)}</h1>
-      <p className="mt-1 text-muted-foreground">{t(`pages.${page}.description`)}</p>
-      <p className="mt-6 rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-        {t("pages.notImplemented")}
-      </p>
-    </section>
+    <>
+      <PageHeader title={t(`nav.${page}`)} description={t(`pages.${page}.description`)} />
+      {item && (
+        <EmptyState
+          icon={item.icon}
+          title={t("pages.notImplemented.title")}
+          description={t("pages.notImplemented.description")}
+        />
+      )}
+    </>
   );
 }

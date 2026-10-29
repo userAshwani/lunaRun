@@ -21,7 +21,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Choose router + TS type generation: React Router hash mode (D-011), `ts-rs` (D-012)
 - [x] ESLint (strict type-checked), Prettier, `cargo fmt`, `clippy` configs; `.editorconfig`; Vitest + Testing Library; `pnpm lint` / `typecheck` / `test` scripts
 - [x] i18n setup: `i18next` + `react-i18next`, typed keys, English strings file (`src/i18n/`)
-- [x] App shell: sidebar (Dashboard, Projects, Runtimes, Services, Settings, Diagnostics) with placeholder pages, light/dark/system theme (theme choice in localStorage until the settings backend exists)
+- [x] App shell: sidebar (Dashboard, Projects, Runtimes, Services, Settings, Diagnostics) with placeholder pages, light-default light/dark/system theme, professional dashboard design (theme choice in localStorage until the settings backend exists)
 - [ ] `luna-core`: `paths.rs` (LUNA_HOME resolution + guarded `safe_remove`), `error.rs` (`LunaError` + codes), `state.rs` (atomic JSON + schema) with tests
 - [ ] One end-to-end command `app_info()` → shows version, OS, arch, LUNA_HOME in Diagnostics
 
