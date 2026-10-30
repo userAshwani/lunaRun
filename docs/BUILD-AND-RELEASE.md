@@ -29,11 +29,16 @@ attach them to a GitHub Release. Users download from the Releases page, and inst
 
 ```
 jobs:
-  lint:     ubuntu   → pnpm lint, prettier --check, cargo fmt --check, cargo clippy --workspace -- -D warnings
-  test:     ubuntu   → pnpm test (vitest), cargo test --workspace
-  test-os:  windows, macos → cargo test -p luna-core           # only on push to main (saves minutes, see §6)
-  build:    ubuntu   → pnpm tauri build --no-bundle            # compiles, no installer
+  lint:     ubuntu   → pnpm lint, pnpm build (tsc + vite), cargo fmt --check, cargo clippy --workspace --all-targets -D warnings
+  test:     ubuntu   → pnpm test (vitest), pnpm build, cargo test --workspace, ts-rs drift check (git status src/bindings must be clean)
+  build:    ubuntu   → pnpm tauri build --debug --no-bundle    # whole chain, no LTO, no installer
+  test-os:  windows, macos → cargo test --workspace            # workflow_dispatch only while private (D-013)
 ```
+
+Implemented in `.github/workflows/ci.yml`, with shared setup in `.github/actions/setup/action.yml`
+(pnpm from `packageManager`, Node 24, the pinned Rust from `rust-toolchain.toml`, Tauri apt packages).
+`pnpm build` runs before every Rust job because the Tauri crate needs `dist/` at compile time.
+Pushes that only touch `*.md`, `docs/` or `LICENSE` skip CI.
 
 Use `Swatinem/rust-cache` and pnpm store caching. Concurrency group per branch with `cancel-in-progress: true`.
 

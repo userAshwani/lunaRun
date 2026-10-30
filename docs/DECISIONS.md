@@ -62,3 +62,8 @@ Short architecture decision records. Add new ones at the bottom: `D-0NN`, date, 
 - Tagged enums use `#[serde(tag = "kind", rename_all = "camelCase")]` so TS gets a discriminated union.
 - `src/lib/ipc.ts` holds thin typed `invoke` wrappers, one per command, importing only from `src/bindings/`.
 **Consequences:** Command names and argument shapes are still written twice (Rust handler, TS wrapper), but payload types cannot drift. If that becomes painful, revisit `tauri-specta` once it reaches a stable 2.0 (supersede this record).
+
+### D-013 — CI cost control while the repo is private (2026-10-30, accepted)
+**Context:** Every working session ends with a push to `main`. On a private repo GitHub Free gives a monthly minute quota, and Windows runners count x2 and macOS x10. Running `cargo test` on both after every push would use the quota in a few weeks.
+**Decision:** Per push and pull request, CI runs only on Ubuntu (lint, test, debug build) and skips docs-only changes. The Windows and macOS test matrix runs on `workflow_dispatch` (manual) and is exercised again by the release workflow on tags. Windows is also tested locally by the developer.
+**Consequences:** A macOS-only break can go unnoticed until a manual run or a release tag. Run the matrix manually (`gh workflow run CI`) after touching OS-specific code. When the repo goes public (free minutes), change `test-os` to run on push to `main`.

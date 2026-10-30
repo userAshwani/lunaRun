@@ -1,0 +1,43 @@
+name: Set up lunaRun
+description: pnpm + Node and, optionally, the Rust toolchain and Linux Tauri dependencies.
+
+inputs:
+  rust:
+    description: Install the pinned Rust toolchain (rust-toolchain.toml) and cache cargo output.
+    default: "true"
+  linux-deps:
+    description: Install the system libraries Tauri needs on Linux.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # The pnpm version comes from "packageManager" in package.json.
+    - uses: pnpm/action-setup@v6
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        cache: pnpm
+
+    - name: Install frontend dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Install Tauri system libraries
+      if: inputs.linux-deps == 'true' && runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
+          libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+    # Reads rust-toolchain.toml, so CI always uses the same Rust as developers.
+    - name: Install Rust toolchain
+      if: inputs.rust == 'true'
+      shell: bash
+      run: rustup toolchain install
+
+    - uses: Swatinem/rust-cache@v2
+      if: inputs.rust == 'true'

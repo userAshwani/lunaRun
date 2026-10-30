@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**", "LICENSE"]
+  pull_request:
+    paths-ignore: ["**/*.md", "docs/**", "LICENSE"]
+  # Manual run, also the only trigger for the Windows/macOS jobs while the repo is private
+  # (macOS minutes cost 10x on private repositories, see docs/BUILD-AND-RELEASE.md section 6).
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: "true"
+
+      - name: ESLint and Prettier
+        run: pnpm lint
+
+      # Also type-checks, and produces dist/, which the Tauri crate needs at compile time.
+      - name: Build frontend
+        run: pnpm build
+
+      - name: rustfmt
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: "true"
+
+      - name: Frontend tests
+        run: pnpm test
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Rust tests
+        run: cargo test --workspace
+
+      # ts-rs regenerates src/bindings during `cargo test` (D-012). Any difference means someone
+      # changed a Rust type without committing the regenerated TypeScript.
+      - name: Generated TypeScript bindings are up to date
+        run: |
+          if [ -n "$(git status --porcelain -- src/bindings)" ]; then
+            echo "::error::src/bindings is out of date. Run 'cargo test -p luna-core' and commit the result."
+            git status --porcelain -- src/bindings
+            git diff -- src/bindings
+            exit 1
+          fi
+
+  build:
+    name: Build app
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: "true"
+
+      # A debug build checks the whole chain (frontend, Tauri config, capabilities) without the
+      # slow LTO of a release build. Installers are built by release.yml.
+      - name: Build (no installer)
+        run: pnpm tauri build --debug --no-bundle
+
+  test-os:
+    name: Test (${{ matrix.os }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Rust tests
+        run: cargo test --workspace
