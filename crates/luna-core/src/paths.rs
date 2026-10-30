@@ -200,7 +200,7 @@ fn outside(path: &Path, why: &str) -> LunaError {
 }
 
 /// Accept only a plain single file-name component (no separators, no `..`, no drive letters).
-fn component(part: &str) -> Result<&str> {
+pub(crate) fn component(part: &str) -> Result<&str> {
     let bad =
         part.is_empty() || part == "." || part == ".." || part.contains(['/', '\\', ':', '\0']);
     if bad {

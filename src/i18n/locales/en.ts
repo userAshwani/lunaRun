@@ -72,6 +72,10 @@ export const en = {
     INVALID_PATH: "Invalid path",
     STATE_CORRUPT: "A data file was damaged",
     STATE_SCHEMA_TOO_NEW: "Data was created by a newer lunaRun",
+    NETWORK: "Network problem",
+    CHECKSUM_MISMATCH: "Download failed verification",
+    CANCELLED: "Cancelled",
+    INVALID_URL: "Invalid or insecure address",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

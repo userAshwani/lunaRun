@@ -2,6 +2,7 @@
 //! See docs/ARCHITECTURE.md for the module layout.
 
 pub mod diagnostics;
+pub mod download;
 pub mod error;
 pub mod paths;
 pub mod state;

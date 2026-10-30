@@ -27,6 +27,14 @@ pub enum ErrorCode {
     StateCorrupt,
     /// A state file was written by a newer lunaRun; it is left untouched.
     StateSchemaTooNew,
+    /// A network request failed (offline, DNS, timeout, bad HTTP status, connection dropped).
+    Network,
+    /// A downloaded file did not match its published SHA-256 and was deleted (NFR-05).
+    ChecksumMismatch,
+    /// The user (or lunaRun) cancelled a long-running operation.
+    Cancelled,
+    /// A URL is malformed or not allowed (only HTTPS is accepted).
+    InvalidUrl,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

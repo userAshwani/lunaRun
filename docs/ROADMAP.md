@@ -39,8 +39,8 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 ## Phase 1 — MVP (`v0.1.0`)
 
 ### M1.1 Download & extract engine
-- [ ] Resumable HTTP download with progress callback, cancel, retry (FR-RT-02)
-- [ ] SHA-256 verify (FR-RT-03, NFR-05)
+- [x] Resumable HTTP download with progress callback, cancel, retry (FR-RT-02) (`luna-core::download`, 18 loopback tests + opt-in HTTPS tests, mutation-checked)
+- [x] SHA-256 verify (FR-RT-03, NFR-05) (mismatch deletes the file, error `CHECKSUM_MISMATCH`)
 - [ ] Extract zip / tar.gz / tar.xz with zip-slip guard and `stripComponents`
 - [ ] Job system: job ids, dedupe, `job:progress` / `job:done` events, `job_cancel`
 - [ ] Tests: checksum mismatch, traversal archive rejected, cancel mid-download, resume

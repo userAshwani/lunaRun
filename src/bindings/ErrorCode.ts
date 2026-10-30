@@ -3,4 +3,4 @@
 /**
  * Stable error identifiers. Add variants freely; never rename or remove one once released.
  */
-export type ErrorCode = "NOT_FOUND" | "PERMISSION_DENIED" | "IO" | "PATH_OUTSIDE_ROOT" | "INVALID_PATH" | "STATE_CORRUPT" | "STATE_SCHEMA_TOO_NEW" | "INTERNAL";
+export type ErrorCode = "NOT_FOUND" | "PERMISSION_DENIED" | "IO" | "PATH_OUTSIDE_ROOT" | "INVALID_PATH" | "STATE_CORRUPT" | "STATE_SCHEMA_TOO_NEW" | "NETWORK" | "CHECKSUM_MISMATCH" | "CANCELLED" | "INVALID_URL" | "INTERNAL";

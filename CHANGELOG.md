@@ -9,6 +9,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [0.0.1] - 2026-10-30
 
 ### Added
+- Download engine in `luna-core`: resumable, cancellable, retried HTTPS downloads that are verified against a SHA-256 before the file appears under its final name; redirects to plain HTTP and oversized downloads are refused. New error codes `NETWORK`, `CHECKSUM_MISMATCH`, `CANCELLED`, `INVALID_URL`.
 - Dependabot: weekly grouped updates for Rust crates, npm packages and GitHub Actions (Tauri packages grouped; major versions get their own PR).
 - GitHub issue forms (bug report, feature request), an issue chooser that routes security reports to `SECURITY.md`, and a pull request template.
 - `pnpm bump <version>` sets the version in `package.json`, `tauri.conf.json`, Cargo and `Cargo.lock` and promotes the changelog's Unreleased section, with dry-run, validation and rollback.
