@@ -27,8 +27,8 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 
 ### M0.2 CI/CD
 - [x] `ci.yml` as in BUILD-AND-RELEASE §3 (Ubuntu lint/test/build on every push, manual Windows/macOS matrix, D-013; first run green)
-- [ ] `release.yml` (draft releases, tag/version check)
-- [ ] `scripts/bump-version.ts` + `pnpm bump`
+- [x] `release.yml` (draft releases, tag/version check; Linux manual run verified, Windows/macOS/release path first exercised at the `v0.0.1` tag)
+- [ ] `scripts/bump-version.mjs` + `pnpm bump` (plain `.mjs`, like `scripts/check-versions.mjs`)
 - [ ] Issue templates (bug, feature), PR template
 - [ ] Dependabot for cargo, npm, github-actions
 - [ ] **Tag `v0.0.1`** → all 3 installers build; install and launch on Windows + macOS manually

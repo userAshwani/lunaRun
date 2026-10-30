@@ -183,7 +183,7 @@ Full rules: [PROJECT-DETECTION.md](PROJECT-DETECTION.md).
 
 | ID | Requirement |
 |---|---|
-| NFR-01 **Footprint** | Installer ≤ 20 MB; idle app RAM ≤ 150 MB with the window closed (excluding services). |
+| NFR-01 **Footprint** | Windows and macOS installer ≤ 20 MB (the Linux AppImage bundles WebKitGTK and is about 80 MB, the `.deb` is about 2 MB); idle app RAM ≤ 150 MB with the window closed (excluding services). |
 | NFR-02 **Startup** | Window interactive in < 2 s on a mid-range laptop. |
 | NFR-03 **No admin** | Normal use MUST NOT need admin/root. Elevation only for explicit actions (hosts file, trusting a CA, ports < 1024 on Linux), each with a prompt explaining why. |
 | NFR-04 **Safety** | lunaRun MUST NOT delete or modify anything outside LUNA_HOME, except explicit user-confirmed actions. All destructive operations go through one guarded helper that refuses paths outside allowed roots. |
