@@ -5,15 +5,15 @@
 > Detailed task checklists live in [docs/ROADMAP.md](docs/ROADMAP.md). This file is the short version plus context
 > that is not derivable from the code.
 
-**Last updated:** 2026-10-30 (end of M0.1) · **Repo:** https://github.com/userAshwani/lunaRun (private, branch `main`)
+**Last updated:** 2026-10-30 (M0.2 in progress) · **Repo:** https://github.com/userAshwani/lunaRun (private, branch `main`)
 
 ## 1. Where we are
 
 | | |
 |---|---|
 | **Current phase** | Phase 0, Foundation (`v0.0.x`) |
-| **Current milestone** | M0.1 Scaffold is **complete**. Next is M0.2 CI/CD (0 of 6 tasks done). |
-| **Next step** | **Finish M0.2 task 1: get the first CI run green.** `ci.yml` is pushed. Run `gh run list --workflow CI --limit 3` and `gh run view <id> --log-failed`, fix whatever fails on Ubuntu (likely suspects: missing apt packages, a clippy lint that differs on Linux, the symlink test which Windows skipped, the bindings drift check), push again until Lint, Test and Build app are all green. Then tick the ROADMAP box, update this file, and the following step is **M0.2 task 2: `release.yml`** (draft releases, tag/version check, per [docs/BUILD-AND-RELEASE.md](docs/BUILD-AND-RELEASE.md) §3). |
+| **Current milestone** | M0.2 CI/CD (1 of 6 tasks done). M0.1 Scaffold is complete. |
+| **Next step** | **M0.2 task 2: `.github/workflows/release.yml`** per [docs/BUILD-AND-RELEASE.md](docs/BUILD-AND-RELEASE.md) §3. Trigger on tags `v*` plus `workflow_dispatch` with a `platform` input (so one OS can be tried without tagging; macOS costs ×10 on this private repo). Matrix `windows-latest`, `macos-latest` (`--target universal-apple-darwin`, add both Rust targets), `ubuntu-22.04`. Reuse `.github/actions/setup` (it already installs the Linux apt packages; check `patchelf` for AppImage). First step must fail the run if the tag does not equal the version in `package.json`, `src-tauri/tauri.conf.json` and `Cargo.toml`. Use `tauri-apps/tauri-action` (look up its current major) with `releaseDraft: true`, `prerelease` when the tag contains `-`. Also set `bundle` in `tauri.conf.json` so Windows builds an NSIS **per-user** installer (`installMode: currentUser`), plus Linux deb/AppImage and macOS dmg. Signing secrets are not set yet, so the workflow must still succeed unsigned. Lint it with actionlint (see scratchpad recipe below), then verify with one manual `workflow_dispatch` run on `ubuntu-22.04` only and check the artifact. Do **not** create a tag yet, that is the last M0.2 task. |
 | **Released versions** | none yet (first tag `v0.0.1` closes Phase 0) |
 | **App state** | Runs. Light-theme dashboard shell. **Diagnostics page shows live data from Rust** (first working IPC command, `app_info`). Everything else is placeholder. |
 
@@ -25,7 +25,7 @@ step, then stop. Before committing, update this file (it lands in the same commi
 
 | Commit | What |
 |---|---|
-| *(this commit)* | **M0.2 task 1, CI workflow written** (`.github/workflows/ci.yml` + composite action `.github/actions/setup`): lint, test (with ts-rs drift check), debug app build on Ubuntu; Windows/macOS matrix manual only (D-013). `packageManager` pinned to pnpm 12.16.1 (lockfile regenerated). `actionlint` clean. First GitHub run still to be verified, see *Next step*. |
+| `c620c18` | **M0.2 task 1: CI workflow, first run green** (`.github/workflows/ci.yml` + composite action `.github/actions/setup`): Lint (ESLint, Prettier, tsc + vite build, rustfmt, clippy), Test (36 Rust + 32 frontend tests, ts-rs drift check, symlink test now really runs on Linux) in 4m22s, debug app Build in 2m53s, all on Ubuntu; Windows/macOS matrix manual only (D-013, run `gh workflow run CI`). `packageManager` pinned to pnpm 12.16.1 (lockfile regenerated). `actionlint` clean. |
 | `78aff18` | **First end-to-end IPC command** `app_info` + Diagnostics page (system card, copy report, loading/error states). `luna-core::diagnostics` (`AppInfo`, `Os`, `Arch`), `LunaHome::from_env`, Tauri command with least-privilege permission (`build.rs` `COMMANDS` + `allow-app-info`, generated `src-tauri/permissions/`), managed `LunaHome` state that creates the data folder at startup, `src/lib/ipc.ts` (`IpcError`), TanStack Query, Badge/Skeleton/ErrorState components, typed error strings per `ErrorCode`. 36 Rust tests + 32 frontend tests; verified in the real app window. CLAUDE.md: "start work" resume protocol and IPC-command checklist. **Closes M0.1.** |
 | `31ec7ab` | `luna-core` foundation: `error.rs`, `paths.rs`, `state.rs` with 31 tests. ts-rs bindings `ErrorCode.ts` and `LunaError.ts`. |
 | `4bd9ed7` | UI/UX redesign: light default theme, Inter font, design tokens, grouped sidebar, dashboard with stat cards and get-started card, shared components (Card, PageHeader, EmptyState, StatCard). CLAUDE.md: UI/UX standard + tracker rules. This TRACKER.md. |
@@ -45,7 +45,7 @@ Full checklists with requirement IDs: [docs/ROADMAP.md](docs/ROADMAP.md).
 | Milestone | Status | Summary |
 |---|---|---|
 | **M0.1 Scaffold** | ✅ done | |
-| **M0.2 CI/CD** | ⬜ next | `ci.yml`, `release.yml`, `scripts/bump-version.ts`, issue/PR templates, Dependabot; **tag `v0.0.1`** and test installers on Windows + macOS |
+| **M0.2 CI/CD** | 🟡 in progress | **Done:** `ci.yml`. **Left:** `release.yml`, `scripts/bump-version.ts`, issue/PR templates, Dependabot, tag `v0.0.1` | `ci.yml`, `release.yml`, `scripts/bump-version.ts`, issue/PR templates, Dependabot; **tag `v0.0.1`** and test installers on Windows + macOS |
 | **M1.1** Download & extract | ⬜ | resumable downloads, SHA-256, zip-slip-safe extraction, job system |
 | **M1.2** Registry | ⬜ | registry parser, fetch/cache/fallback, generator script |
 | **M1.3** Runtime manager | ⬜ | adapters, install/uninstall, php.ini, VC++ check, Runtimes page |
@@ -106,6 +106,12 @@ folder (not the repo). Seed the theme with `localStorage.setItem("lunarun.theme"
 (`SetProcessDPIAware`), find the nav link with UI Automation (`AutomationElement.FromHandle`, a `Hyperlink` named e.g.
 "Diagnostics") and call its `InvokePattern.Invoke()` (a synthetic mouse click did not register), then capture the window with
 `PrintWindow(hwnd, hdc, 2)` into a PNG in the scratchpad and look at it.
+
+**Workflow lint** (do this before pushing any `.github/workflows/*.yml`, runner minutes are limited): download actionlint into the
+scratchpad with `gh release download --repo rhysd/actionlint --pattern "actionlint_*_windows_amd64.zip"`, unzip, and run
+`actionlint.exe .github/workflows/<file>.yml` on workflow files only (it rejects `action.yml` composite actions when passed directly,
+but follows local `uses: ./...` references). After pushing, follow the run with `gh run watch <id> --exit-status` and read failures with
+`gh run view <id> --log-failed`. CI uses Node 24 LTS while this machine has Node 26, and both pass.
 
 ## 8. Handoff checklist for a new session
 

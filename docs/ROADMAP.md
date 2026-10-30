@@ -26,7 +26,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] One end-to-end command `app_info()` → shows version, OS, arch, LUNA_HOME in Diagnostics (typed IPC wrapper, TanStack Query, loading/error states, least-privilege permission)
 
 ### M0.2 CI/CD
-- [ ] `ci.yml` as in BUILD-AND-RELEASE §3
+- [x] `ci.yml` as in BUILD-AND-RELEASE §3 (Ubuntu lint/test/build on every push, manual Windows/macOS matrix, D-013; first run green)
 - [ ] `release.yml` (draft releases, tag/version check)
 - [ ] `scripts/bump-version.ts` + `pnpm bump`
 - [ ] Issue templates (bug, feature), PR template
