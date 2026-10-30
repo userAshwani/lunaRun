@@ -3,8 +3,10 @@ name: Release
 # Pushing a tag like v0.1.0 builds installers for every OS and attaches them to a DRAFT GitHub
 # release, which a human reviews and publishes (docs/BUILD-AND-RELEASE.md section 3).
 #
-# Manual runs build the installers only: no release is created, and the files are kept as workflow
-# artifacts. Pick one platform to save minutes, macOS counts 10x on a private repository.
+# Manual runs build the installers only: no release is created. The log lists what was produced, and
+# the files can optionally be kept as workflow artifacts (they count against the account's artifact
+# storage quota, so that is off by default). Pick one platform to save minutes, macOS counts 10x on a
+# private repository.
 on:
   push:
     tags: ["v*"]
@@ -15,6 +17,10 @@ on:
         type: choice
         options: [linux, windows, macos, all]
         default: linux
+      keep_artifacts:
+        description: Also keep the installers as downloadable workflow artifacts (uses storage quota)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -95,5 +101,16 @@ jobs:
           releaseBody: See CHANGELOG.md for what changed. These installers are not code-signed yet.
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
-          uploadWorkflowArtifacts: ${{ github.ref_type != 'tag' }}
+          uploadWorkflowArtifacts: ${{ github.ref_type != 'tag' && inputs.keep_artifacts }}
           args: ${{ matrix.args }}
+
+      # Proof that real installers exist, independent of artifact storage.
+      - name: List installers
+        shell: bash
+        run: |
+          installers=$(find target -path '*/release/bundle/*' -type f | grep -E '\.(exe|msi|dmg|deb|rpm|AppImage)$' || true)
+          if [ -z "$installers" ]; then
+            echo "::error::No installers were produced"
+            exit 1
+          fi
+          echo "$installers" | while read -r file; do ls -l "$file"; done
