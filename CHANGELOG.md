@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Release workflow: a version tag builds Windows, macOS (universal) and Linux installers into a draft GitHub release; manual runs build one platform as downloadable artifacts. `scripts/check-versions.mjs` refuses a release whose tag and app versions disagree. Windows installer is per-user (no admin).
 - Continuous integration (GitHub Actions): lint, tests, generated-types check and a debug app build on Ubuntu; manual Windows/macOS test matrix. Pinned pnpm via `packageManager`.
 - First end-to-end command: `app_info` returns version, OS, architecture and data folder to the Diagnostics page, which has loading, error and retry states and a "Copy report" button. Commands are granted individually through generated permissions.
 - `luna-core` foundation: typed `LunaError` with stable codes (TypeScript bindings generated), `LunaHome` with guarded `safe_remove`, and atomic, schema-versioned JSON state with corruption recovery and migrations.

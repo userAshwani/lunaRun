@@ -42,50 +42,22 @@ Pushes that only touch `*.md`, `docs/` or `LICENSE` skip CI.
 
 Use `Swatinem/rust-cache` and pnpm store caching. Concurrency group per branch with `cancel-in-progress: true`.
 
-### `release.yml` — on push of a tag `v*`
+### `release.yml` — on push of a tag `v*`, or run by hand
 
-```yaml
-on:
-  push:
-    tags: ['v*']
-permissions:
-  contents: write
-jobs:
-  release:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: windows-latest
-            args: ''
-          - platform: macos-latest
-            args: '--target universal-apple-darwin'
-          - platform: ubuntu-22.04
-            args: ''
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - checkout
-      - setup pnpm + Node 24 LTS
-      - setup Rust stable (+ targets aarch64-apple-darwin,x86_64-apple-darwin on macOS)
-      - linux only: apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - pnpm install --frozen-lockfile
-      - verify tag == version in package.json / tauri.conf.json / Cargo.toml (fail otherwise)
-      - uses: tauri-apps/tauri-action@v0   # check for the current major version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # macOS signing/notarisation (optional until Q4 decided):
-          # APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
-          # APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'lunaRun ${{ github.ref_name }}'
-          releaseBody: 'See CHANGELOG.md'
-          releaseDraft: true          # a human reviews and publishes
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          args: ${{ matrix.args }}
-```
+Implemented in `.github/workflows/release.yml` as two jobs, `plan` then `build`:
+
+1. **Plan** (Ubuntu, seconds): runs `node scripts/check-versions.mjs <tag>`, which fails the whole run before any
+   expensive build if `package.json`, `src-tauri/tauri.conf.json` and the Cargo workspace version disagree or do not
+   equal the tag. It then picks the platforms to build.
+2. **Build** (matrix from the plan): `windows-latest`, `macos-latest` (`--target universal-apple-darwin`) and
+   `ubuntu-22.04`. Each uses the shared `.github/actions/setup` action and `tauri-apps/tauri-action@v1`.
+3. What the build does with the result: on a **tag**, `tauri-action` creates a **draft** release (`prerelease` when the tag contains `-`) and uploads the
+   installers. On a **manual run** (`workflow_dispatch`) no release is created and the installers are kept as workflow
+   artifacts. The `platform` input (`linux` by default) limits the build, because macOS minutes cost 10x (D-013).
+
+Installers come from the `bundle` section of `tauri.conf.json` (`targets: all`; Windows uses a per-user NSIS
+installer, `installMode: currentUser`). Signing secrets are listed in comments in the workflow and are not set yet,
+so installers are unsigned until section 4 is done.
 
 **Release procedure:**
 1. `pnpm bump 0.1.0` → review `CHANGELOG.md` → commit `chore(release): v0.1.0` → merge to `main`.

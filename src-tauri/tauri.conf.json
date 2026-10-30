@@ -33,6 +33,19 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "Digitally Bird",
+    "copyright": "Copyright 2026 Digitally Bird. Licensed under the Apache License 2.0.",
+    "category": "DeveloperTool",
+    "shortDescription": "Multi-version PHP and Laravel local development environment",
+    "longDescription": "lunaRun installs and runs several versions of PHP, Node.js and databases side by side, and picks the right ones for each project.",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    }
   }
 }

@@ -1,0 +1,99 @@
+name: Release
+
+# Pushing a tag like v0.1.0 builds installers for every OS and attaches them to a DRAFT GitHub
+# release, which a human reviews and publishes (docs/BUILD-AND-RELEASE.md section 3).
+#
+# Manual runs build the installers only: no release is created, and the files are kept as workflow
+# artifacts. Pick one platform to save minutes, macOS counts 10x on a private repository.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which installers to build (no release is created for manual runs)
+        type: choice
+        options: [linux, windows, macos, all]
+        default: linux
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Fails the whole run before any expensive build starts if the tag and the versions disagree.
+      - name: Check versions
+        env:
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: node scripts/check-versions.mjs "$TAG"
+
+      - name: Choose platforms
+        id: matrix
+        env:
+          PLATFORM: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
+        run: |
+          all='[
+            {"name":"windows","os":"windows-latest","args":""},
+            {"name":"macos","os":"macos-latest","args":"--target universal-apple-darwin"},
+            {"name":"linux","os":"ubuntu-22.04","args":""}
+          ]'
+          matrix=$(jq -c --arg p "$PLATFORM" 'map(select($p == "all" or .name == $p))' <<< "$all")
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Building: $matrix"
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: plan
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    # Creating a release needs write access. Manual runs never use it.
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: "true"
+
+      # One universal binary for Apple Silicon and Intel.
+      - name: Add macOS Rust targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signing is added later (docs/BUILD-AND-RELEASE.md section 4). Until then installers are
+          # unsigned. When the secrets exist, set them here:
+          #   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (updater, Phase 2)
+          #   APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
+          #   APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID                         (macOS notarisation)
+        with:
+          # An empty tagName builds without creating a release (manual runs).
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: lunaRun ${{ github.ref_name }}
+          releaseBody: See CHANGELOG.md for what changed. These installers are not code-signed yet.
+          releaseDraft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          uploadWorkflowArtifacts: ${{ github.ref_type != 'tag' }}
+          args: ${{ matrix.args }}
