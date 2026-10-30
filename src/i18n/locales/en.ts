@@ -76,6 +76,9 @@ export const en = {
     CHECKSUM_MISMATCH: "Download failed verification",
     CANCELLED: "Cancelled",
     INVALID_URL: "Invalid or insecure address",
+    ARCHIVE_UNSAFE: "Unsafe download rejected",
+    ARCHIVE_CORRUPT: "Damaged or unsupported archive",
+    ARCHIVE_TOO_LARGE: "Archive is too large",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

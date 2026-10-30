@@ -130,6 +130,14 @@ request install(runtime, version)
 Any failure → remove staging dir, emit `job:done {ok:false, error}`. The same version cannot be installed
 twice concurrently (job deduplication by `(runtime, version, variant)`).
 
+**Extraction safety** (`luna-core::extract`, D-016). Every archive is treated as hostile; nothing is ever written outside
+the staging directory. Entries with absolute paths, drive letters, UNC paths, `..` components or NUL bytes are rejected; the
+staging directory must be empty; nothing is written *through* a symlink the archive created; symlinks (Unix only) must be
+relative and stay inside; hard links must point at an earlier regular file; devices and pipes are rejected; files are
+created with `create_new`, so nothing is overwritten. Limits on total size (8 GiB), per-file size (4 GiB) and entry count
+(250,000) stop decompression bombs. Only `rwx` permission bits are kept (the `+x` bit matters for `php` and `mysqld`).
+Errors: `ARCHIVE_UNSAFE`, `ARCHIVE_CORRUPT`, `ARCHIVE_TOO_LARGE`, `CANCELLED`.
+
 **Uninstall:** refuse while a service from it is running (`RUNTIME_IN_USE`, with a "stop and uninstall" option).
 Warn when projects are bound to it (`runtime_usage`). Remove `runtimes/<rt>/<ver>` and `config/<rt>/<ver>`.
 DB `data/` dirs are removed only with an explicit `deleteData = true` (FR-RT-06).

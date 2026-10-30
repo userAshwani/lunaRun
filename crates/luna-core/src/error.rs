@@ -35,6 +35,13 @@ pub enum ErrorCode {
     Cancelled,
     /// A URL is malformed or not allowed (only HTTPS is accepted).
     InvalidUrl,
+    /// An archive entry tried to escape the destination or is otherwise not allowed (zip-slip, symlink
+    /// tricks, special files). Nothing outside the destination was touched.
+    ArchiveUnsafe,
+    /// An archive is truncated, damaged or uses an unsupported feature.
+    ArchiveCorrupt,
+    /// An archive would expand beyond the allowed size or entry count (decompression bomb).
+    ArchiveTooLarge,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }
