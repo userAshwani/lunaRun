@@ -17,8 +17,12 @@ attach them to a GitHub Release. Users download from the Releases page, and inst
 ## 2. Versioning
 
 - **SemVer**: `0.y.z` until the first stable release. Tags look like `v0.1.0`, `v0.1.1`, `v0.2.0-beta.1`.
-- The version lives in three files that MUST match: `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml` (and the workspace crates).
-  `scripts/bump-version.ts <new-version>` updates all of them and adds a `CHANGELOG.md` section heading.
+- The version lives in three files that MUST match: `package.json`, `src-tauri/tauri.conf.json` and the root `Cargo.toml`
+  (`[workspace.package]`, which every crate inherits). `pnpm bump <version>` (`scripts/bump-version.mjs`) updates all three
+  plus `Cargo.lock`, and turns `## [Unreleased]` in `CHANGELOG.md` into `## [<version>] - <date>` with a fresh empty
+  Unreleased section above it. Options: `--dry-run`, `--force` (allow a non-greater version), `--no-lock`. It computes every edit
+  first, refuses an invalid or non-increasing version or an empty Unreleased section, and restores the files if `cargo update`
+  or the final consistency check fails. `scripts/check-versions.mjs` (also used by the release workflow) verifies the result.
 - **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `ci:`, `chore:`; `!` for breaking).
   These feed the changelog. Optional later: release-please to automate bumping.
 - Pre-release tags (`-alpha`, `-beta`, `-rc`) → the GitHub Release is marked *pre-release*, and only beta-channel users get it as an update.
@@ -60,7 +64,8 @@ installer, `installMode: currentUser`). Signing secrets are listed in comments i
 so installers are unsigned until section 4 is done.
 
 **Release procedure:**
-1. `pnpm bump 0.1.0` → review `CHANGELOG.md` → commit `chore(release): v0.1.0` → merge to `main`.
+1. Make sure `## [Unreleased]` in `CHANGELOG.md` describes the release (the bump refuses an empty section).
+   `pnpm bump 0.1.0` → review `git diff` → commit `chore(release): v0.1.0` → push to `main`.
 2. `git tag v0.1.0 && git push origin v0.1.0`.
 3. Wait for all 3 jobs → open the **draft** release → smoke-test the installers → paste changelog → **Publish**.
 

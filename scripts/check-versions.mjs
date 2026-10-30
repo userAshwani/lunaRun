@@ -50,7 +50,7 @@ export function findProblems(versions, tag) {
   return problems;
 }
 
-function readVersions(root) {
+export function readVersions(root) {
   const read = (relative) => readFileSync(path.join(root, relative), "utf8");
   return {
     "package.json": JSON.parse(read("package.json")).version ?? null,
