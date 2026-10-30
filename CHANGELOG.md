@@ -6,6 +6,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-10-30
+
 ### Added
 - Dependabot: weekly grouped updates for Rust crates, npm packages and GitHub Actions (Tauri packages grouped; major versions get their own PR).
 - GitHub issue forms (bug report, feature request), an issue chooser that routes security reports to `SECURITY.md`, and a pull request template.
