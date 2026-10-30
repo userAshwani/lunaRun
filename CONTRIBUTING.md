@@ -5,7 +5,8 @@ Thanks for your interest! lunaRun is in early development, so the details below 
 ## Ground rules
 
 - Read [docs/PRD.md](docs/PRD.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first.
-- Open an issue before starting a larger change, so we can agree on the approach.
+- Open an issue before starting a larger change, so we can agree on the approach. Use the bug report or feature request form; for a bug, paste the text from **Diagnostics → Copy report**.
+- Security problems go through [SECURITY.md](SECURITY.md), never a public issue.
 - One logical change per PR. Reference requirement IDs (`FR-…`) and issues.
 - Use [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `ci:`, `chore:`.
 - CI must be green: `pnpm lint`, `pnpm test`, `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test --workspace`.

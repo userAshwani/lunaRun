@@ -42,7 +42,7 @@ jobs:
 Implemented in `.github/workflows/ci.yml`, with shared setup in `.github/actions/setup/action.yml`
 (pnpm from `packageManager`, Node 24, the pinned Rust from `rust-toolchain.toml`, Tauri apt packages).
 `pnpm build` runs before every Rust job because the Tauri crate needs `dist/` at compile time.
-Pushes that only touch `*.md`, `docs/` or `LICENSE` skip CI.
+Pushes that only touch `*.md`, `docs/`, `LICENSE`, `.github/ISSUE_TEMPLATE/` or `.github/dependabot.yml` skip CI.
 
 Use `Swatinem/rust-cache` and pnpm store caching. Concurrency group per branch with `cancel-in-progress: true`.
 

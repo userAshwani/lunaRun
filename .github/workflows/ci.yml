@@ -3,9 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore: ["**/*.md", "docs/**", "LICENSE"]
+    paths-ignore:
+      ["**/*.md", "docs/**", "LICENSE", ".github/ISSUE_TEMPLATE/**", ".github/dependabot.yml"]
   pull_request:
-    paths-ignore: ["**/*.md", "docs/**", "LICENSE"]
+    paths-ignore:
+      ["**/*.md", "docs/**", "LICENSE", ".github/ISSUE_TEMPLATE/**", ".github/dependabot.yml"]
   # Manual run, also the only trigger for the Windows/macOS jobs while the repo is private
   # (macOS minutes cost 10x on private repositories, see docs/BUILD-AND-RELEASE.md section 6).
   workflow_dispatch:

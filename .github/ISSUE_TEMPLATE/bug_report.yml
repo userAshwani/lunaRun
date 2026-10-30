@@ -1,0 +1,70 @@
+name: Bug report
+description: Something in lunaRun does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please search existing issues first.
+        **Never paste `.env` contents, passwords or tokens** into this form.
+  - type: input
+    id: version
+    attributes:
+      label: lunaRun version
+      description: Shown at the bottom of the sidebar, for example `0.1.0`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS (Apple silicon)
+        - macOS (Intel)
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, in order? Mention the runtime versions and project type involved (for example "PHP 8.3, Laravel 12").
+      placeholder: |
+        1. Open Runtimes
+        2. Install PHP 8.3
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: Include the exact error message and a screenshot if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: Open **Diagnostics** in lunaRun, press **Copy report**, and paste it here. It lists version, platform and data folder, and contains no secrets (the folder path may include your user name).
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log excerpt
+      description: Optional. The relevant lines from the service log or `LUNA_HOME/logs`. Remove anything private first.
+      render: text
+    validations:
+      required: false

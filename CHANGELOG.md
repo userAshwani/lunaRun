@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- GitHub issue forms (bug report, feature request), an issue chooser that routes security reports to `SECURITY.md`, and a pull request template.
 - `pnpm bump <version>` sets the version in `package.json`, `tauri.conf.json`, Cargo and `Cargo.lock` and promotes the changelog's Unreleased section, with dry-run, validation and rollback.
 - Release workflow: a version tag builds Windows, macOS (universal) and Linux installers into a draft GitHub release; manual runs build one platform as downloadable artifacts. `scripts/check-versions.mjs` refuses a release whose tag and app versions disagree. Windows installer is per-user (no admin).
 - Continuous integration (GitHub Actions): lint, tests, generated-types check and a debug app build on Ubuntu; manual Windows/macOS test matrix. Pinned pnpm via `packageManager`.

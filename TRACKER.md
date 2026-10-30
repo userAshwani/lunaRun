@@ -12,8 +12,8 @@
 | | |
 |---|---|
 | **Current phase** | Phase 0, Foundation (`v0.0.x`) |
-| **Current milestone** | M0.2 CI/CD (3 of 6 tasks done). M0.1 Scaffold is complete. |
-| **Next step** | **M0.2 task 4: issue templates and PR template.** Create `.github/ISSUE_TEMPLATE/bug_report.yml` (issue form: lunaRun version, OS, steps to reproduce, expected, actual, a field for the text from Diagnostics > Copy report, optional log excerpt, and a reminder never to paste `.env` contents or passwords), `.github/ISSUE_TEMPLATE/feature_request.yml` (problem, proposed solution, alternatives, which persona from PRD §3 it helps), `.github/ISSUE_TEMPLATE/config.yml` (`blank_issues_enabled: false`, contact link to `SECURITY.md` for vulnerabilities) and `.github/PULL_REQUEST_TEMPLATE.md` (what/why, requirement IDs like `FR-RT-02`, checklist: tests, `pnpm lint` + `cargo clippy`, docs/CHANGELOG/TRACKER updated, UI screenshots in light and dark for UI changes). Keep them short, a contributor should finish them in a minute. Validate the YAML (issue forms are strict: unique `id`s, valid `type`s) with a YAML parse and, if possible, GitHub's own rendering after pushing (`gh api repos/userAshwani/lunaRun/community/profile` or just open https://github.com/userAshwani/lunaRun/issues/new/choose). Then the remaining M0.2 tasks are 5 (Dependabot for cargo, npm and github-actions; see ROADMAP) and 6 (tag `v0.0.1`). |
+| **Current milestone** | M0.2 CI/CD (4 of 6 tasks done). M0.1 Scaffold is complete. |
+| **Next step** | **M0.2 task 5: Dependabot.** Create `.github/dependabot.yml` (version 2) with three ecosystems: `cargo` (directory `/`), `npm` (directory `/`; the repo uses pnpm, which Dependabot's `npm` ecosystem reads), and `github-actions` for **both** `/` and `/.github/actions/setup` (the composite action pins `pnpm/action-setup`, `setup-node`, `rust-cache`). Weekly schedule, `open-pull-requests-limit` about 5, commit-message prefix `chore(deps)` (Conventional Commits), and `groups` so minor and patch updates arrive as one PR per ecosystem (Tauri crates and `@tauri-apps/*` grouped together, since they must stay in step). Validate against schemastore's `dependabot-2.0` schema with the Ajv recipe used for the issue forms (see scratchpad `schema-check`; recreate it as in TRACKER §7 if missing). **Known risk:** `pnpm-lock.yaml` starts with an extra YAML document (`packageManagerDependencies`, pnpm 12 format) that Dependabot may not parse. After pushing, check the Dependabot run results (repo Insights > Dependency graph > Dependabot, or `gh api repos/userAshwani/lunaRun/dependabot/alerts`) and record the outcome in Known issues. Dependabot PRs trigger CI minutes, so keep it weekly and grouped. Enabling GitHub's *Dependabot security updates* is a repo setting for the owner (Settings > Code security); do not change it without asking, just mention it. After this, the only M0.2 task left is 6, tag `v0.0.1`. |
 | **Released versions** | none yet (first tag `v0.0.1` closes Phase 0) |
 | **App state** | Runs. Light-theme dashboard shell. **Diagnostics page shows live data from Rust** (first working IPC command, `app_info`). Everything else is placeholder. |
 
@@ -25,7 +25,8 @@ step, then stop. Before committing, update this file (it lands in the same commi
 
 | Commit | What |
 |---|---|
-| *(this commit)* | **M0.2 task 3: `pnpm bump <version>`** (`scripts/bump-version.mjs`): updates `package.json`, `tauri.conf.json`, Cargo `[workspace.package]`, `Cargo.lock` (`cargo update --workspace --offline`) and promotes the CHANGELOG Unreleased section; validates version (semver, no `v`, must increase unless `--force`), `--dry-run`, computes all edits first, restores files if cargo or the final check fails. 20 new tests (59 frontend/script tests total). Verified with real cargo on a throwaway copy: one changed line per file, lock changes only the two workspace crates. `check-versions.mjs` now exports `readVersions`. |
+| *(this commit)* | **M0.2 task 4: GitHub issue forms and PR template** (`.github/ISSUE_TEMPLATE/bug_report.yml`, `feature_request.yml`, `config.yml` with blank issues off and a security link, `.github/PULL_REQUEST_TEMPLATE.md`). Forms validated with Ajv against schemastore's `github-issue-forms` and `github-issue-config` schemas (and a deliberately broken form is rejected). CI now also skips pushes that only touch issue templates or `dependabot.yml`; CONTRIBUTING points to the forms and to SECURITY.md. |
+| `c99ec35` | **M0.2 task 3: `pnpm bump <version>`** (`scripts/bump-version.mjs`): updates `package.json`, `tauri.conf.json`, Cargo `[workspace.package]`, `Cargo.lock` (`cargo update --workspace --offline`) and promotes the CHANGELOG Unreleased section; validates version (semver, no `v`, must increase unless `--force`), `--dry-run`, computes all edits first, restores files if cargo or the final check fails. 20 new tests (59 frontend/script tests total). Verified with real cargo on a throwaway copy: one changed line per file, lock changes only the two workspace crates. `check-versions.mjs` now exports `readVersions`. |
 | `87d29f4` | Docs only: tick the release-workflow task, record the Linux verification, PRD NFR-01 note on the AppImage size. |
 | `e1d58cf`, `9e3b74b` | **M0.2 task 2: release workflow, verified on Linux** (`.github/workflows/release.yml`): `plan` job runs `scripts/check-versions.mjs` (tag must equal the version in package.json, tauri.conf.json and Cargo.toml; 7 tests) and picks platforms; `build` matrix uses `tauri-apps/tauri-action@v1`; a tag push makes a draft release; manual runs (`platform` input, default linux; `keep_artifacts` off by default) only build and list the installers. `tauri.conf.json` bundle metadata and per-user NSIS install mode, `patchelf` in Linux deps. Manual run on `ubuntu-22.04` succeeded and produced `.deb` (2.1 MB), `.rpm` (2.1 MB), `.AppImage` (80.7 MB). `actionlint` clean, 39 frontend tests pass. **Windows and macOS builds are still unverified.** |
 | `c620c18` | **M0.2 task 1: CI workflow, first run green** (`.github/workflows/ci.yml` + composite action `.github/actions/setup`): Lint (ESLint, Prettier, tsc + vite build, rustfmt, clippy), Test (36 Rust + 32 frontend tests, ts-rs drift check, symlink test now really runs on Linux) in 4m22s, debug app Build in 2m53s, all on Ubuntu; Windows/macOS matrix manual only (D-013, run `gh workflow run CI`). `packageManager` pinned to pnpm 12.16.1 (lockfile regenerated). `actionlint` clean. |
@@ -48,7 +49,7 @@ Full checklists with requirement IDs: [docs/ROADMAP.md](docs/ROADMAP.md).
 | Milestone | Status | Summary |
 |---|---|---|
 | **M0.1 Scaffold** | ✅ done | |
-| **M0.2 CI/CD** | 🟡 in progress | **Done:** `ci.yml`, `release.yml` (Linux verified), bump script. **Left:** issue/PR templates, Dependabot, tag `v0.0.1` (first real Windows/macOS/release test) |
+| **M0.2 CI/CD** | 🟡 in progress | **Done:** `ci.yml`, `release.yml` (Linux verified), bump script, issue/PR templates. **Left:** Dependabot, tag `v0.0.1` (first real Windows/macOS/release test) |
 | **M1.1** Download & extract | ⬜ | resumable downloads, SHA-256, zip-slip-safe extraction, job system |
 | **M1.2** Registry | ⬜ | registry parser, fetch/cache/fallback, generator script |
 | **M1.3** Runtime manager | ⬜ | adapters, install/uninstall, php.ini, VC++ check, Runtimes page |
@@ -119,6 +120,13 @@ scratchpad with `gh release download --repo rhysd/actionlint --pattern "actionli
 `actionlint.exe .github/workflows/<file>.yml` on workflow files only (it rejects `action.yml` composite actions when passed directly,
 but follows local `uses: ./...` references). After pushing, follow the run with `gh run watch <id> --exit-status` and read failures with
 `gh run view <id> --log-failed`. CI uses Node 24 LTS while this machine has Node 26, and both pass.
+
+**Validating GitHub YAML configs** (issue forms, `config.yml`, `dependabot.yml`, which fail silently or with vague errors on GitHub):
+in a scratchpad folder run `npm init -y && npm i ajv yaml`, download the schema from schemastore
+(`https://json.schemastore.org/github-issue-forms.json`, `github-issue-config.json`, `dependabot-2.0.json`) into a `schemas/` subfolder, and
+validate each parsed YAML file with `new Ajv({ strict: false, allErrors: true }).compile(schema)`. Compile each schema only once (Ajv rejects a
+duplicate `$id`), and check that GitHub's extra rules hold, such as unique `id` and `label` inside an issue form. Also feed it one deliberately broken
+file to prove the validator can fail. Run Prettier too: `pnpm lint` checks `.github/**/*.yml`, and CI's lint job fails on unformatted YAML.
 
 ## 8. Handoff checklist for a new session
 
