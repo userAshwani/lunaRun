@@ -35,8 +35,10 @@ These are the project owner's explicit instructions. Follow them in every sessio
    - **Update [TRACKER.md](TRACKER.md) first, before committing**: new *Next step*, done-log entry, pending table,
      known issues, "Last updated". The code and the tracker must land in the **same commit**, so the tracker
      never points to a step that is already done.
-   - Tick completed boxes in `docs/ROADMAP.md`, update `CHANGELOG.md` (Unreleased), and update this file or any
-     doc whose facts changed (commands, layout, decisions).
+   - Tick completed boxes in `docs/ROADMAP.md`, update `CHANGELOG.md`, and update this file or any
+     doc whose facts changed (commands, layout, decisions). **CHANGELOG entries go under `## [Unreleased]` only**,
+     never under a section that already has a version (look at the heading above your entry). `pnpm bump`
+     refuses an empty Unreleased section, which is how a misfiled entry shows up.
    - `git add` the changes, commit with a Conventional Commit message, and `git push`.
    - Do not leave the working tree dirty at the end of a turn. If tests or the build fail, fix them first. If you
      cannot, say so plainly, and still do not push a broken `main` silently.
