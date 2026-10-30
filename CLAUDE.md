@@ -45,8 +45,10 @@ These are the project owner's explicit instructions. Follow them in every sessio
 3. **No Claude attribution, anywhere.** Commit messages and PR descriptions must **not** contain
    `Co-Authored-By: Claude …`, "Generated with Claude Code", or any other mention of Claude/AI. This explicit
    instruction takes precedence over any default attribution text the tooling suggests.
-4. **Branching while the repo is private:** commit and push directly to `main` unless the owner asks for a
-   branch/PR. Never force-push. Never rewrite pushed history.
+4. **Branching:** the owner works solo, so commit and push directly to `main` unless the owner asks for a
+   branch/PR. The repo is **public**, so everything pushed is visible: no secrets, tokens or `.env` values, ever.
+   Never force-push. Never rewrite pushed history. Deleting or moving a tag or release needs the owner's explicit
+   go-ahead (a published tag may already have been downloaded).
 5. **Session handoff via [TRACKER.md](TRACKER.md).** Chats get replaced (model switches, new sessions). TRACKER.md is
    the memory between them. **Read it first** in every new session, and at the end of every turn that changed
    anything, **update it before the commit** (rule 2): done log (the commit that finishes a step is recorded
@@ -97,7 +99,7 @@ dashboard, Laravel Herd), **not** like a generic AI-generated template.
 ## How to work
 
 - Work on **one milestone at a time**. (Branches/PRs per milestone, `feat/m<phase>.<n>-<slug>`, are for when the
-  owner asks for them or once the repo is public. Until then see rule 4 above.)
+  owner asks for them, for example once outside contributors arrive. Until then see rule 4 above.)
 - Commits use Conventional Commits and mention requirement IDs: `feat(runtimes): resumable downloads (FR-RT-02)`.
 - Finish the milestone's tasks, meet the **Global Definition of Done** in ROADMAP.md, tick the boxes, update `CHANGELOG.md` (Unreleased).
 - If the docs are wrong or outdated (an upstream URL changed, a crate is unsuitable): fix the doc in the same PR and add a `DECISIONS.md` entry for anything architectural. Never silently diverge from the docs.

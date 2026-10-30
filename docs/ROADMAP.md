@@ -32,14 +32,14 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Issue templates (bug, feature), PR template (issue forms validated against GitHub's JSON schemas)
 - [x] Dependabot for cargo, npm, github-actions (weekly, grouped; schema-validated; first runs on GitHub parsed the pnpm lockfile, no PRs yet because everything is current)
 - [x] **Tag `v0.0.1`** → all 3 installers build into a draft release (Windows 12 min, macOS 7 min, Linux 9 min; macOS binary verified universal)
-- [ ] Owner smoke test of the `v0.0.1` draft: install and launch on Windows (per-user, no admin) and macOS (unsigned, right-click > Open)
+- [ ] Owner smoke test of the public `v0.0.2`: install and launch on Windows (per-user, no admin) and macOS (unsigned, right-click > Open)
 
 ### M0.3 Public presence (added when the repo went public, D-015)
 - [x] Logo (`assets/logo.svg`) and real app icons replacing the Tauri defaults (`pnpm tauri icon`)
 - [x] README with logo, badges and a download table whose links never change (`releases/latest/download/<stable name>`)
 - [x] "Build & Release" workflow: manual build button (Actions tab) defaulting to all platforms with artifacts; tags publish automatically after all builds pass (`scripts/finalize-release.mjs`, tested against the real `v0.0.1` asset list)
 - [x] CI runs the Windows and macOS tests on every push
-- [ ] First automatic release: tag a version and confirm the README links download (needs the owner's go-ahead, see TRACKER)
+- [x] First automatic release: `v0.0.2` was tagged and published by the workflow; all six README download links verified (302 to the files)
 
 ---
 
