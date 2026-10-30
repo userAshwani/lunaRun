@@ -17,14 +17,24 @@ alternative to XAMPP/WAMP for PHP & Laravel. It is built with **Tauri 2 (Rust) +
 
 These are the project owner's explicit instructions. Follow them in every session.
 
-1. **Step by step, only on command.** Do nothing beyond what was asked. When the owner says **"start work"**
-   (or "next", "continue"), do the **next single step** and then **stop**:
-   - A *step* = the first unchecked task in [docs/ROADMAP.md](docs/ROADMAP.md), or a few tightly coupled tasks
-     if one alone is meaningless. Never run ahead into the next step or milestone on your own.
-   - Before coding, say in 1–3 lines which step you are about to do.
-   - After finishing, report: what changed, how to verify it, and what the next step is. Then wait.
+1. **"start work" alone is a complete instruction. Resume exactly where the project left off.** The owner will
+   often send only those two words, in a brand-new chat, possibly to a different model. Do this, without asking
+   what to work on:
+   1. Read [TRACKER.md](TRACKER.md) (section 1 "Where we are": *Next step*, and section 3 "Pending work"), then this file.
+   2. Run `git pull`, `git status` and `git log --oneline -5`. If the tree is dirty or an earlier turn was
+      interrupted mid-step, finish or cleanly resolve that first and say so.
+   3. Cross-check TRACKER.md's *Next step* against the first unchecked task in [docs/ROADMAP.md](docs/ROADMAP.md).
+      If they disagree, trust the code and git history, fix the docs, and tell the owner in one line.
+   4. Say in 1–3 lines which step you are about to do, then do **that single step** and **stop**. A *step* is the
+      tracker's *Next step* (one roadmap task, or a few tightly coupled ones). Never run ahead into the next
+      step or milestone on your own. "next" and "continue" mean the same as "start work".
+   5. After finishing, report: what changed, how it was verified, caveats, and what the next step is. Then wait.
+   If the owner adds extra instructions to "start work", do those first, then continue with the step.
 2. **After every chat that changes files: update the docs, commit, push.** At the end of each turn that modified
-   anything:
+   anything, in this order:
+   - **Update [TRACKER.md](TRACKER.md) first, before committing**: new *Next step*, done-log entry, pending table,
+     known issues, "Last updated". The code and the tracker must land in the **same commit**, so the tracker
+     never points to a step that is already done.
    - Tick completed boxes in `docs/ROADMAP.md`, update `CHANGELOG.md` (Unreleased), and update this file or any
      doc whose facts changed (commands, layout, decisions).
    - `git add` the changes, commit with a Conventional Commit message, and `git push`.
@@ -37,8 +47,11 @@ These are the project owner's explicit instructions. Follow them in every sessio
    branch/PR. Never force-push. Never rewrite pushed history.
 5. **Session handoff via [TRACKER.md](TRACKER.md).** Chats get replaced (model switches, new sessions). TRACKER.md is
    the memory between them. **Read it first** in every new session, and at the end of every turn that changed
-   anything, **update it**: done log (with commit hash), the single next step, pending work, open questions,
-   known issues. If TRACKER.md and ROADMAP.md disagree, fix them in the same commit.
+   anything, **update it before the commit** (rule 2): done log (the commit that finishes a step is recorded
+   by the *next* commit's hash lookup, so write "this commit" and replace it with the real hash at the start of
+   the following step), the single next step, pending work, open questions, known issues. The *Next step* line
+   must be specific enough that a fresh session can act on it with no other context. If TRACKER.md and
+   ROADMAP.md disagree, fix them in the same commit.
 6. **UI/UX quality bar:** follow the "UI/UX design standard" section below for every screen you build or touch.
 7. If `origin` is not configured or push fails (auth, network), commit locally, say exactly what failed, and
    tell the owner the one command needed. Do not create or change remote repositories or visibility without being asked.
@@ -104,8 +117,9 @@ cargo fmt --all
 
 `pnpm typecheck` runs `tsc`. `pnpm lint:fix` auto-fixes ESLint and Prettier issues. Keep this section in sync if scripts change.
 
-**Windows note:** in a fresh terminal `cargo` and `pnpm` must be on `PATH` (`%USERPROFILE%.cargobin`, `%APPDATA%
-pm`). The first `pnpm tauri build` compiles ~500 crates and takes several minutes; later builds are incremental.
+**Windows note:** in a fresh terminal `cargo` and `pnpm` must be on `PATH` (`%USERPROFILE%\.cargo\bin`, `%APPDATA%\npm`). The first `pnpm tauri build` compiles ~500 crates and takes several minutes; later builds are incremental.
+
+**Adding an IPC command** takes three edits plus a test: the function in `src-tauri/src/commands.rs`; its name in `COMMANDS` in `src-tauri/build.rs` and in `generate_handler!` in `src-tauri/src/lib.rs`; `allow-<name>` (kebab-case) in `src-tauri/capabilities/default.json`; and a typed wrapper in `src/lib/ipc.ts`. Skipping the capability makes the call fail at runtime with a permission error that unit tests (which mock the backend) will not catch, so verify new commands in the real app window (recipe in TRACKER.md §7).
 
 ## Golden rules (non-negotiable)
 

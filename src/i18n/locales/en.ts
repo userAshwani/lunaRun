@@ -60,6 +60,55 @@ export const en = {
       },
     },
   },
+  common: {
+    retry: "Try again",
+  },
+  // One entry per ErrorCode (src/bindings/ErrorCode.ts). Type-checked: a missing code fails the build.
+  errors: {
+    NOT_FOUND: "Not found",
+    PERMISSION_DENIED: "Permission denied",
+    IO: "File system error",
+    PATH_OUTSIDE_ROOT: "Path not allowed",
+    INVALID_PATH: "Invalid path",
+    STATE_CORRUPT: "A data file was damaged",
+    STATE_SCHEMA_TOO_NEW: "Data was created by a newer lunaRun",
+    INTERNAL: "Unexpected error",
+  },
+  diagnostics: {
+    loading: "Loading system information",
+    loadError: "Could not load system information",
+    system: {
+      title: "System",
+      description:
+        "Details about this installation. The data folder path may contain your user name.",
+    },
+    fields: {
+      version: "lunaRun version",
+      os: "Operating system",
+      arch: "Processor architecture",
+      home: "Data folder",
+    },
+    os: {
+      windows: "Windows",
+      macos: "macOS",
+      linux: "Linux",
+      unknown: "Unknown",
+    },
+    arch: {
+      x86_64: "x86-64 (Intel / AMD)",
+      aarch64: "ARM64 (Apple silicon / ARM)",
+      unknown: "Unknown",
+    },
+    home: {
+      fromEnv: "Set by LUNA_HOME",
+      default: "Default location",
+    },
+    copy: {
+      action: "Copy report",
+      done: "Copied",
+      failed: "Copy failed",
+    },
+  },
   theme: {
     label: "Theme",
     light: "Light",

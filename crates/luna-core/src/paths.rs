@@ -21,6 +21,7 @@ const LAYOUT: [&str; 6] = ["runtimes", "config", "data", "logs", "run", "cache"]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LunaHome {
     root: PathBuf,
+    from_env: bool,
 }
 
 impl LunaHome {
@@ -49,7 +50,10 @@ impl LunaHome {
         if BaseDirs::new().is_some_and(|dirs| dirs.home_dir() == root) {
             return reject("it must not be your home directory");
         }
-        Ok(Self { root })
+        Ok(Self {
+            root,
+            from_env: false,
+        })
     }
 
     /// `LUNA_HOME` if set and non-empty, otherwise the per-OS default.
@@ -60,7 +64,10 @@ impl LunaHome {
     /// Pure core of [`LunaHome::resolve`], separated so it can be tested without touching the environment.
     fn resolve_with(env_value: Option<OsString>, default: Option<PathBuf>) -> Result<Self> {
         match env_value.filter(|value| !value.is_empty()) {
-            Some(value) => Self::at(PathBuf::from(value)),
+            Some(value) => Self::at(PathBuf::from(value)).map(|home| Self {
+                from_env: true,
+                ..home
+            }),
             None => match default {
                 Some(root) => Self::at(root),
                 None => Err(LunaError::internal(
@@ -72,6 +79,11 @@ impl LunaHome {
 
     pub fn root(&self) -> &Path {
         &self.root
+    }
+
+    /// Whether the root came from the `LUNA_HOME` environment variable (shown in Diagnostics).
+    pub fn from_env(&self) -> bool {
+        self.from_env
     }
 
     /// Create the standard directory layout. Safe to call repeatedly.
@@ -247,12 +259,14 @@ mod tests {
         let home =
             LunaHome::resolve_with(Some(from_env.clone().into()), Some(fallback.clone())).unwrap();
         assert_eq!(home.root(), from_env);
+        assert!(home.from_env());
 
         let home = LunaHome::resolve_with(Some(OsString::new()), Some(fallback.clone())).unwrap();
         assert_eq!(home.root(), fallback);
 
         let home = LunaHome::resolve_with(None, Some(fallback.clone())).unwrap();
         assert_eq!(home.root(), fallback);
+        assert!(!home.from_env());
 
         assert_eq!(
             LunaHome::resolve_with(None, None).unwrap_err().code,

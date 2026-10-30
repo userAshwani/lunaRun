@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- First end-to-end command: `app_info` returns version, OS, architecture and data folder to the Diagnostics page, which has loading, error and retry states and a "Copy report" button. Commands are granted individually through generated permissions.
 - `luna-core` foundation: typed `LunaError` with stable codes (TypeScript bindings generated), `LunaHome` with guarded `safe_remove`, and atomic, schema-versioned JSON state with corruption recovery and migrations.
 - UI design system: light-first theme, Inter font, design tokens, grouped sidebar, dashboard overview, shared Card, PageHeader, EmptyState and StatCard components.
 - Project tracker (`TRACKER.md`) for session handoff.

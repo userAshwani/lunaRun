@@ -188,7 +188,7 @@ A runtime directory without a valid receipt is treated as an incomplete install 
 
 ## 6. IPC contract (Tauri commands)
 
-All commands return `Result<T, LunaError>`. `LunaError` is serialised as
+All commands return `Result<T, LunaError>`. A command only works once it is declared in `src-tauri/build.rs` (`COMMANDS`) and granted as `allow-<name>` in `src-tauri/capabilities/default.json`, so the webview can call exactly the listed commands and nothing else. `LunaError` is serialised as
 `{ code: string, message: string, details?: object }`. `code` is a stable SCREAMING_SNAKE id
 (`PORT_IN_USE`, `CHECKSUM_MISMATCH`, `RUNTIME_IN_USE`, `NOT_FOUND`, `NETWORK`, `PERMISSION_DENIED`, …)
 that the UI maps to a translated message. Long work returns a `jobId` straight away and reports through events.
