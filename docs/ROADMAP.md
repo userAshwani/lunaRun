@@ -30,7 +30,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] `release.yml` (draft releases, tag/version check; Linux manual run verified, Windows/macOS/release path first exercised at the `v0.0.1` tag)
 - [x] `scripts/bump-version.mjs` + `pnpm bump` (plain `.mjs`, like `scripts/check-versions.mjs`; 20 tests, verified with real cargo on a throwaway copy)
 - [x] Issue templates (bug, feature), PR template (issue forms validated against GitHub's JSON schemas)
-- [x] Dependabot for cargo, npm, github-actions (weekly, grouped; schema-validated; first Dependabot run checked after push)
+- [x] Dependabot for cargo, npm, github-actions (weekly, grouped; schema-validated; first runs on GitHub parsed the pnpm lockfile, no PRs yet because everything is current)
 - [ ] **Tag `v0.0.1`** → all 3 installers build; install and launch on Windows + macOS manually
 
 ---
