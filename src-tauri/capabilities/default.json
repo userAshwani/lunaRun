@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Capability for the main window. Only the commands listed in build.rs are granted.",
   "windows": ["main"],
-  "permissions": ["core:default", "allow-app-info"]
+  "permissions": ["core:default", "allow-app-info", "allow-jobs-list", "allow-job-cancel"]
 }

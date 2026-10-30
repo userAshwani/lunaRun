@@ -116,6 +116,35 @@ export const en = {
       failed: "Copy failed",
     },
   },
+  jobs: {
+    title: "Background tasks",
+    description: "Downloads and installs run here. Cancelling keeps what was already downloaded.",
+    loading: "Loading background tasks",
+    loadError: "Could not load background tasks",
+    empty: {
+      title: "No background tasks",
+      description: "When you install a runtime, its download and progress will show up here.",
+    },
+    cancel: "Cancel",
+    cancelLabel: "Cancel {{label}}",
+    progressLabel: "Progress of {{label}}",
+    state: {
+      running: "Running",
+      succeeded: "Done",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    },
+    phase: {
+      starting: "Starting",
+      download: "Downloading",
+      verify: "Verifying",
+      extract: "Extracting",
+    },
+    bytes: {
+      of: "{{done}} of {{total}}",
+      done: "{{done}} so far",
+    },
+  },
   theme: {
     label: "Theme",
     light: "Light",

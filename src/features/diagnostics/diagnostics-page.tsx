@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { JobsCard } from "@/features/jobs/jobs-card";
 import { CopyReportButton } from "./copy-report-button";
 import { useAppInfo } from "./use-app-info";
 
@@ -81,6 +82,8 @@ export function DiagnosticsPage() {
           </CardContent>
         </Card>
       )}
+
+      <JobsCard />
     </>
   );
 }

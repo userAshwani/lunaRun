@@ -24,4 +24,7 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }
+
 # Release-size tuning lives in the workspace root (profiles are only read from the root manifest).

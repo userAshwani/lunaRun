@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Background job system: long tasks such as installing a runtime get an id, can be deduplicated, report throttled progress through `job:progress` and `job:done` events, and can be cancelled (`jobs_list` and `job_cancel` commands). The Diagnostics page shows a live "Background tasks" list with progress bars and a Cancel button.
 - Safe archive extraction in `luna-core` for `.zip`, `.tar.gz` and `.tar.xz`: refuses path traversal, absolute paths, symlink tricks, special files and decompression bombs, keeps the executable bit, supports stripping a wrapper folder, progress and cancellation. New error codes `ARCHIVE_UNSAFE`, `ARCHIVE_CORRUPT`, `ARCHIVE_TOO_LARGE`.
 
 ## [0.0.2] - 2026-10-30

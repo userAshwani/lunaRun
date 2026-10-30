@@ -1,6 +1,9 @@
 //! A minimal HTTP/1.1 server for download tests. It speaks just enough HTTP, over raw TCP, to let a
 //! test decide exactly what happens: ignore `Range`, drop the connection mid-body, stall, answer 503.
 
+// Shared by several test crates, and each one uses only part of it.
+#![allow(dead_code)]
+
 use std::io::{Read, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicUsize, Ordering};

@@ -2,6 +2,7 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { LunaError } from "@/bindings/LunaError";
 import { Button } from "@/components/ui/button";
+import { useErrorCategory } from "@/lib/errors";
 
 interface ErrorStateProps {
   error: LunaError;
@@ -12,10 +13,8 @@ interface ErrorStateProps {
 
 /** Full error state: what failed, the category, the technical detail, and how to retry. */
 export function ErrorState({ error, title, onRetry }: ErrorStateProps) {
-  const { t, i18n } = useTranslation();
-  // A code this build does not know (newer backend) must still render something sensible.
-  const known = i18n.exists(`errors.${error.code}`);
-  const category = known ? t(`errors.${error.code}`) : t("errors.INTERNAL");
+  const { t } = useTranslation();
+  const category = useErrorCategory()(error.code);
 
   return (
     <div

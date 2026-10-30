@@ -49,7 +49,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Resumable HTTP download with progress callback, cancel, retry (FR-RT-02) (`luna-core::download`, 18 loopback tests + opt-in HTTPS tests, mutation-checked)
 - [x] SHA-256 verify (FR-RT-03, NFR-05) (mismatch deletes the file, error `CHECKSUM_MISMATCH`)
 - [x] Extract zip / tar.gz / tar.xz with zip-slip guard and `stripComponents` (`luna-core::extract`, 18 tests + opt-in real-Node tests, mutation-checked, D-016)
-- [ ] Job system: job ids, dedupe, `job:progress` / `job:done` events, `job_cancel`
+- [x] Job system: job ids, dedupe, `job:progress` / `job:done` events, `job_cancel` (`luna-core::jobs`, commands `jobs_list` / `job_cancel`, events forwarded by `src-tauri/src/events.rs`, "Background tasks" card on Diagnostics)
 - [x] Tests: checksum mismatch, traversal archive rejected, cancel mid-download, resume (covered by `tests/download.rs` and `tests/extract.rs`)
 
 ### M1.2 Registry

@@ -1,6 +1,9 @@
 //! Builds archives in memory for extraction tests, including hostile ones that normal libraries refuse
 //! to write (`../evil` names, links pointing outside, special files).
 
+// Shared by several test crates, and each one uses only part of it.
+#![allow(dead_code)]
+
 use std::io::{Cursor, Write};
 
 pub enum Kind {

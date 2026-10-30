@@ -123,6 +123,8 @@ cargo fmt --all
 
 **Windows note:** in a fresh terminal `cargo` and `pnpm` must be on `PATH` (`%USERPROFILE%\.cargo\bin`, `%APPDATA%\npm`). The first `pnpm tauri build` compiles ~500 crates and takes several minutes; later builds are incremental.
 
+**Testing the Tauri side.** Tests that use Tauri's mock runtime (`tauri::test`) must be **integration tests** in `src-tauri/tests/`, not unit tests inside the crate: on Windows the unit-test executable cannot start (`STATUS_ENTRYPOINT_NOT_FOUND`) because only test targets get the Common Controls manifest that `src-tauri/build.rs` embeds. Frontend component tests fake the backend with `src/test/backend.ts` (`respondTo`, `emitEvent`, `backendError`) after mocking `@tauri-apps/api/core` and `@tauri-apps/api/event`.
+
 **Adding an IPC command** takes three edits plus a test: the function in `src-tauri/src/commands.rs`; its name in `COMMANDS` in `src-tauri/build.rs` and in `generate_handler!` in `src-tauri/src/lib.rs`; `allow-<name>` (kebab-case) in `src-tauri/capabilities/default.json`; and a typed wrapper in `src/lib/ipc.ts`. Skipping the capability makes the call fail at runtime with a permission error that unit tests (which mock the backend) will not catch, so verify new commands in the real app window (recipe in TRACKER.md §7).
 
 ## Golden rules (non-negotiable)

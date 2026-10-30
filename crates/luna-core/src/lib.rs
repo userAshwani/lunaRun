@@ -5,6 +5,7 @@ pub mod diagnostics;
 pub mod download;
 pub mod error;
 pub mod extract;
+pub mod jobs;
 pub mod paths;
 pub mod state;
 

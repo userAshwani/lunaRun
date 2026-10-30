@@ -94,6 +94,11 @@ reusable by `luna-cli`.
 - **RuntimeManager**: install/uninstall jobs, receipts, post-install steps, per-runtime adapters behind a `RuntimeAdapter` trait.
 - **Supervisor**: owns all child processes; state machine, restart policy, log capture, graceful shutdown. See [SERVICES](SERVICES.md).
 - **ProjectService**: project CRUD, detection, resolution, bindings, site config generation.
+- **JobManager** (`jobs.rs`): runs long tasks (install = download, verify, extract) on a Tokio runtime handle. Jobs are
+  identified by `job-N`, deduplicated by a key such as `php@8.3.14` while running, cancellable through a
+  `CancellationToken`, and report to a `JobEventSink` (throttled to about 10 progress events per second per job, the final
+  state always delivered). `src-tauri` supplies a sink that emits `job:progress` and `job:done` to the webview. Jobs live in
+  memory only (the newest 50 finished ones stay listable) and do not survive a restart.
 - **PortAllocator**: persistent port assignments plus live conflict checks.
 - **StateStore**: atomic JSON read/write with schema versions.
 
