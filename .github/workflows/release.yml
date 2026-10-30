@@ -1,26 +1,29 @@
-name: Release
+name: Build & Release
 
-# Pushing a tag like v0.1.0 builds installers for every OS and attaches them to a DRAFT GitHub
-# release, which a human reviews and publishes (docs/BUILD-AND-RELEASE.md section 3).
+# Two ways to use this workflow (docs/BUILD-AND-RELEASE.md section 3):
 #
-# Manual runs build the installers only: no release is created. The log lists what was produced, and
-# the files can optionally be kept as workflow artifacts (they count against the account's artifact
-# storage quota, so that is off by default). Pick one platform to save minutes, macOS counts 10x on a
-# private repository.
+# 1. Release: push a tag like v0.1.0 (`pnpm bump`, then `git tag` and `git push`). It builds the Windows,
+#    macOS and Linux installers into a draft release, and, only if every build succeeded, gives the
+#    installers permanent download names and publishes the release. The README links to those names.
+#
+# 2. Just build: Actions tab > "Build & Release" > "Run workflow". Builds the chosen platforms and keeps
+#    the installers as downloadable workflow artifacts. No release is created.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual build ({0})', inputs.platform) || format('Release {0}', github.ref_name) }}
+
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       platform:
-        description: Which installers to build (no release is created for manual runs)
+        description: Which installers to build
         type: choice
-        options: [linux, windows, macos, all]
-        default: linux
+        options: [all, windows, macos, linux]
+        default: all
       keep_artifacts:
-        description: Also keep the installers as downloadable workflow artifacts (uses storage quota)
+        description: Keep the installers as downloadable artifacts of this run
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -99,6 +102,7 @@ jobs:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
           releaseName: lunaRun ${{ github.ref_name }}
           releaseBody: See CHANGELOG.md for what changed. These installers are not code-signed yet.
+          # Always a draft first: it only goes public in the `publish` job, after all builds passed.
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           uploadWorkflowArtifacts: ${{ github.ref_type != 'tag' && inputs.keep_artifacts }}
@@ -114,3 +118,26 @@ jobs:
             exit 1
           fi
           echo "$installers" | while read -r file; do ls -l "$file"; done
+
+  # Runs only for tags, and only when every platform built. Until this job succeeds the release stays a
+  # hidden draft, so a half-finished build can never reach the download page.
+  publish:
+    name: Publish release
+    if: github.ref_type == 'tag'
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Give the installers permanent names and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: node scripts/finalize-release.mjs "$TAG" --publish

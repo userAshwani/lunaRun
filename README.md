@@ -1,12 +1,57 @@
-# lunaRun
+<p align="center">
+  <img src="assets/logo.svg" width="112" height="112" alt="lunaRun logo">
+</p>
 
-> A free, open-source, cross-platform local development environment for PHP & Laravel —
-> run **multiple versions** of PHP, MySQL/MariaDB, Node.js and more **side by side**, and let lunaRun
-> **read your project** and pick the right versions for you.
+<h1 align="center">lunaRun</h1>
 
-**Status:** 🚧 pre-alpha — under active development. Nothing is usable yet.
+<p align="center">
+  <strong>Run every PHP, Node.js and database version you need, side by side.</strong><br>
+  A free, open-source local development environment for PHP &amp; Laravel on Windows, macOS and Linux.
+</p>
+
+<p align="center">
+  <a href="https://github.com/userAshwani/lunaRun/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/userAshwani/lunaRun?include_prereleases&label=latest&color=4F46E5"></a>
+  <a href="https://github.com/userAshwani/lunaRun/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/userAshwani/lunaRun/total?color=4F46E5"></a>
+  <a href="https://github.com/userAshwani/lunaRun/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/userAshwani/lunaRun/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/github/license/userAshwani/lunaRun?color=4F46E5"></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-4F46E5">
+</p>
+
+<p align="center">
+  <a href="#download">Download</a> ·
+  <a href="#why-lunarun">Why lunaRun</a> ·
+  <a href="#documentation">Documentation</a> ·
+  <a href="#development">Development</a>
+</p>
 
 ---
+
+## Download
+
+The links below always point to the **newest release**, so they never need updating. Every release is built
+automatically by GitHub Actions from a version tag.
+
+| Platform | Download |
+|---|---|
+| **Windows** 10 / 11 (64-bit) | [**lunaRun for Windows** (.exe installer)](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-windows-x64-setup.exe) · [.msi](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-windows-x64.msi) |
+| **macOS** 12+ (Apple silicon and Intel) | [**lunaRun for macOS** (.dmg)](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-macos-universal.dmg) |
+| **Linux** (64-bit) | [AppImage](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-linux-x64.AppImage) · [.deb](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-linux-x64.deb) · [.rpm](https://github.com/userAshwani/lunaRun/releases/latest/download/lunaRun-linux-x64.rpm) |
+
+All versions and their change notes are on the [Releases page](https://github.com/userAshwani/lunaRun/releases).
+
+<details>
+<summary><strong>First-run notes: the installers are not code-signed yet</strong></summary>
+
+- **Windows:** the installer is per-user and needs no administrator rights. SmartScreen may say "Windows protected
+  your PC": choose **More info**, then **Run anyway**.
+- **macOS:** Gatekeeper blocks unsigned apps. Right-click the app and choose **Open**, or run
+  `xattr -dr com.apple.quarantine /Applications/lunaRun.app` once.
+- **Linux:** make the AppImage executable first: `chmod +x lunaRun-linux-x64.AppImage`.
+
+</details>
+
+> **Status: pre-alpha.** The app runs and shows system diagnostics, but installing runtimes, running services and
+> project detection are still being built. See the [roadmap](docs/ROADMAP.md) for what exists today.
 
 ## Why lunaRun?
 
@@ -28,10 +73,7 @@ lunaRun lets you:
 |---|---|
 | Windows 10/11 (x64) | Primary target |
 | macOS 12+ (Apple Silicon & Intel) | Primary target |
-| Linux (x64, AppImage / .deb) | Best effort |
-
-Installers are built automatically by GitHub Actions and published on the
-[Releases](../../releases) page for every version tag.
+| Linux (x64, AppImage / .deb / .rpm) | Best effort |
 
 ## Documentation
 
@@ -45,15 +87,18 @@ Installers are built automatically by GitHub Actions and published on the
 | [docs/BUILD-AND-RELEASE.md](docs/BUILD-AND-RELEASE.md) | CI, release pipeline, signing, auto-update |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased task list |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision log |
-| [docs/REPO-SETUP.md](docs/REPO-SETUP.md) | Maintainer guide: GitHub setup & going public |
+| [docs/REPO-SETUP.md](docs/REPO-SETUP.md) | Maintainer guide: GitHub setup |
 
 ## Development
 
-> Will be filled in during Phase 0 (see [ROADMAP](docs/ROADMAP.md)).
+You need [Rust](https://rustup.rs), Node.js 24 LTS and [pnpm](https://pnpm.io), plus the
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your OS. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
 pnpm install
-pnpm tauri dev
+pnpm tauri dev      # run the app
+pnpm test           # frontend tests
+cargo test --workspace
 ```
 
 ## License

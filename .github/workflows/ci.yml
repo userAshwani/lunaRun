@@ -8,8 +8,7 @@ on:
   pull_request:
     paths-ignore:
       ["**/*.md", "docs/**", "LICENSE", ".github/ISSUE_TEMPLATE/**", ".github/dependabot.yml"]
-  # Manual run, also the only trigger for the Windows/macOS jobs while the repo is private
-  # (macOS minutes cost 10x on private repositories, see docs/BUILD-AND-RELEASE.md section 6).
+  # Manual run from the Actions tab.
   workflow_dispatch:
 
 concurrency:
@@ -91,9 +90,9 @@ jobs:
       - name: Build (no installer)
         run: pnpm tauri build --debug --no-bundle
 
+  # Windows and macOS run the Rust tests on every push. Standard runners are free on a public repo (D-015).
   test-os:
     name: Test (${{ matrix.os }})
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:

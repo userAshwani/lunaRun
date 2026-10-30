@@ -46,18 +46,41 @@ Pushes that only touch `*.md`, `docs/`, `LICENSE`, `.github/ISSUE_TEMPLATE/` or 
 
 Use `Swatinem/rust-cache` and pnpm store caching. Concurrency group per branch with `cancel-in-progress: true`.
 
-### `release.yml` — on push of a tag `v*`, or run by hand
+### `release.yml` ("Build & Release"): tag a release, or press a button
 
-Implemented in `.github/workflows/release.yml` as two jobs, `plan` then `build`:
+Implemented in `.github/workflows/release.yml`, with three jobs: `plan`, `build`, `publish`.
 
 1. **Plan** (Ubuntu, seconds): runs `node scripts/check-versions.mjs <tag>`, which fails the whole run before any
    expensive build if `package.json`, `src-tauri/tauri.conf.json` and the Cargo workspace version disagree or do not
    equal the tag. It then picks the platforms to build.
 2. **Build** (matrix from the plan): `windows-latest`, `macos-latest` (`--target universal-apple-darwin`) and
-   `ubuntu-22.04`. Each uses the shared `.github/actions/setup` action and `tauri-apps/tauri-action@v1`.
-3. What the build does with the result: on a **tag**, `tauri-action` creates a **draft** release (`prerelease` when the tag contains `-`) and uploads the
-   installers. On a **manual run** (`workflow_dispatch`) no release is created and the installers are kept as workflow
-   artifacts. The `platform` input (`linux` by default) limits the build, because macOS minutes cost 10x (D-013).
+   `ubuntu-22.04`, each with the shared `.github/actions/setup` action and `tauri-apps/tauri-action@v1`.
+3. **Publish** (tags only, and only if every build succeeded): `scripts/finalize-release.mjs` renames the installers
+   to the permanent names below and turns the draft into a public release. Until then the release is a hidden
+   draft, so a half-finished build never reaches the download page.
+
+**Two ways to use it**
+
+- **Release:** push a tag (`pnpm bump 0.1.0`, commit, `git tag v0.1.0`, `git push origin v0.1.0`). A few minutes later the
+  release is public and the README download links serve the new files.
+- **Just build:** GitHub > **Actions** > **Build & Release** (click it in the left sidebar; the button is not on the
+  "All workflows" list) > **Run workflow**. Pick `all`, `windows`, `macos` or `linux`. The installers are kept as
+  downloadable artifacts of that run and no release is created.
+
+**Permanent download names.** Tauri names files with the version (`lunaRun_0.1.0_x64-setup.exe`), but GitHub's
+`releases/latest/download/<name>` links need a fixed name. The publish job therefore renames the installers, so the
+README never needs an edit:
+
+| Stable name | Platform |
+|---|---|
+| `lunaRun-windows-x64-setup.exe`, `lunaRun-windows-x64.msi` | Windows 10/11 x64 (per-user NSIS installer, MSI) |
+| `lunaRun-macos-universal.dmg`, `lunaRun-macos-universal.app.tar.gz` | macOS 12+, Apple silicon and Intel |
+| `lunaRun-linux-x64.AppImage`, `.deb`, `.rpm` | Linux x64 |
+
+The release page itself shows the version (tag and title). If the Phase 2 auto-updater is added, its `latest.json`
+must reference these stable names: switch to `releaseAssetNamePattern` in the workflow then. A pre-release tag (one with
+a `-`, such as `v0.2.0-beta.1`) is published as a pre-release, which GitHub does not count as "latest", so the
+`latest/download` links keep serving the last stable version.
 
 Installers come from the `bundle` section of `tauri.conf.json` (`targets: all`; Windows uses a per-user NSIS
 installer, `installMode: currentUser`). Signing secrets are listed in comments in the workflow and are not set yet,
@@ -67,7 +90,7 @@ so installers are unsigned until section 4 is done.
 1. Make sure `## [Unreleased]` in `CHANGELOG.md` describes the release (the bump refuses an empty section).
    `pnpm bump 0.1.0` → review `git diff` → commit `chore(release): v0.1.0` → push to `main`.
 2. `git tag v0.1.0 && git push origin v0.1.0`.
-3. Wait for all 3 jobs → open the **draft** release → smoke-test the installers → paste changelog → **Publish**.
+3. Wait for the run (about 12 minutes). If all three builds pass, the release publishes itself and the README links serve it. If one fails, nothing is published: fix it, delete the tag and the draft release (ask first, this rewrites a tag), and tag again.
 
 ### `registry.yml` — daily cron (Phase 1/2)
 Runs `scripts/registry/generate.ts`, opens a PR in the registry repo when versions change. See [RUNTIMES §5](RUNTIMES.md#5-registry-generation--hosting).
@@ -91,16 +114,18 @@ notarisation (the unsigned macOS experience is the worst). Document the unsigned
   **Back up the private key** (password manager). If you lose it, existing installs can never auto-update again.
 - The app checks on launch and every 24 h (can be switched off) and shows "Update available → Install & restart". Before restarting, all services are stopped gracefully.
 
-## 6. ⚠ Private repository caveats
+## 6. Public repository notes
 
-1. **Release downloads are private.** Only signed-in collaborators can download installers from a private repo's Releases,
-   and the auto-updater cannot reach `latest.json`. Public distribution and auto-update start when the repo (or a release-only repo) becomes public.
-2. **Actions minutes are limited** on private repos (GitHub Free: a monthly quota; **Windows minutes count ×2 and macOS ×10**. Check current GitHub billing).
-   One release builds all three OSes, and the macOS job alone can use well over 100 billed minutes. So:
-   - Run full-OS matrices only on `main` / tags, and run PR CI on Ubuntu only.
-   - Tag releases sparingly while private. Use `workflow_dispatch` with an OS input to build just one platform for testing.
-   - Public repos get standard runners free, so this goes away when you go public.
-3. **Branch protection / rulesets** for private repos need a paid GitHub plan. On Free, follow the discipline (PRs into `main`) manually until public.
+The repository is public (since 2026-10-30), which changes what the earlier private-repo plan assumed:
+
+1. **Standard runners are free** for public repositories, so there is no minute budget to protect. CI runs the Rust tests on
+   Windows and macOS on every push (D-015, which supersedes D-013), and a full three-platform release costs nothing.
+2. **Release downloads are public**, which is what the README download table needs. The Phase 2 auto-updater can now reach
+   `latest.json`.
+3. **Branch protection and rulesets** are available for free (Settings > Rules). Consider requiring the CI checks on `main`.
+4. **Everything in the repo and its history is public**, including commit author emails and local paths that appear in
+   docs. Never commit secrets. Dependabot and secret scanning are free on public repos.
+5. Workflow runs started by outside contributors' pull requests do not receive secrets, which is the safe default.
 
 ## 7. Local builds
 

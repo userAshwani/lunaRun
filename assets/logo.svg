@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">lunaRun</title>
+  <defs>
+    <!-- The crescent is a full moon with a second disc cut out of its upper right. -->
+    <mask id="crescent">
+      <rect width="512" height="512" fill="#fff"/>
+      <circle cx="322" cy="210" r="120" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#4F46E5"/>
+  <circle cx="254" cy="270" r="140" fill="#fff" mask="url(#crescent)"/>
+  <circle cx="356" cy="150" r="15" fill="#C7D2FE"/>
+</svg>

@@ -9,6 +9,10 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [0.0.1] - 2026-10-30
 
 ### Added
+- Project logo and real application icons (replacing the Tauri defaults).
+- README with logo, badges and permanent download links for Windows, macOS and Linux.
+- "Build & Release" workflow: a manual build button in the Actions tab, and automatic publishing of a tagged release once all three platform builds succeed, with installers renamed to permanent download names.
+- CI now runs the Rust tests on Windows and macOS for every push (the repository is public, so runners are free).
 - Download engine in `luna-core`: resumable, cancellable, retried HTTPS downloads that are verified against a SHA-256 before the file appears under its final name; redirects to plain HTTP and oversized downloads are refused. New error codes `NETWORK`, `CHECKSUM_MISMATCH`, `CANCELLED`, `INVALID_URL`.
 - Dependabot: weekly grouped updates for Rust crates, npm packages and GitHub Actions (Tauri packages grouped; major versions get their own PR).
 - GitHub issue forms (bug report, feature request), an issue chooser that routes security reports to `SECURITY.md`, and a pull request template.

@@ -43,7 +43,7 @@ These docs are the contract. The usual loop:
 4. Repeat, one milestone at a time. Don't ask for a whole phase in one go.
 5. When reality differs from the docs (an upstream URL changed, a crate doesn't work), Sonnet should **update the doc + add a DECISIONS entry**, not silently diverge. Switch back to Opus for big re-planning (new phase, a major design change).
 
-## 4. Before going public — checklist
+## 4. Going public: checklist (the repo went public on 2026-10-30)
 
 You can either **flip this repo to public** (Settings → Danger Zone → Change visibility), which keeps history, issues and releases, or push a fresh history to a new public repo. Flipping is simpler. Do it only if the history contains no secrets.
 
