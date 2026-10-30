@@ -1,0 +1,54 @@
+# Weekly, grouped dependency updates. Grouping keeps the PR count (and the CI minutes each PR costs on
+# a private repo) low: one PR for the Tauri family, one for all other minor/patch bumps, and a separate
+# PR for every major bump so breaking changes get a proper review.
+version: 2
+
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      # tauri, tauri-build, tauri-plugin-*, tauri-utils... must move together.
+      tauri:
+        patterns: ["tauri", "tauri-*"]
+      rust-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # The repo uses pnpm; Dependabot's npm ecosystem reads pnpm-lock.yaml.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      # Keep the JS API and CLI in step with each other. They should also match the Rust crate
+      # version, which Dependabot cannot group across ecosystems, so check Tauri PRs together.
+      tauri:
+        patterns: ["@tauri-apps/*"]
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    # The workflows live in /.github/workflows and the shared setup is a composite action.
+    directories:
+      - /
+      - /.github/actions/setup
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      actions:
+        patterns: ["*"]
