@@ -38,6 +38,14 @@ describe("app shell", () => {
     expect(screen.getByText(/^Version \d+\.\d+\.\d+/)).toBeInTheDocument();
   });
 
+  it("shows the lunaRun icon next to the name as a decorative image", () => {
+    renderAt("/");
+    const icon = document.querySelector("aside img");
+    expect(icon).toHaveAttribute("src", expect.stringContaining("app-icon"));
+    expect(icon).toHaveAttribute("alt", ""); // decorative: the visible name already says "lunaRun"
+    expect(screen.getAllByText("lunaRun").length).toBeGreaterThan(0);
+  });
+
   it("shows every sidebar page and marks the current one", () => {
     renderAt("/runtimes");
     const nav = screen.getByRole("navigation", { name: "Main navigation" });

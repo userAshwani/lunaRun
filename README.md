@@ -1,8 +1,9 @@
-<p align="center">
-  <img src="assets/logo.svg" width="112" height="112" alt="lunaRun logo">
-</p>
-
-<h1 align="center">lunaRun</h1>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-lockup-dark.png">
+    <img src="assets/logo-lockup-light.png" alt="lunaRun" width="340">
+  </picture>
+</h1>
 
 <p align="center">
   <strong>Run every PHP, Node.js and database version you need, side by side.</strong><br>

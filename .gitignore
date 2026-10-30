@@ -34,3 +34,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Original logo export (about 5 MB, with a generator watermark). The cropped source is assets/source/.
+assets/newlogo.png

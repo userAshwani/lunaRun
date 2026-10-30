@@ -1,7 +1,7 @@
-import { Moon } from "lucide-react";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet } from "react-router";
+import appIcon from "@/assets/app-icon.png";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, NAV_ITEMS } from "./routes";
@@ -12,9 +12,8 @@ export function Layout() {
     <div className="flex h-screen bg-background">
       <aside className="flex w-60 shrink-0 flex-col border-r bg-card">
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Moon className="size-5" aria-hidden />
-          </div>
+          {/* Decorative: the name next to it already says "lunaRun". 128 px source, shown at 36 px. */}
+          <img src={appIcon} alt="" width={36} height={36} className="size-9 shrink-0" />
           <div className="min-w-0 leading-tight">
             <p className="text-base font-semibold">{t("app.name")}</p>
             <p className="truncate text-xs text-muted-foreground">{t("app.tagline")}</p>
