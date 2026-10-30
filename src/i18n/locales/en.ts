@@ -79,6 +79,9 @@ export const en = {
     ARCHIVE_UNSAFE: "Unsafe download rejected",
     ARCHIVE_CORRUPT: "Damaged or unsupported archive",
     ARCHIVE_TOO_LARGE: "Archive is too large",
+    REGISTRY_INVALID: "Version list is invalid",
+    REGISTRY_UNSUPPORTED_SCHEMA: "Version list needs a newer lunaRun",
+    NO_ARTIFACT_FOR_PLATFORM: "Not available for this computer",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

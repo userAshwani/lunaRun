@@ -42,6 +42,12 @@ pub enum ErrorCode {
     ArchiveCorrupt,
     /// An archive would expand beyond the allowed size or entry count (decompression bomb).
     ArchiveTooLarge,
+    /// The list of downloadable versions (the registry) is malformed or breaks a rule.
+    RegistryInvalid,
+    /// The registry was written for a newer lunaRun. Update the app.
+    RegistryUnsupportedSchema,
+    /// The registry has no download for this operating system and processor.
+    NoArtifactForPlatform,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

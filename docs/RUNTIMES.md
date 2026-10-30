@@ -105,7 +105,7 @@ Hosted as a static JSON file. The URL is configurable in settings and defaults t
 
 Rules:
 - `os` ∈ `windows | macos | linux`, `arch` ∈ `x86_64 | aarch64`. On macOS the app picks the native arch and falls back to `x86_64` (Rosetta) only if no native artifact exists, with a visible note.
-- Unknown fields MUST be ignored (forward compatibility). A higher `schema` than supported → use the cached/bundled registry and prompt the user to update the app.
+- Unknown fields MUST be ignored (forward compatibility). So are artifacts and versions the app cannot use (unknown `os`, `arch`, `format` or `channel`): they are skipped, never an error. Everything the app *does* use is validated strictly (https URL, 64-hex `sha256`, `size` > 0, safe names, no duplicates). A higher `schema` than supported → use the cached/bundled registry and prompt the user to update the app.
 - Phase 2: the registry is signed (minisign/Ed25519). The app embeds the public key and rejects a remote registry with a bad signature.
 
 ## 4. Install flow

@@ -10,6 +10,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - New logo: a crescent moon merged with an `R` and an arrow. It replaces the old icon in the app window, the installer, the sidebar, the browser favicon and the README (which switches between a light and a dark version), and a social preview image is included.
 
 ### Added
+- Registry parser in `luna-core`: reads the list of downloadable runtime versions, ignores fields and downloads it does not understand, refuses a list written for a newer lunaRun, rejects non-HTTPS URLs, bad checksums and unsafe names, orders versions numerically, picks the right download for the computer (with a Rosetta fallback on Apple silicon) and flags versions whose line has reached end of life. New error codes `REGISTRY_INVALID`, `REGISTRY_UNSUPPORTED_SCHEMA`, `NO_ARTIFACT_FOR_PLATFORM`.
 - Background job system: long tasks such as installing a runtime get an id, can be deduplicated, report throttled progress through `job:progress` and `job:done` events, and can be cancelled (`jobs_list` and `job_cancel` commands). The Diagnostics page shows a live "Background tasks" list with progress bars and a Cancel button.
 - Safe archive extraction in `luna-core` for `.zip`, `.tar.gz` and `.tar.xz`: refuses path traversal, absolute paths, symlink tricks, special files and decompression bombs, keeps the executable bit, supports stripping a wrapper folder, progress and cancellation. New error codes `ARCHIVE_UNSAFE`, `ARCHIVE_CORRUPT`, `ARCHIVE_TOO_LARGE`.
 

@@ -53,7 +53,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Tests: checksum mismatch, traversal archive rejected, cancel mid-download, resume (covered by `tests/download.rs` and `tests/extract.rs`)
 
 ### M1.2 Registry
-- [ ] Registry types + parser (ignore unknown fields, schema check)
+- [x] Registry types + parser (ignore unknown fields, schema check)
 - [ ] Fetch → cache → bundled fallback; `LUNA_REGISTRY_URL` override
 - [ ] `scripts/registry/generate.ts`: PHP (Windows releases.json + static builds), Node (index.json), Composer, MySQL, MariaDB, Caddy
 - [ ] Bundle the generated `registry.json` as a fallback

@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-29T00:00:00Z",
+  "futureTopLevelField": { "ignored": true },
+  "runtimes": {
+    "php": {
+      "displayName": "PHP",
+      "license": { "name": "PHP License v3.01", "url": "https://www.php.net/license/" },
+      "lines": {
+        "8.3": { "eol": "2027-12-31", "securityOnlySince": "2025-12-31" },
+        "8.1": { "eol": "2025-12-31" },
+        "8.4": {}
+      },
+      "versions": [
+        {
+          "version": "8.3.9",
+          "releasedAt": "2024-07-04",
+          "artifacts": [
+            {
+              "os": "windows", "arch": "x86_64", "variant": "nts-vs16", "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.3.9-nts-Win32-vs16-x64.zip",
+              "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "size": 31000000,
+              "requires": ["vcredist-14-x64"],
+              "futureArtifactField": 1
+            }
+          ]
+        },
+        {
+          "version": "8.3.14",
+          "channel": "stable",
+          "artifacts": [
+            {
+              "os": "windows", "arch": "x86_64", "variant": "nts-vs16", "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.3.14-nts-Win32-vs16-x64.zip",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+              "size": 31234567,
+              "requires": ["vcredist-14-x64"]
+            },
+            {
+              "os": "windows", "arch": "x86_64", "variant": "ts-vs16", "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.3.14-Win32-vs16-x64.zip",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+              "size": 31300000
+            },
+            {
+              "os": "macos", "arch": "x86_64", "variant": "static", "format": "tar.gz",
+              "url": "https://dl.static-php.dev/php-8.3.14-macos-x86_64.tar.gz",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000003",
+              "size": 12000000,
+              "extensions": ["bcmath", "ctype"]
+            },
+            {
+              "os": "linux", "arch": "x86_64", "variant": "static", "format": "tar.gz",
+              "url": "https://dl.static-php.dev/php-8.3.14-linux-x86_64.tar.gz",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000004",
+              "size": 13000000
+            },
+            {
+              "os": "freebsd", "arch": "x86_64", "format": "tar.gz",
+              "url": "https://example.com/php-freebsd.tar.gz",
+              "sha256": "not even a hash, but this artifact is for an OS we skip",
+              "size": 0
+            },
+            {
+              "os": "linux", "arch": "riscv64", "format": "tar.gz",
+              "url": "http://example.com/skipped",
+              "sha256": "x",
+              "size": 0
+            },
+            {
+              "os": "linux", "arch": "aarch64", "format": "7z",
+              "url": "http://example.com/skipped",
+              "sha256": "x",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "version": "8.4.0",
+          "artifacts": [
+            {
+              "os": "macos", "arch": "x86_64", "format": "tar.gz",
+              "url": "https://dl.static-php.dev/php-8.4.0-macos-x86_64.tar.gz",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000005",
+              "size": 12500000
+            },
+            {
+              "os": "macos", "arch": "aarch64", "format": "tar.gz",
+              "url": "https://dl.static-php.dev/php-8.4.0-macos-aarch64.tar.gz",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000006",
+              "size": 11500000
+            }
+          ]
+        },
+        {
+          "version": "8.5.0-rc1",
+          "channel": "rc",
+          "artifacts": []
+        },
+        {
+          "version": "9.0.0",
+          "channel": "nightly-from-the-future",
+          "artifacts": []
+        },
+        {
+          "version": "8.1.30",
+          "artifacts": []
+        }
+      ]
+    },
+    "node": {
+      "displayName": "Node.js",
+      "lines": { "24": { "eol": "2028-04-30" } },
+      "versions": [
+        {
+          "version": "24.22.2",
+          "artifacts": [
+            {
+              "os": "linux", "arch": "x86_64", "format": "tar.xz", "stripComponents": 1,
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.xz",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000007",
+              "size": 29000000
+            }
+          ]
+        },
+        {
+          "version": "24.4.0",
+          "artifacts": []
+        }
+      ]
+    }
+  }
+}
