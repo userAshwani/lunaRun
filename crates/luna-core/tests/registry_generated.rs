@@ -62,10 +62,15 @@ fn a_windows_pc_can_install_php_and_node_and_lines_are_flagged() {
     let rows = registry.available_versions(Os::Windows, Arch::X86_64, today);
 
     let php: Vec<_> = rows.iter().filter(|r| r.runtime == "php").collect();
-    assert!(
-        php.iter().all(|r| r.available),
-        "every PHP line has a Windows build"
-    );
+    // The static macOS/Linux builds are separate versions (8.3.32 next to Windows' 8.3.36), so a row can
+    // be unavailable here, but every line must still have a Windows build.
+    let lines: std::collections::BTreeSet<&str> = php.iter().map(|r| r.line.as_str()).collect();
+    for line in lines {
+        assert!(
+            php.iter().any(|r| r.line == line && r.available),
+            "PHP {line} has no Windows build"
+        );
+    }
     assert!(
         php.iter().any(|r| r.line == "7.4" && r.eol),
         "PHP 7.4 is end of life"
@@ -86,9 +91,9 @@ fn a_windows_pc_can_install_php_and_node_and_lines_are_flagged() {
 }
 
 #[test]
-fn macos_and_linux_get_node_but_not_yet_php() {
-    // PHP for macOS and Linux needs its own source (docs/PRD.md Q3). Say so in a test, so the day it
-    // arrives this one fails and gets updated on purpose.
+fn macos_and_linux_get_php_as_a_cli_and_an_fpm_download() {
+    // static-php ships `php` and `php-fpm` as two archives, listed as the variants static-cli and
+    // static-fpm. An installer needs both (docs/RUNTIMES.md), so this test pins that shape.
     let registry = registry();
     let today = CalDate::new(2026, 11, 2).unwrap();
     for (os, arch) in [
@@ -103,10 +108,34 @@ fn macos_and_linux_get_node_but_not_yet_php() {
             "{os:?}/{arch:?}"
         );
         assert!(
-            !rows.iter().any(|r| r.runtime == "php" && r.available),
-            "{os:?}/{arch:?}"
+            rows.iter().any(|r| r.runtime == "php" && r.available),
+            "PHP on {os:?}/{arch:?}"
         );
     }
+
+    let php = registry.runtime("php").unwrap();
+    let static_release = php
+        .releases
+        .iter()
+        .find(|r| r.artifacts.iter().any(|a| a.os == Os::Macos))
+        .expect("a PHP release with a macOS build");
+    for os in [Os::Macos, Os::Linux] {
+        let mut variants: Vec<&str> = static_release
+            .artifacts
+            .iter()
+            .filter(|a| a.os == os && a.arch == Arch::X86_64)
+            .filter_map(|a| a.variant.as_deref())
+            .collect();
+        variants.sort_unstable();
+        assert_eq!(variants, ["static-cli", "static-fpm"], "{os:?}");
+    }
+    let cli = static_release
+        .artifacts
+        .iter()
+        .find(|a| a.os == Os::Macos && a.variant.as_deref() == Some("static-cli"))
+        .unwrap();
+    assert!(cli.extensions.iter().any(|e| e == "pdo_sqlite"));
+    assert!(cli.extensions.iter().any(|e| e == "pdo_mysql"));
 }
 
 #[test]

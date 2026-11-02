@@ -19,6 +19,14 @@ export function fakeSource({ size = (url) => url.length * 1000, hash, downloadVe
   const assets = json("caddy-releases.json").flatMap((release) => release.assets);
   const honestHash = async (url) => {
     const file = url.split("/").pop();
+    if (!file.startsWith("caddy_")) {
+      // Any other download (static PHP): a hash that depends on the url, and the size the fake server reports.
+      return {
+        sha256: createHash("sha256").update(url).digest("hex"),
+        sha512: createHash("sha512").update(url).digest("hex"),
+        size: size(url),
+      };
+    }
     const version = /^caddy_(\d+\.\d+\.\d+)_/.exec(file)[1];
     const asset = assets.find((a) => a.name === file);
     const sha512 = parseChecksums(text(`caddy-checksums-${version}.txt`), 128).get(file);
@@ -32,6 +40,8 @@ export function fakeSource({ size = (url) => url.length * 1000, hash, downloadVe
   return {
     phpReleases: async () => json("php-releases.json"),
     phpStates: async () => json("php-states.json"),
+    staticPhpListing: async () => json("static-php-listing.json"),
+    staticPhpExtensions: async () => json("static-php-extensions.json"),
     nodeIndex: async () => json("node-index.json"),
     nodeSchedule: async () => json("node-schedule.json"),
     nodeShasums: async (version) => text(`SHASUMS256-v${version}.txt`),

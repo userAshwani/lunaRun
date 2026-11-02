@@ -106,6 +106,10 @@ export function liveSource(fetchFn = fetch, { spawnFn, gpg = process.env.GPG ?? 
       (await get("https://raw.githubusercontent.com/nodejs/Release/main/schedule.json")).json(),
     nodeShasums: async (version) =>
       (await get(`https://nodejs.org/dist/v${version}/SHASUMS256.txt`)).text(),
+    staticPhpListing: async () =>
+      (await get("https://dl.static-php.dev/static-php-cli/common/?format=json")).json(),
+    staticPhpExtensions: async () =>
+      (await get("https://dl.static-php.dev/static-php-cli/common/build-extensions.json")).json(),
     mariadbMajors: async () =>
       (await get("https://downloads.mariadb.org/rest-api/mariadb/")).json(),
     mariadbLine: async (line) =>

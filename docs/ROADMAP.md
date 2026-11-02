@@ -55,12 +55,12 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 ### M1.2 Registry
 - [x] Registry types + parser (ignore unknown fields, schema check)
 - [x] Fetch → cache → bundled fallback; `LUNA_REGISTRY_URL` override
-- [ ] `scripts/registry/generate.mjs` (`pnpm registry`), one runtime at a time:
+- [x] `scripts/registry/generate.mjs` (`pnpm registry`), one runtime at a time:
   - [x] PHP for Windows (releases.json, php.net support dates), Node (index.json, SHASUMS, release schedule)
   - [x] Composer (one `composer.phar` per platform), Caddy (SHA-512 verified, SHA-256 pinned)
   - [x] MariaDB (Windows and Linux x64, long-term-support lines)
   - [x] MySQL (LTS lines and 8.0, signature-verified, D-017)
-  - [ ] PHP for macOS and Linux (static builds, no upstream checksums, decide Q3 first)
+  - [x] PHP for macOS and Linux (upstream static-php `common` builds, CLI and FPM as two variants, no upstream checksum, Q3 default)
 - [ ] Bundle the generated `registry.json` as a fallback
 - [ ] Decide registry hosting (RUNTIMES §5) and record it in DECISIONS.md
 

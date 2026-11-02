@@ -63,6 +63,10 @@ describe("lib", () => {
 });
 
 describe("php", () => {
+  /** The versions that have a Windows download, as the Windows-only tests below expect them. */
+  const windowsOnly = (php) =>
+    php.versions.filter((v) => v.artifacts.some((a) => a.os === "windows"));
+
   it("drops the Windows packaging revision so the version sorts correctly", () => {
     expect(phpVersion("8.3.36-1")).toBe("8.3.36");
     expect(phpVersion("7.4.33")).toBe("7.4.33");
@@ -72,9 +76,10 @@ describe("php", () => {
 
   it("builds NTS x64 downloads from releases.json, newest first, with real file names", async () => {
     const php = await buildPhp(fakeSource());
-    expect(php.versions.map((v) => v.version)).toEqual(["8.5.12", "8.3.36", "7.4.33"]);
+    const windows = windowsOnly(php);
+    expect(windows.map((v) => v.version)).toEqual(["8.5.12", "8.3.36", "7.4.33"]);
 
-    const v83 = php.versions[1];
+    const v83 = windows[1];
     expect(v83.artifacts).toEqual([
       {
         os: "windows",
@@ -91,13 +96,14 @@ describe("php", () => {
       },
     ]);
     expect(v83.releasedAt).toBe("2026-10-26");
-    expect(php.versions[0].artifacts[0].variant).toBe("nts-vs17");
-    expect(php.versions[2].artifacts[0].variant).toBe("nts-vc15");
+    expect(windows[0].artifacts[0].variant).toBe("nts-vs17");
+    expect(windows[2].artifacts[0].variant).toBe("nts-vc15");
   });
 
   it("takes support dates from php.net and only for lines that are offered", async () => {
     const php = await buildPhp(fakeSource());
-    expect(Object.keys(php.lines)).toEqual(["8.5", "8.3", "7.4"]);
+    // The static builds add the other lines of the fixture (8.4, 8.2, 8.1, 8.0), so every offered version has one.
+    expect(Object.keys(php.lines)).toEqual(["8.5", "8.4", "8.3", "8.2", "8.1", "8.0", "7.4"]);
     expect(php.lines["8.3"]).toEqual({ eol: "2027-12-31", securityOnlySince: "2025-12-31" });
     expect(php.lines["7.4"].eol).toBe("2022-11-28");
   });
@@ -108,7 +114,7 @@ describe("php", () => {
         size: (url) => (url.includes("7.4.33") && !url.includes("/archives/") ? null : 4242),
       }),
     );
-    expect(moved.versions[2].artifacts[0].url).toBe(
+    expect(windowsOnly(moved)[2].artifacts[0].url).toBe(
       "https://windows.php.net/downloads/releases/archives/php-7.4.33-nts-Win32-vc15-x64.zip",
     );
     await expect(
@@ -121,7 +127,7 @@ describe("php", () => {
     const lower = releases["8.3"]["nts-vs16-x64"].zip.sha256;
     releases["8.3"]["nts-vs16-x64"].zip.sha256 = lower.toUpperCase();
     const php = await buildPhp({ ...fakeSource(), phpReleases: async () => releases });
-    expect(php.versions[1].artifacts[0].sha256).toBe(lower);
+    expect(windowsOnly(php)[1].artifacts[0].sha256).toBe(lower);
   });
 
   it("fails when a line has no NTS x64 build or a bad checksum, instead of dropping it", async () => {

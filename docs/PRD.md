@@ -235,6 +235,6 @@ Track decisions in [DECISIONS.md](DECISIONS.md) once resolved.
 |---|---|---|
 | Q1 | Final product name (lunaRun is a working name). Check trademark/domain before going public. | Keep `lunaRun`; keep the name in one constant/config so a rename is cheap. |
 | Q2 | Bundle identifier (permanent: changing it breaks updates and data paths). | `com.digitallybird.lunarun` |
-| Q3 | Self-build macOS/Linux PHP in a `lunarun-binaries` repo vs. use upstream static-php builds directly. | Start with upstream static-php builds, move to self-built if coverage/extensions are insufficient. |
+| Q3 | Self-build macOS/Linux PHP in a `lunarun-binaries` repo vs. use upstream static-php builds directly. | Start with upstream static-php builds, move to self-built if coverage/extensions are insufficient. **In use since 2026-11-02:** upstream `common` builds. Gaps found: no `intl`, `opcache`, `sodium`; no upstream checksum or signature; versions lag Windows by a few patches. Revisit before `v0.1.0`. |
 | Q4 | Code signing budget (Apple Developer $99/yr; Windows signing cert / Azure Trusted Signing). | Unsigned during private phase; decide before public v0.1.0. |
 | Q5 | Xdebug on macOS/Linux static PHP builds (static builds cannot load shared extensions). | Investigate in Phase 2. |

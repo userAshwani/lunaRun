@@ -35,6 +35,17 @@ Nginx (official Windows zips; macOS/Linux need self-built binaries), Xdebug (Win
   `bcmath ctype curl dom fileinfo filter gd iconv intl mbstring openssl pdo pdo_mysql pdo_pgsql pdo_sqlite
   phar posix redis session simplexml sodium sqlite3 tokenizer xml xmlreader xmlwriter zip zlib`.
   Static builds **cannot load shared extensions** (`extension=foo.so`), so the extension set is fixed per build (Q5).
+  **What upstream static-php really offers (checked 2026-11-02, Q3 default in use):** the `common` set at
+  `dl.static-php.dev/static-php-cli/common/` has `bcmath bz2 calendar ctype curl dom exif fileinfo filter ftp gd gmp
+  iconv mbstring mbregex mysqlnd openssl pcntl pdo pdo_mysql pdo_pgsql pdo_sqlite pgsql phar posix redis session
+  simplexml soap sockets sqlite3 tokenizer xml xmlreader xmlwriter zip zlib`: everything Laravel itself needs, but
+  **no `intl`, `opcache` or `sodium`**. The `bulk` set has those but no `pdo_sqlite` or `pdo_pgsql`, so it is worse
+  for Laravel (SQLite is its default database). Self-built binaries (Q3) could have the union. `php` and `php-fpm` are
+  **two separate archives** per platform (one file each, `stripComponents: 0`), listed in the registry as the
+  variants `static-cli` and `static-fpm`: an installer needs both. The newest build of each line lags the Windows
+  releases (8.3.32 against 8.3.36), so the registry has separate versions per platform family unless a number
+  exists on both. static-php publishes **no checksum and no signature**: the SHA-256 is computed from the
+  generator's own download (D-017), and each artifact has `builtAt`, the listing's date, to notice a rebuilt file.
 - **macOS arm64:** binaries must be at least ad-hoc signed or the kernel kills them. Post-install runs
   `codesign --force --sign - <binary>` on every executable that `codesign -v` reports as unsigned.
 

@@ -1,10 +1,10 @@
-// PHP for Windows: the official NTS x64 builds listed in windows.php.net's releases.json, with the
-// support dates from php.net (docs/RUNTIMES.md section 2).
-//
-// macOS and Linux PHP are not here yet: static-php publishes no checksums, so they need their own design
-// (open question Q3 in docs/PRD.md).
+// PHP: the official NTS x64 builds for Windows listed in windows.php.net's releases.json, plus the static
+// builds for macOS and Linux (phpstatic.mjs), with the support dates from php.net (docs/RUNTIMES.md
+// section 2). Both are versions of the same runtime: a version number that exists on both gets one entry
+// with all its downloads, otherwise each platform family has its own versions (static builds lag).
 
 import { checkedSha256, compareVersions, isoDate } from "./lib.mjs";
+import { buildStaticPhp } from "./phpstatic.mjs";
 
 export const PHP_RELEASES_URL = "https://windows.php.net/downloads/releases/";
 const NTS_X64 = /^nts-((?:vc|vs)\d+)-x64$/;
@@ -36,8 +36,9 @@ export function phpLines(states, wanted) {
 
 /**
  * @param {{ phpReleases(): Promise<object>, phpStates(): Promise<object>, size(url: string): Promise<number | null> }} source
+ * @param {{ previous?: object | null }} [options]
  */
-export async function buildPhp(source) {
+export async function buildPhp(source, { previous = null } = {}) {
   const releases = await source.phpReleases();
   const states = await source.phpStates();
 
@@ -89,6 +90,12 @@ export async function buildPhp(source) {
     });
   }
   if (versions.length === 0) throw new Error("php: releases.json lists no versions");
+
+  for (const extra of await buildStaticPhp(source, { previous })) {
+    const same = versions.find((v) => v.version === extra.version);
+    if (same) same.artifacts.push(...extra.artifacts);
+    else versions.push(extra);
+  }
   versions.sort((a, b) => compareVersions(b.version, a.version));
 
   const wanted = new Set(versions.map((v) => v.version.split(".").slice(0, 2).join(".")));
