@@ -1,0 +1,107 @@
+//! The registry file the generator wrote (`registry/registry.json`) must be accepted by the app's own
+//! parser, so the two can never drift apart. A change to the generator or to the parser that breaks this
+//! fails here, in CI, instead of in a user's Runtimes page.
+
+// Test code: a panic with a message is the desired failure mode.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
+use luna_core::diagnostics::{Arch, Os};
+use luna_core::registry::{CalDate, Registry};
+
+const GENERATED: &str = include_str!("../../../registry/registry.json");
+
+fn registry() -> Registry {
+    Registry::parse(GENERATED).expect("registry/registry.json is rejected by the app's parser")
+}
+
+#[test]
+fn the_generated_registry_is_accepted_by_the_parser() {
+    let registry = registry();
+    let ids: Vec<&str> = registry.runtime_ids().collect();
+    assert_eq!(ids, ["node", "php"]);
+    for id in ids {
+        let runtime = registry.runtime(id).unwrap();
+        assert!(!runtime.releases.is_empty(), "{id} has no versions");
+        assert!(
+            runtime.releases.iter().all(|r| !r.artifacts.is_empty()),
+            "{id}: a version without any download"
+        );
+    }
+}
+
+#[test]
+fn every_download_is_usable_as_written() {
+    // Nothing the generator wrote may be silently skipped by the parser (an unknown OS or format would be).
+    let registry = registry();
+    let json: serde_json::Value = serde_json::from_str(GENERATED).unwrap();
+    for (id, runtime) in json["runtimes"].as_object().unwrap() {
+        let written: usize = runtime["versions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v["artifacts"].as_array().unwrap().len())
+            .sum();
+        let parsed: usize = registry
+            .runtime(id)
+            .unwrap()
+            .releases
+            .iter()
+            .map(|r| r.artifacts.len())
+            .sum();
+        assert_eq!(parsed, written, "{id}: the parser skipped some downloads");
+    }
+}
+
+#[test]
+fn a_windows_pc_can_install_php_and_node_and_lines_are_flagged() {
+    let registry = registry();
+    let today = CalDate::new(2026, 11, 2).unwrap();
+    let rows = registry.available_versions(Os::Windows, Arch::X86_64, today);
+
+    let php: Vec<_> = rows.iter().filter(|r| r.runtime == "php").collect();
+    assert!(
+        php.iter().all(|r| r.available),
+        "every PHP line has a Windows build"
+    );
+    assert!(
+        php.iter().any(|r| r.line == "7.4" && r.eol),
+        "PHP 7.4 is end of life"
+    );
+    assert!(
+        php.iter().any(|r| !r.eol),
+        "at least one PHP line is still supported"
+    );
+
+    let node = rows
+        .iter()
+        .filter(|r| r.runtime == "node")
+        .collect::<Vec<_>>();
+    assert!(
+        node.iter()
+            .all(|r| r.available && r.size.unwrap() > 1_000_000)
+    );
+}
+
+#[test]
+fn macos_and_linux_get_node_but_not_yet_php() {
+    // PHP for macOS and Linux needs its own source (docs/PRD.md Q3). Say so in a test, so the day it
+    // arrives this one fails and gets updated on purpose.
+    let registry = registry();
+    let today = CalDate::new(2026, 11, 2).unwrap();
+    for (os, arch) in [
+        (Os::Macos, Arch::Aarch64),
+        (Os::Macos, Arch::X86_64),
+        (Os::Linux, Arch::X86_64),
+        (Os::Linux, Arch::Aarch64),
+    ] {
+        let rows = registry.available_versions(os, arch, today);
+        assert!(
+            rows.iter().any(|r| r.runtime == "node" && r.available),
+            "{os:?}/{arch:?}"
+        );
+        assert!(
+            !rows.iter().any(|r| r.runtime == "php" && r.available),
+            "{os:?}/{arch:?}"
+        );
+    }
+}

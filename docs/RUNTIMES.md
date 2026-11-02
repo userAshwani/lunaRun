@@ -144,9 +144,14 @@ DB `data/` dirs are removed only with an explicit `deleteData = true` (FR-RT-06)
 
 ## 5. Registry generation & hosting
 
-- A script (`scripts/registry/`, written in TypeScript and run with Node) pulls upstream indexes
-  (`releases.json`, `index.json`, GitHub releases API, …), downloads new artifacts once to compute/verify
-  SHA-256, and writes `registry.json`.
+- A script (`scripts/registry/generate.mjs`, plain JavaScript on a bare Node like the other scripts; run it
+  with `pnpm registry`) pulls upstream indexes (`releases.json`, `index.json`, GitHub releases API, …) and
+  writes `registry/registry.json`. SHA-256 values are **copied from the upstream's own published checksums**;
+  only a runtime whose upstream publishes none (static PHP) would have them computed from a download.
+  Exact sizes come from HEAD requests, because upstream sizes are rounded ("32.6MB"). Output is deterministic
+  (the `generatedAt` stamp only moves when the data does), and a runtime whose upstream fails keeps its
+  previous entry while the run exits non-zero. PHP for Windows reports its rebuilds as `8.3.36-1`; the
+  registry says `8.3.36` (the file name keeps the real name), since the app would read `-1` as a pre-release.
 - A scheduled GitHub Actions workflow (`registry.yml`, daily) runs the generator and opens a PR (or
   commits to a `registry` branch) when something changed. A human merges it.
 - **Hosting:** the app must fetch the registry **without authentication**. While the main repo is

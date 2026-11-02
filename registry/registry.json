@@ -1,0 +1,808 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-02T10:11:49.136Z",
+  "runtimes": {
+    "node": {
+      "displayName": "Node.js",
+      "lines": {
+        "16": {
+          "eol": "2023-09-11",
+          "securityOnlySince": "2022-10-18"
+        },
+        "17": {
+          "eol": "2022-06-01",
+          "securityOnlySince": "2022-04-01"
+        },
+        "18": {
+          "eol": "2025-04-30",
+          "securityOnlySince": "2023-10-18"
+        },
+        "19": {
+          "eol": "2023-06-01",
+          "securityOnlySince": "2023-04-01"
+        },
+        "20": {
+          "eol": "2026-04-30",
+          "securityOnlySince": "2024-10-22"
+        },
+        "21": {
+          "eol": "2024-06-01",
+          "securityOnlySince": "2024-04-01"
+        },
+        "22": {
+          "eol": "2027-04-30",
+          "securityOnlySince": "2025-10-21"
+        },
+        "23": {
+          "eol": "2025-06-01",
+          "securityOnlySince": "2025-04-01"
+        },
+        "24": {
+          "eol": "2028-04-30",
+          "securityOnlySince": "2026-10-20"
+        },
+        "25": {
+          "eol": "2026-06-01",
+          "securityOnlySince": "2026-04-01"
+        },
+        "26": {
+          "eol": "2029-04-30",
+          "securityOnlySince": "2027-10-20"
+        }
+      },
+      "versions": [
+        {
+          "version": "26.13.0",
+          "channel": "stable",
+          "releasedAt": "2026-10-28",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v26.13.0/node-v26.13.0-win-x64.zip",
+              "sha256": "dcc60d59a0746999f99064a01c020445d54d84228c691cdbf25b49ac3b59150a",
+              "size": 41157375,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v26.13.0/node-v26.13.0-darwin-arm64.tar.gz",
+              "sha256": "d38bd5e5a2ddce6bbb5ce45e46e208337da4d51fffe611e567fd32073d6439f6",
+              "size": 58334661,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v26.13.0/node-v26.13.0-darwin-x64.tar.gz",
+              "sha256": "525c9b29bb0263d687de60a4cec0e2a6db876a8eb032369e5795eca71e7c358e",
+              "size": 59802926,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v26.13.0/node-v26.13.0-linux-x64.tar.xz",
+              "sha256": "d28a96af6c38596f6d9d97c0ee531c13d238d757742387d1928de822d959e997",
+              "size": 34083252,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v26.13.0/node-v26.13.0-linux-arm64.tar.xz",
+              "sha256": "406fe3fbde1c054adff8b297c16fdb5af6659db327c1ac8acd46b56ef1af9a92",
+              "size": 33049732,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "25.9.0",
+          "channel": "stable",
+          "releasedAt": "2026-03-31",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v25.9.0/node-v25.9.0-win-x64.zip",
+              "sha256": "929552b8305effac843ba7b4270c437aefb702fc3fbd73fcd1bffd35d4ac284e",
+              "size": 37531403,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v25.9.0/node-v25.9.0-darwin-arm64.tar.gz",
+              "sha256": "e479f3c469d3d9303a44f00a8ea37a3788395d171bb8059c48a4bbbd2e371b59",
+              "size": 53923095,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v25.9.0/node-v25.9.0-darwin-x64.tar.gz",
+              "sha256": "7d737b53ce191142bfa1c17cfa5b070d96e84eebf76b8dd06d84981cbdc3f7e3",
+              "size": 55168333,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v25.9.0/node-v25.9.0-linux-x64.tar.xz",
+              "sha256": "1d8db7d6e291d167e8c467ae4094be175e1a0b3969c7ae1f8955b9f7824f7b2e",
+              "size": 29901920,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v25.9.0/node-v25.9.0-linux-arm64.tar.xz",
+              "sha256": "bf007bf0dcc2fddd90888fde374a1ad33c1ab2ca2ad324c645dd7aed0f9f1460",
+              "size": 29111572,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "24.22.2",
+          "channel": "stable",
+          "releasedAt": "2026-10-27",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-win-x64.zip",
+              "sha256": "ca1bff5d8ead13c9f2ea404a176db46bd430704d5b5113734049fa365e7799e2",
+              "size": 37754834,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-darwin-arm64.tar.gz",
+              "sha256": "aa9549349e47dffaa42dcf95d6e06ade8c4bdafc980979883b88767670df385a",
+              "size": 53068959,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-darwin-x64.tar.gz",
+              "sha256": "d5e336d588c45be0c37dbd52cc29895593009ca4997a77a1fd02815131ed0e52",
+              "size": 54383415,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-x64.tar.xz",
+              "sha256": "48cc0e21e048790e54c0cf5749c2725005313d652651c40b7a21feb9697aaf75",
+              "size": 32039312,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v24.22.2/node-v24.22.2-linux-arm64.tar.xz",
+              "sha256": "eb187837a2230d4047161ac0be008584e16b46f726e9c9490ee35dc6b17d9ba8",
+              "size": 30968168,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "23.11.1",
+          "channel": "stable",
+          "releasedAt": "2025-05-14",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v23.11.1/node-v23.11.1-win-x64.zip",
+              "sha256": "d22640060e1911efaede4ecc5820f94b613bc196868289cd34f56d46e4709b71",
+              "size": 35772966,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v23.11.1/node-v23.11.1-darwin-arm64.tar.gz",
+              "sha256": "255509d2c4fe8e1d6fefb950ad8db285ed75ba543e18744d83dc139f978e404d",
+              "size": 48081507,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v23.11.1/node-v23.11.1-darwin-x64.tar.gz",
+              "sha256": "7e384a0cfa8b44ee4833b3823485baad78bf258e54f47020d2d2b4b75e9275d3",
+              "size": 49775940,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v23.11.1/node-v23.11.1-linux-x64.tar.xz",
+              "sha256": "64220ef391e74bb8feafe51a17764eff908f0cfd7f6c2c184fe8361fb8520a44",
+              "size": 31006276,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v23.11.1/node-v23.11.1-linux-arm64.tar.xz",
+              "sha256": "3a0297c7f177d0fc06ea35c71909fbca6cdd891074c265a432c84971ebad4f7b",
+              "size": 29544532,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "22.23.4",
+          "channel": "stable",
+          "releasedAt": "2026-10-20",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-win-x64.zip",
+              "sha256": "cbc74b5e0982c9dbb41525fd8fb5dcd32fbee237863f7829072f4639a1ce5f20",
+              "size": 35604229,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-darwin-arm64.tar.gz",
+              "sha256": "c9e1dbc748b33ed2d14f42445191ecaf14c56259c7a9a26d0042c49ec2b66428",
+              "size": 49996369,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-darwin-x64.tar.gz",
+              "sha256": "efcc2b0db6f94bf53eddb038fe2b370277a042bd29e4f19b8f8e23598795b819",
+              "size": 51190214,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-x64.tar.xz",
+              "sha256": "1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce",
+              "size": 31029996,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-arm64.tar.xz",
+              "sha256": "6287aa46b6c375d816e63ae66d024fbbfd70404825aabdfdf898a970871d2f4b",
+              "size": 30201396,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "21.7.3",
+          "channel": "stable",
+          "releasedAt": "2024-04-10",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v21.7.3/node-v21.7.3-win-x64.zip",
+              "sha256": "d2314f496782b53ad2fe5fa82fca6ff7f39f07fe59dd007116404ad92179c78e",
+              "size": 30624804,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v21.7.3/node-v21.7.3-darwin-arm64.tar.gz",
+              "sha256": "165d3ba3500cfc8708f85d3815aaaa21ce418164c933d5419c30825ccad3a99c",
+              "size": 43008394,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v21.7.3/node-v21.7.3-darwin-x64.tar.gz",
+              "sha256": "58d0212e169764c3424d2d5bec73e8a098d34b4e82fca6e1dd54083ea3049c5f",
+              "size": 44862252,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v21.7.3/node-v21.7.3-linux-x64.tar.xz",
+              "sha256": "19e17a77e59044de169cd19be3f3bccae686982fba022f9634421b44724ee90c",
+              "size": 26596108,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v21.7.3/node-v21.7.3-linux-arm64.tar.xz",
+              "sha256": "d48a76d02c5940a6dc0738bc0af22551d15cb58b30a5ddddb54fe6e00021f3c1",
+              "size": 25619996,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "20.20.2",
+          "channel": "stable",
+          "releasedAt": "2026-03-24",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v20.20.2/node-v20.20.2-win-x64.zip",
+              "sha256": "dc3700fdd57a63eedb8fd7e3c7baaa32e6a740a1b904167ff4204bc68ed8bf77",
+              "size": 30283903,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v20.20.2/node-v20.20.2-darwin-arm64.tar.gz",
+              "sha256": "466e05f3477c20dfb723054dfebffe55bc74660ee77f612166fca121dacb65b6",
+              "size": 41511345,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v20.20.2/node-v20.20.2-darwin-x64.tar.gz",
+              "sha256": "8be6f5e4bb128c82774f8a0b8d7a1cc1365a7977d9657cece0ca647b3fe04e61",
+              "size": 42784764,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v20.20.2/node-v20.20.2-linux-x64.tar.xz",
+              "sha256": "df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d",
+              "size": 26169540,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v20.20.2/node-v20.20.2-linux-arm64.tar.xz",
+              "sha256": "73093db209e4e9e09dd7d15a47aeaab1b74833830df03efa5f942a1122c5fa71",
+              "size": 25271160,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "19.9.0",
+          "channel": "stable",
+          "releasedAt": "2023-04-10",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v19.9.0/node-v19.9.0-win-x64.zip",
+              "sha256": "589f7880af8de21ee371de8c06a85b5e996d049bf499fbac1245fb10b441e504",
+              "size": 29384772,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v19.9.0/node-v19.9.0-darwin-arm64.tar.gz",
+              "sha256": "13f7f0e57a2123e55a3172b65e08bc2a51fb52bf366a83d7dda12456ebdc3da0",
+              "size": 40427103,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v19.9.0/node-v19.9.0-darwin-x64.tar.gz",
+              "sha256": "4f1a5b72ef0bcb6757e5daaf3fcf2c26fa35dc5d5fdff7692b63775ed51934a4",
+              "size": 42218463,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v19.9.0/node-v19.9.0-linux-x64.tar.xz",
+              "sha256": "e8ea737ee15a62c8752159d12765ed757b5d4b18036b1011d9e4c9e692a4e58d",
+              "size": 24170372,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v19.9.0/node-v19.9.0-linux-arm64.tar.xz",
+              "sha256": "7dd78091f8cf34fc094c79b6dfcdbf427abd2ecc4df266a99964bf853b5d6ca0",
+              "size": 23432824,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "18.20.8",
+          "channel": "stable",
+          "releasedAt": "2025-03-27",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v18.20.8/node-v18.20.8-win-x64.zip",
+              "sha256": "1a1e40260a6facba83636e4cd0ba01eb5bd1386896824b36645afba44857384a",
+              "size": 28782590,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v18.20.8/node-v18.20.8-darwin-arm64.tar.gz",
+              "sha256": "bae4965d29d29bd32f96364eefbe3bca576a03e917ddbb70b9330d75f2cacd76",
+              "size": 39866069,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v18.20.8/node-v18.20.8-darwin-x64.tar.gz",
+              "sha256": "ed2554677188f4afc0d050ecd8bd56effb2572d6518f8da6d40321ede6698509",
+              "size": 41055784,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-x64.tar.xz",
+              "sha256": "5467ee62d6af1411d46b6a10e3fb5cacc92734dbcef465fea14e7b90993001c9",
+              "size": 24011112,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-arm64.tar.xz",
+              "sha256": "224e569dbe7b0ea4628ce383d9d482494b57ee040566583f1c54072c86d1116b",
+              "size": 23271188,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "17.9.1",
+          "channel": "stable",
+          "releasedAt": "2022-06-01",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v17.9.1/node-v17.9.1-win-x64.zip",
+              "sha256": "cd00754f7e976f767d5ee3eb459103cdf91152d8e8024228fd790b94ddaac278",
+              "size": 26700636,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v17.9.1/node-v17.9.1-darwin-arm64.tar.gz",
+              "sha256": "d6add5bbe10203a76d9ed964a2e5075a45aaf76137dbf3ee772fe6a679a34f36",
+              "size": 39094906,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v17.9.1/node-v17.9.1-darwin-x64.tar.gz",
+              "sha256": "ef8ef450425db95a1e91c1dd4bc6d05ca40bbbbdab9a71f59c5a02e13cc039fb",
+              "size": 40617633,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v17.9.1/node-v17.9.1-linux-x64.tar.xz",
+              "sha256": "2e5fcad237d934d1bced978b5a53a7586fe83aa3c20de5f4791601789dcb4f5c",
+              "size": 22672072,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v17.9.1/node-v17.9.1-linux-arm64.tar.xz",
+              "sha256": "47c29c0a5c833b50f763546a02f1d912d1b8d363ea8fe4174cd139860a754b47",
+              "size": 22037104,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "16.20.2",
+          "channel": "stable",
+          "releasedAt": "2023-08-08",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://nodejs.org/dist/v16.20.2/node-v16.20.2-win-x64.zip",
+              "sha256": "f8bb35f6c08dc7bf14ac753509c06ed1a7ebf5b390cd3fbdc8f8c1aedd020ec3",
+              "size": 26923830,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v16.20.2/node-v16.20.2-darwin-arm64.tar.gz",
+              "sha256": "6a5c4108475871362d742b988566f3fe307f6a67ce14634eb3fbceb4f9eea88c",
+              "size": 29989231,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://nodejs.org/dist/v16.20.2/node-v16.20.2-darwin-x64.tar.gz",
+              "sha256": "d7a46eaf2b57ffddeda16ece0d887feb2e31a91ad33f8774da553da0249dc4a6",
+              "size": 31266877,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-x64.tar.xz",
+              "sha256": "874463523f26ed528634580247f403d200ba17a31adf2de98a7b124c6eb33d87",
+              "size": 22556484,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.xz",
+              "url": "https://nodejs.org/dist/v16.20.2/node-v16.20.2-linux-arm64.tar.xz",
+              "sha256": "e88d86154d1ce53dc52fd74d79d4bfdf0b05f58c0bb2639adfa36e9378b770c4",
+              "size": 21993928,
+              "stripComponents": 1
+            }
+          ]
+        }
+      ]
+    },
+    "php": {
+      "displayName": "PHP",
+      "license": {
+        "name": "PHP License v3.01",
+        "url": "https://www.php.net/license/"
+      },
+      "lines": {
+        "8.5": {
+          "eol": "2029-12-31",
+          "securityOnlySince": "2027-12-31"
+        },
+        "8.4": {
+          "eol": "2028-12-31",
+          "securityOnlySince": "2026-12-31"
+        },
+        "8.3": {
+          "eol": "2027-12-31",
+          "securityOnlySince": "2025-12-31"
+        },
+        "8.2": {
+          "eol": "2026-12-31",
+          "securityOnlySince": "2024-12-31"
+        },
+        "8.1": {
+          "eol": "2025-12-31",
+          "securityOnlySince": "2023-11-25"
+        },
+        "8.0": {
+          "eol": "2023-11-26",
+          "securityOnlySince": "2022-11-26"
+        },
+        "7.4": {
+          "eol": "2022-11-28",
+          "securityOnlySince": "2021-11-28"
+        }
+      },
+      "versions": [
+        {
+          "version": "8.5.12",
+          "channel": "stable",
+          "releasedAt": "2026-10-26",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs17",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.5.12-1-nts-Win32-vs17-x64.zip",
+              "sha256": "2a36a2edcb7a5b9252f638fd5e4cf84d7f6e066092654220dc0b63e5cf4e9723",
+              "size": 36310917,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "8.4.27",
+          "channel": "stable",
+          "releasedAt": "2026-10-26",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs17",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.4.27-1-nts-Win32-vs17-x64.zip",
+              "sha256": "dbae154a0a89791f36c3d48e68bae797878333e7d6cb5721e74617de59b63ab7",
+              "size": 35296081,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "8.3.36",
+          "channel": "stable",
+          "releasedAt": "2026-10-26",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs16",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.3.36-1-nts-Win32-vs16-x64.zip",
+              "sha256": "1a097d52b7a68622cdc723073b61cc70caf79c941218ff65b2d8441dbc6b10d4",
+              "size": 34179998,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "8.2.35",
+          "channel": "stable",
+          "releasedAt": "2026-10-26",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs16",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.2.35-1-nts-Win32-vs16-x64.zip",
+              "sha256": "ebe75134c03869826cb1714d31fd5eb96afefa6d9fd35d786971c03020e7bce2",
+              "size": 33780725,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "8.1.34",
+          "channel": "stable",
+          "releasedAt": "2025-12-16",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs16",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.1.34-nts-Win32-vs16-x64.zip",
+              "sha256": "9cfe246cb144076c16f5913a3ef88a474c3dd7e60f0f0c8bb95faf68674016cc",
+              "size": 30822368,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "8.0.30",
+          "channel": "stable",
+          "releasedAt": "2024-07-10",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vs16",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-8.0.30-nts-Win32-vs16-x64.zip",
+              "sha256": "dfb70498ffa2c617f2f655a155564697e3c9cca41709938fd1a5997d1d5b0785",
+              "size": 26766957,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        },
+        {
+          "version": "7.4.33",
+          "channel": "stable",
+          "releasedAt": "2024-07-10",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "variant": "nts-vc15",
+              "format": "zip",
+              "url": "https://windows.php.net/downloads/releases/php-7.4.33-nts-Win32-vc15-x64.zip",
+              "sha256": "14ae3250d4447c8ccfc4c45a70d90adfbcd61e728d85f0be56a7ddf8f9c8aace",
+              "size": 26132214,
+              "stripComponents": 0,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

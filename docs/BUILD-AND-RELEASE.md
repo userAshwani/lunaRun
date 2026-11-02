@@ -93,7 +93,7 @@ so installers are unsigned until section 4 is done.
 3. Wait for the run (about 12 minutes). If all three builds pass, the release publishes itself and the README links serve it. If one fails, nothing is published: fix it, delete the tag and the draft release (ask first, this rewrites a tag), and tag again.
 
 ### `registry.yml` — daily cron (Phase 1/2)
-Runs `scripts/registry/generate.ts`, opens a PR in the registry repo when versions change. See [RUNTIMES §5](RUNTIMES.md#5-registry-generation--hosting).
+Runs `scripts/registry/generate.mjs`, opens a PR in the registry repo when versions change. See [RUNTIMES §5](RUNTIMES.md#5-registry-generation--hosting).
 
 ## 4. Code signing
 

@@ -9,3 +9,5 @@ src/bindings
 docs
 *.md
 LICENSE
+registry/registry.json
+scripts/registry/fixtures
