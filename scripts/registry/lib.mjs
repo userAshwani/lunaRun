@@ -16,15 +16,23 @@ export function compareVersions(a, b) {
   return 0;
 }
 
-/** SHASUMS256.txt: one `<64 hex>  <file name>` per line. Returns a Map of file name to lowercase hex. */
-export function parseShasums(text) {
+/**
+ * A checksum list: one `<hex>  <file name>` per line (`sha256sum` and `sha512sum` format). Returns a Map of
+ * file name to lowercase hex. Lines that are not a checksum of exactly `hexLength` digits are ignored, so a
+ * SHA-512 list can never be read as SHA-256 by accident.
+ */
+export function parseChecksums(text, hexLength) {
+  const line = new RegExp(`^([0-9a-fA-F]{${hexLength}}) [ *](.+)$`);
   const sums = new Map();
-  for (const line of text.split(/\r?\n/)) {
-    const match = /^([0-9a-fA-F]{64}) [ *](.+)$/.exec(line.trim());
+  for (const entry of text.split(/\r?\n/)) {
+    const match = line.exec(entry.trim());
     if (match) sums.set(match[2], match[1].toLowerCase());
   }
   return sums;
 }
+
+/** SHASUMS256.txt as published by Node.js. */
+export const parseShasums = (text) => parseChecksums(text, 64);
 
 /** `2027-12-31T00:00:00+00:00` or `2027-12-31` to `2027-12-31`; throws on anything else. */
 export function isoDate(value, what) {

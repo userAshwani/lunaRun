@@ -147,7 +147,12 @@ DB `data/` dirs are removed only with an explicit `deleteData = true` (FR-RT-06)
 - A script (`scripts/registry/generate.mjs`, plain JavaScript on a bare Node like the other scripts; run it
   with `pnpm registry`) pulls upstream indexes (`releases.json`, `index.json`, GitHub releases API, …) and
   writes `registry/registry.json`. SHA-256 values are **copied from the upstream's own published checksums**;
-  only a runtime whose upstream publishes none (static PHP) would have them computed from a download.
+  only a runtime whose upstream publishes none, or publishes a different hash (Caddy ships SHA-512), has its
+  SHA-256 computed from a download, and then only after that download matched the upstream's own checksum
+  (and GitHub's digest when it shows one). Release assets do not change, so a version already in the
+  previous registry is not downloaded again. The Composer file is one `composer.phar`, listed once per
+  platform with `format: "file"`. GitHub API calls use `GITHUB_TOKEN` when set (it raises the rate limit)
+  and fail with a clear message when the limit is used up.
   Exact sizes come from HEAD requests, because upstream sizes are rounded ("32.6MB"). Output is deterministic
   (the `generatedAt` stamp only moves when the data does), and a runtime whose upstream fails keeps its
   previous entry while the run exits non-zero. PHP for Windows reports its rebuilds as `8.3.36-1`; the

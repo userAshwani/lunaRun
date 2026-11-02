@@ -1,28 +1,9 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { generate, liveSource } from "./generate.mjs";
 import { compareVersions, parseShasums, registryText, validateRegistry } from "./lib.mjs";
 import { buildNode, newestPerMajor } from "./node.mjs";
 import { buildPhp, phpVersion } from "./php.mjs";
-
-// Real upstream answers, trimmed. See the files in fixtures/.
-const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
-const text = (name) => readFileSync(path.join(dir, name), "utf8");
-const json = (name) => JSON.parse(text(name));
-
-/** A source that answers from the fixtures. `size` is a function so a test can make files vanish. */
-function fakeSource({ size = (url) => url.length * 1000 } = {}) {
-  return {
-    phpReleases: async () => json("php-releases.json"),
-    phpStates: async () => json("php-states.json"),
-    nodeIndex: async () => json("node-index.json"),
-    nodeSchedule: async () => json("node-schedule.json"),
-    nodeShasums: async (version) => text(`SHASUMS256-v${version}.txt`),
-    size: async (url) => size(url),
-  };
-}
+import { fakeSource, json, text } from "./test-support.mjs";
 
 describe("lib", () => {
   it("compares versions as numbers, not as text", () => {
@@ -213,7 +194,7 @@ describe("generate", () => {
     expect(errors).toEqual([]);
     expect(registry.schema).toBe(1);
     expect(registry.generatedAt).toBe("2026-11-02T00:00:00.000Z");
-    expect(Object.keys(registry.runtimes)).toEqual(["node", "php"]);
+    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "node", "php"]);
   });
 
   it("makes the same bytes from the same data and keeps the timestamp until the data changes", async () => {
@@ -270,7 +251,7 @@ describe("generate", () => {
     };
     const { registry, errors } = await generate(broken);
     expect(errors.map((e) => e.runtime)).toEqual(["php"]);
-    expect(Object.keys(registry.runtimes)).toEqual(["node"]);
+    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "node"]);
   });
 });
 
@@ -282,8 +263,10 @@ describe("liveSource", () => {
 
   it("asks for the size with HEAD, and treats 404 as missing and anything else wrong as an error", async () => {
     const calls = [];
+    const encodings = [];
     const spy = (response) => async (url, init) => {
       calls.push(init.method);
+      encodings.push(init.headers["accept-encoding"]);
       return response();
     };
     const ok = liveSource(
@@ -291,6 +274,7 @@ describe("liveSource", () => {
     );
     expect(await ok.size("https://x.test/a.zip")).toBe(1234);
     expect(calls).toEqual(["HEAD"]);
+    expect(encodings).toEqual(["identity"]);
 
     expect(await liveSource(answer(404)).size("https://x.test/a.zip")).toBeNull();
     await expect(liveSource(answer(503)).size("https://x.test/a.zip")).rejects.toThrow(/HTTP 503/);

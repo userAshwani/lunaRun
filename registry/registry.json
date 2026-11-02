@@ -1,7 +1,343 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-02T10:11:49.136Z",
+  "generatedAt": "2026-11-02T10:28:03.794Z",
   "runtimes": {
+    "caddy": {
+      "displayName": "Caddy",
+      "license": {
+        "name": "Apache License 2.0",
+        "url": "https://github.com/caddyserver/caddy/blob/master/LICENSE"
+      },
+      "lines": {},
+      "versions": [
+        {
+          "version": "2.11.7",
+          "channel": "stable",
+          "releasedAt": "2026-10-03",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_windows_amd64.zip",
+              "sha256": "0a1edc0b799512051c57071ce0e798d3f2cf67dc98171366f1d2b326072e3b06",
+              "size": 18479498,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_mac_arm64.tar.gz",
+              "sha256": "cda3030e5d5b13eb9f0b6fb541037f633bddd958c070c5f561d7a5cccb581665",
+              "size": 17297953,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_mac_amd64.tar.gz",
+              "sha256": "110c53e5c093e4cfce6eda787f94f23bef913c309f620fab26b4f678031841ad",
+              "size": 18551994,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_linux_amd64.tar.gz",
+              "sha256": "727b91701a392de6ebc5027509f548bf39979e5216340d0faed8fa5e69c84f8b",
+              "size": 18113754,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.11.7/caddy_2.11.7_linux_arm64.tar.gz",
+              "sha256": "d8fc6d179a5d283028a472a5618564f6ad8a86fed513e64f032b3b0b7cc45e42",
+              "size": 16485181,
+              "stripComponents": 0
+            }
+          ]
+        },
+        {
+          "version": "2.10.2",
+          "channel": "stable",
+          "releasedAt": "2025-08-23",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_windows_amd64.zip",
+              "sha256": "9fd1ef9be5d9b05852b66ccc25f96f23d8651bcab20779861a745bdffa273722",
+              "size": 16167725,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_mac_arm64.tar.gz",
+              "sha256": "cc9ad20742ea7bfee5dd1d435d42ab7fcf8592294f9ec43bf08fd21cbe448bc4",
+              "size": 15143224,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_mac_amd64.tar.gz",
+              "sha256": "de2230a0d0e424e8de2c450e989ebe7511e6f8886937e81b571e0853c497fe40",
+              "size": 16213883,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_amd64.tar.gz",
+              "sha256": "5c218bc34c9197369263da7e9317a83acdbd80ef45d94dca5eff76e727c67cdd",
+              "size": 15875694,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_arm64.tar.gz",
+              "sha256": "501e955fa634c5aab63247458c3ac655cfdd6cbf1e0436528f41248451c190ac",
+              "size": 14477031,
+              "stripComponents": 0
+            }
+          ]
+        },
+        {
+          "version": "2.9.1",
+          "channel": "stable",
+          "releasedAt": "2025-01-08",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_windows_amd64.zip",
+              "sha256": "fc99862101cd015a1fd2c1b38376109b543a5de5b6fa63ecf35a491b41e3613a",
+              "size": 14614316,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_mac_arm64.tar.gz",
+              "sha256": "1e063ac96568caf985f4bcebfb14e438f5e3fab42432e2b529c69f16443f2195",
+              "size": 13910034,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_mac_amd64.tar.gz",
+              "sha256": "0c480edfc32a41135bcec90c3ad2043309af3a2e2ad78f905bab050f40d6022f",
+              "size": 14684479,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_linux_amd64.tar.gz",
+              "sha256": "0542edbb5ce0d6987de6a37caa2bbc52a42445ec094fb9ba3e605534af5dd898",
+              "size": 14338916,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://github.com/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_linux_arm64.tar.gz",
+              "sha256": "e6f117f373c690f159dc0178d03e9003b4962118a49d889fadaef14cfc7666f8",
+              "size": 13263663,
+              "stripComponents": 0
+            }
+          ]
+        }
+      ]
+    },
+    "composer": {
+      "displayName": "Composer",
+      "license": {
+        "name": "MIT",
+        "url": "https://github.com/composer/composer/blob/main/LICENSE"
+      },
+      "lines": {
+        "1": {
+          "eol": "2026-05-30"
+        },
+        "2.2": {
+          "eol": "2026-12-31"
+        }
+      },
+      "versions": [
+        {
+          "version": "2.11.1",
+          "channel": "stable",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.11.1/composer.phar",
+              "sha256": "6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c",
+              "size": 3797852,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.11.1/composer.phar",
+              "sha256": "6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c",
+              "size": 3797852,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.11.1/composer.phar",
+              "sha256": "6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c",
+              "size": 3797852,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.11.1/composer.phar",
+              "sha256": "6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c",
+              "size": 3797852,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.11.1/composer.phar",
+              "sha256": "6f1b891e1d4927d62740276c540fb490e47689e19e102c49e8da849794882f8c",
+              "size": 3797852,
+              "stripComponents": 0
+            }
+          ]
+        },
+        {
+          "version": "2.2.31",
+          "channel": "stable",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.2.31/composer.phar",
+              "sha256": "e13af0ac1ab0a96dcf7de2f1eada9cce442f2a99ed23023784a2627f3e476215",
+              "size": 2436102,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.2.31/composer.phar",
+              "sha256": "e13af0ac1ab0a96dcf7de2f1eada9cce442f2a99ed23023784a2627f3e476215",
+              "size": 2436102,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.2.31/composer.phar",
+              "sha256": "e13af0ac1ab0a96dcf7de2f1eada9cce442f2a99ed23023784a2627f3e476215",
+              "size": 2436102,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.2.31/composer.phar",
+              "sha256": "e13af0ac1ab0a96dcf7de2f1eada9cce442f2a99ed23023784a2627f3e476215",
+              "size": 2436102,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/2.2.31/composer.phar",
+              "sha256": "e13af0ac1ab0a96dcf7de2f1eada9cce442f2a99ed23023784a2627f3e476215",
+              "size": 2436102,
+              "stripComponents": 0
+            }
+          ]
+        },
+        {
+          "version": "1.10.28",
+          "channel": "stable",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/1.10.28/composer.phar",
+              "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
+              "size": 2009028,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/1.10.28/composer.phar",
+              "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
+              "size": 2009028,
+              "stripComponents": 0
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/1.10.28/composer.phar",
+              "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
+              "size": 2009028,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/1.10.28/composer.phar",
+              "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
+              "size": 2009028,
+              "stripComponents": 0
+            },
+            {
+              "os": "linux",
+              "arch": "aarch64",
+              "format": "file",
+              "url": "https://getcomposer.org/download/1.10.28/composer.phar",
+              "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
+              "size": 2009028,
+              "stripComponents": 0
+            }
+          ]
+        }
+      ]
+    },
     "node": {
       "displayName": "Node.js",
       "lines": {

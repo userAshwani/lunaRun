@@ -18,7 +18,7 @@ fn registry() -> Registry {
 fn the_generated_registry_is_accepted_by_the_parser() {
     let registry = registry();
     let ids: Vec<&str> = registry.runtime_ids().collect();
-    assert_eq!(ids, ["node", "php"]);
+    assert_eq!(ids, ["caddy", "composer", "node", "php"]);
     for id in ids {
         let runtime = registry.runtime(id).unwrap();
         assert!(!runtime.releases.is_empty(), "{id} has no versions");
@@ -104,4 +104,42 @@ fn macos_and_linux_get_node_but_not_yet_php() {
             "{os:?}/{arch:?}"
         );
     }
+}
+
+#[test]
+fn caddy_and_composer_are_offered_on_every_platform() {
+    let registry = registry();
+    let today = CalDate::new(2026, 11, 2).unwrap();
+    for (os, arch) in [
+        (Os::Windows, Arch::X86_64),
+        (Os::Macos, Arch::Aarch64),
+        (Os::Macos, Arch::X86_64),
+        (Os::Linux, Arch::X86_64),
+        (Os::Linux, Arch::Aarch64),
+    ] {
+        let rows = registry.available_versions(os, arch, today);
+        for runtime in ["caddy", "composer"] {
+            assert!(
+                rows.iter().any(|r| r.runtime == runtime && r.available),
+                "{runtime} on {os:?}/{arch:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn composer_is_a_single_file_and_caddy_is_an_archive() {
+    use luna_core::registry::ArtifactFormat;
+    let registry = registry();
+    let composer = registry
+        .artifact_for("composer", "2.11.1", Os::Linux, Arch::X86_64)
+        .unwrap();
+    assert_eq!(composer.artifact.format, ArtifactFormat::File);
+    assert!(composer.artifact.url.ends_with("/composer.phar"));
+
+    let caddy = &registry.runtime("caddy").unwrap().releases[0];
+    let windows = registry
+        .artifact_for("caddy", caddy.version.as_str(), Os::Windows, Arch::X86_64)
+        .unwrap();
+    assert_eq!(windows.artifact.format, ArtifactFormat::Zip);
 }

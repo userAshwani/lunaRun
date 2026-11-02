@@ -1,0 +1,268 @@
+[
+ {
+  "assets": [
+   {
+    "digest": "sha256:5d27b76b95f496638d79208c55250317b8755fd9e90005f7466aa32956944a90",
+    "name": "caddy_2.11.7_checksums.txt",
+    "size": 6769
+   },
+   {
+    "digest": "sha256:727b91701a392de6ebc5027509f548bf39979e5216340d0faed8fa5e69c84f8b",
+    "name": "caddy_2.11.7_linux_amd64.tar.gz",
+    "size": 18113754
+   },
+   {
+    "digest": "sha256:d8fc6d179a5d283028a472a5618564f6ad8a86fed513e64f032b3b0b7cc45e42",
+    "name": "caddy_2.11.7_linux_arm64.tar.gz",
+    "size": 16485181
+   },
+   {
+    "digest": "sha256:110c53e5c093e4cfce6eda787f94f23bef913c309f620fab26b4f678031841ad",
+    "name": "caddy_2.11.7_mac_amd64.tar.gz",
+    "size": 18551994
+   },
+   {
+    "digest": "sha256:cda3030e5d5b13eb9f0b6fb541037f633bddd958c070c5f561d7a5cccb581665",
+    "name": "caddy_2.11.7_mac_arm64.tar.gz",
+    "size": 17297953
+   },
+   {
+    "digest": "sha256:0a1edc0b799512051c57071ce0e798d3f2cf67dc98171366f1d2b326072e3b06",
+    "name": "caddy_2.11.7_windows_amd64.zip",
+    "size": 18479498
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-03T05:58:33Z",
+  "tag_name": "v2.11.7"
+ },
+ {
+  "assets": [
+   {
+    "digest": "sha256:26c88a924222a8efa717d9d80304250c2afa59f5070c259a319d032d66e2a735",
+    "name": "caddy_2.11.6_checksums.txt",
+    "size": 6769
+   },
+   {
+    "digest": "sha256:22c84f8d2d4e4e0e2d422f8049fdd0fc1ed8d5665d0fe166f506c7fd863b4555",
+    "name": "caddy_2.11.6_linux_amd64.tar.gz",
+    "size": 18080871
+   },
+   {
+    "digest": "sha256:6a59a88914db644d410c4773286784096a97b59ea74152311442c19e988071ac",
+    "name": "caddy_2.11.6_linux_arm64.tar.gz",
+    "size": 16461651
+   },
+   {
+    "digest": "sha256:77f16d929a01bf8ff4f3fa2bec41867d19fef30f5a2489120f790f048d9d3003",
+    "name": "caddy_2.11.6_mac_amd64.tar.gz",
+    "size": 18512204
+   },
+   {
+    "digest": "sha256:4ad5a757d4ebb880e0a2bb333410a0089f09348d9e74693bcf13be0669675f6e",
+    "name": "caddy_2.11.6_mac_arm64.tar.gz",
+    "size": 17267020
+   },
+   {
+    "digest": "sha256:07429393375227eb669e449764c5245eaac8fc69fc68b2f867717af794cc1153",
+    "name": "caddy_2.11.6_windows_amd64.zip",
+    "size": 18451523
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-01T15:21:21Z",
+  "tag_name": "v2.11.6"
+ },
+ {
+  "assets": [
+   {
+    "digest": "sha256:4a9222346e07b442fc8ea046cef27d03a25b22158117249b939c52bb63ff72ca",
+    "name": "caddy_2.11.0-beta.2_checksums.txt",
+    "size": 8074
+   },
+   {
+    "digest": "sha256:dcf018352d614bd615731c9c923f72d850eb1cf00b2baf51d9fbf1e37da8b298",
+    "name": "caddy_2.11.0-beta.2_linux_amd64.tar.gz",
+    "size": 16453741
+   },
+   {
+    "digest": "sha256:fe10a3188eaae0aac3df1d64e0d50ea4de70b8708e34507412c06bbef9eeff67",
+    "name": "caddy_2.11.0-beta.2_linux_arm64.tar.gz",
+    "size": 15000996
+   },
+   {
+    "digest": "sha256:d75bb3371128d10c881f17b0e90a07f984d419c88e1c834d9df9d55623236485",
+    "name": "caddy_2.11.0-beta.2_mac_amd64.tar.gz",
+    "size": 16810600
+   },
+   {
+    "digest": "sha256:08751ea2cf09e808a20767f343d431d6a47c96a21386a96d90cdb23f43d235d6",
+    "name": "caddy_2.11.0-beta.2_mac_arm64.tar.gz",
+    "size": 15701173
+   },
+   {
+    "digest": "sha256:84f2f17c7001e140d5db710b1fae74819466b6b02c04c34dbc3a6a96f7f59b4a",
+    "name": "caddy_2.11.0-beta.2_windows_amd64.zip",
+    "size": 16751029
+   }
+  ],
+  "draft": false,
+  "prerelease": true,
+  "published_at": "2026-01-06T18:02:07Z",
+  "tag_name": "v2.11.0-beta.2"
+ },
+ {
+  "assets": [
+   {
+    "digest": "sha256:1ed936a434758b9a54cad696be680ab8951ee4767ea8affecf4469432fbf20f9",
+    "name": "caddy_2.10.2_checksums.txt",
+    "size": 7738
+   },
+   {
+    "digest": "sha256:5c218bc34c9197369263da7e9317a83acdbd80ef45d94dca5eff76e727c67cdd",
+    "name": "caddy_2.10.2_linux_amd64.tar.gz",
+    "size": 15875694
+   },
+   {
+    "digest": "sha256:501e955fa634c5aab63247458c3ac655cfdd6cbf1e0436528f41248451c190ac",
+    "name": "caddy_2.10.2_linux_arm64.tar.gz",
+    "size": 14477031
+   },
+   {
+    "digest": "sha256:de2230a0d0e424e8de2c450e989ebe7511e6f8886937e81b571e0853c497fe40",
+    "name": "caddy_2.10.2_mac_amd64.tar.gz",
+    "size": 16213883
+   },
+   {
+    "digest": "sha256:cc9ad20742ea7bfee5dd1d435d42ab7fcf8592294f9ec43bf08fd21cbe448bc4",
+    "name": "caddy_2.10.2_mac_arm64.tar.gz",
+    "size": 15143224
+   },
+   {
+    "digest": "sha256:9fd1ef9be5d9b05852b66ccc25f96f23d8651bcab20779861a745bdffa273722",
+    "name": "caddy_2.10.2_windows_amd64.zip",
+    "size": 16167725
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2025-08-23T03:10:31Z",
+  "tag_name": "v2.10.2"
+ },
+ {
+  "assets": [
+   {
+    "digest": "sha256:52961ae0673e3ab1934d3bf2888cf418ac160b3190b4d184b4cd500d483bf208",
+    "name": "caddy_2.10.1_checksums.txt",
+    "size": 7738
+   },
+   {
+    "digest": "sha256:783541f0e4b85479700f9f73e5dcede30476c08603620076a6c07841d56dc6ab",
+    "name": "caddy_2.10.1_linux_amd64.tar.gz",
+    "size": 15875620
+   },
+   {
+    "digest": "sha256:cee7edb7e861fcfcf3e45cfc8da2c9c626e5a431480adf4647ac05ac84693d11",
+    "name": "caddy_2.10.1_linux_arm64.tar.gz",
+    "size": 14476871
+   },
+   {
+    "digest": "sha256:086d3f417b2e7d143ce943916e1ce5986af661eb9398a5311999ad143769ae8d",
+    "name": "caddy_2.10.1_mac_amd64.tar.gz",
+    "size": 16211525
+   },
+   {
+    "digest": "sha256:c09b66863a198d4663001e38e946dce30f6121c8ab4d548d9d9da9beb6378d82",
+    "name": "caddy_2.10.1_mac_arm64.tar.gz",
+    "size": 15143204
+   },
+   {
+    "digest": "sha256:1ec34e4f87a47a7c1c475411036bf1f3b8cb05e5e07124e116bd974053e1c202",
+    "name": "caddy_2.10.1_windows_amd64.zip",
+    "size": 16167802
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2025-08-22T16:14:52Z",
+  "tag_name": "v2.10.1"
+ },
+ {
+  "assets": [
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_checksums.txt",
+    "size": 7690
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_linux_amd64.tar.gz",
+    "size": 14338916
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_linux_arm64.tar.gz",
+    "size": 13263663
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_mac_amd64.tar.gz",
+    "size": 14684479
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_mac_arm64.tar.gz",
+    "size": 13910034
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.9.1_windows_amd64.zip",
+    "size": 14614316
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2025-01-08T15:22:53Z",
+  "tag_name": "v2.9.1"
+ },
+ {
+  "assets": [
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_checksums.txt",
+    "size": 7690
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_linux_amd64.tar.gz",
+    "size": 14595001
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_linux_arm64.tar.gz",
+    "size": 13501100
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_mac_amd64.tar.gz",
+    "size": 14943135
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_mac_arm64.tar.gz",
+    "size": 14173674
+   },
+   {
+    "digest": null,
+    "name": "caddy_2.8.4_windows_amd64.zip",
+    "size": 14853036
+   }
+  ],
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2024-06-02T12:24:47Z",
+  "tag_name": "v2.8.4"
+ }
+]

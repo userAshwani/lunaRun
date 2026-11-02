@@ -8,14 +8,22 @@
 //
 // A runtime whose upstream fails keeps its previous entry, the error is printed, and the exit code is 1,
 // so a broken upstream is loud but never wipes data out of the registry.
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { buildCaddy } from "./caddy.mjs";
+import { buildComposer } from "./composer.mjs";
 import { registryText, validateRegistry } from "./lib.mjs";
 import { buildNode } from "./node.mjs";
 import { buildPhp } from "./php.mjs";
 
-export const BUILDERS = { node: buildNode, php: buildPhp };
+export const BUILDERS = {
+  caddy: buildCaddy,
+  composer: buildComposer,
+  node: buildNode,
+  php: buildPhp,
+};
 const DEFAULT_OUT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../registry/registry.json",
@@ -39,7 +47,7 @@ export async function generate(
       continue;
     }
     try {
-      runtimes[id] = await build(source);
+      runtimes[id] = await build(source, { previous: carried ?? null });
     } catch (error) {
       errors.push({ runtime: id, message: error instanceof Error ? error.message : String(error) });
       if (carried) runtimes[id] = carried;
@@ -66,7 +74,21 @@ export function liveSource(fetchFn = fetch) {
     "user-agent": "lunaRun-registry-generator (+https://github.com/userAshwani/lunaRun)",
   };
   const get = async (url) => {
-    const response = await fetchFn(url, { headers });
+    // The GitHub API allows 60 unauthenticated requests an hour. A token (set automatically in Actions)
+    // raises that. It is only ever sent to api.github.com and never printed.
+    const token = process.env.GITHUB_TOKEN;
+    const auth =
+      token && new URL(url).hostname === "api.github.com"
+        ? { authorization: `Bearer ${token}` }
+        : {};
+    const response = await fetchFn(url, { headers: { ...headers, ...auth } });
+    if (response.status === 403 || response.status === 429) {
+      if (response.headers.get("x-ratelimit-remaining") === "0") {
+        throw new Error(
+          `${url}: the GitHub API rate limit is used up, set GITHUB_TOKEN or wait an hour`,
+        );
+      }
+    }
     if (!response.ok) throw new Error(`${url} answered HTTP ${response.status}`);
     return response;
   };
@@ -79,9 +101,38 @@ export function liveSource(fetchFn = fetch) {
       (await get("https://raw.githubusercontent.com/nodejs/Release/main/schedule.json")).json(),
     nodeShasums: async (version) =>
       (await get(`https://nodejs.org/dist/v${version}/SHASUMS256.txt`)).text(),
+    composerVersions: async () => (await get("https://getcomposer.org/versions")).json(),
+    composerChecksum: async (path) =>
+      (await get(`https://getcomposer.org${path}.sha256sum`)).text(),
+    caddyReleases: async () =>
+      (await get("https://api.github.com/repos/caddyserver/caddy/releases?per_page=50")).json(),
+    caddyChecksums: async (tag, version) =>
+      (
+        await get(
+          `https://github.com/caddyserver/caddy/releases/download/${tag}/caddy_${version}_checksums.txt`,
+        )
+      ).text(),
+    /** Download a file once and return its SHA-256, SHA-512 and exact size, for upstreams that publish neither SHA-256 nor a size. */
+    hash: async (url) => {
+      const response = await get(url);
+      const sha256 = createHash("sha256");
+      const sha512 = createHash("sha512");
+      let size = 0;
+      for await (const chunk of response.body) {
+        sha256.update(chunk);
+        sha512.update(chunk);
+        size += chunk.length;
+      }
+      return { sha256: sha256.digest("hex"), sha512: sha512.digest("hex"), size };
+    },
     /** Exact size in bytes from a HEAD request, or null when the file does not exist. */
     size: async (url) => {
-      const response = await fetchFn(url, { method: "HEAD", headers });
+      // "identity": the size of the file as the app downloads it. A compressed answer carries a different
+      // length, or none (getcomposer.org leaves it out when gzip is negotiated).
+      const response = await fetchFn(url, {
+        method: "HEAD",
+        headers: { ...headers, "accept-encoding": "identity" },
+      });
       if (response.status === 404) return null;
       if (!response.ok) throw new Error(`${url} answered HTTP ${response.status}`);
       const length = Number(response.headers.get("content-length"));

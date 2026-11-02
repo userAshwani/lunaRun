@@ -57,8 +57,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Fetch → cache → bundled fallback; `LUNA_REGISTRY_URL` override
 - [ ] `scripts/registry/generate.mjs` (`pnpm registry`), one runtime at a time:
   - [x] PHP for Windows (releases.json, php.net support dates), Node (index.json, SHASUMS, release schedule)
-  - [ ] Composer
-  - [ ] Caddy
+  - [x] Composer (one `composer.phar` per platform), Caddy (SHA-512 verified, SHA-256 pinned)
   - [ ] MariaDB
   - [ ] MySQL
   - [ ] PHP for macOS and Linux (static builds, no upstream checksums, decide Q3 first)
