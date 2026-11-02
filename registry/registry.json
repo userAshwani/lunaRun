@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-02T10:53:16.209Z",
+  "generatedAt": "2026-11-02T11:22:41.811Z",
   "runtimes": {
     "caddy": {
       "displayName": "Caddy",
@@ -498,6 +498,155 @@
               "url": "https://archive.mariadb.org/mariadb-10.6.28/bintar-linux-systemd-x86_64/mariadb-10.6.28-linux-systemd-x86_64.tar.gz",
               "sha256": "80ca39575e5dd9670d9015b674835cd1d37548576547425763694d1bcc686ce2",
               "size": 326718696,
+              "stripComponents": 1
+            }
+          ]
+        }
+      ]
+    },
+    "mysql": {
+      "displayName": "MySQL",
+      "license": {
+        "name": "GPL v2",
+        "url": "https://www.mysql.com/about/legal/licensing/oem/"
+      },
+      "lines": {
+        "9.7": {
+          "eol": "2034-04-30"
+        },
+        "8.4": {
+          "eol": "2032-04-30"
+        },
+        "8.0": {
+          "eol": "2026-04-30"
+        }
+      },
+      "versions": [
+        {
+          "version": "9.7.4",
+          "channel": "stable",
+          "releasedAt": "2026-10-20",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-9.7/mysql-9.7.4-winx64.zip",
+              "sha256": "641bdaf01004927194c561b956f14f915a3166c9b0f9b1b5464ae63152bf4b96",
+              "size": 344052123,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-9.7/mysql-9.7.4-macos15-arm64.tar.gz",
+              "sha256": "abf378ff27753325c908d687a3060f025c58b6530eda53ff4a0c6fc5ff3d7716",
+              "size": 174454473,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-9.7/mysql-9.7.4-macos15-x86_64.tar.gz",
+              "sha256": "4d5e110fe4e8fc87d6a4c30355096914be2606687cb5818a353190764302c26a",
+              "size": 181509239,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-9.7/mysql-9.7.4-linux-glibc2.28-x86_64.tar.xz",
+              "sha256": "4959b6f54258f26b51f8012e806cec11f4d68cf2984c978081609bd5ace56d72",
+              "size": 987094240,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "8.4.13",
+          "channel": "stable",
+          "releasedAt": "2026-09-30",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.13-winx64.zip",
+              "sha256": "e9cd98b1d23f122987b1afca26ad942efec5891481103d48ae3cde237fa3ea54",
+              "size": 281154912,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.13-macos15-arm64.tar.gz",
+              "sha256": "f324f8950e24d4147470bbc6a6ef0b90ef93b91d3fc74154b3d2ba085b44912a",
+              "size": 165362783,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.13-linux-glibc2.28-x86_64.tar.xz",
+              "sha256": "e32f82598aef1384d2bbb8e57a1c684f9b7734409ae8028b363fb913e56b8e92",
+              "size": 834116500,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "8.0.46",
+          "channel": "stable",
+          "releasedAt": "2026-04-07",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-winx64.zip",
+              "sha256": "28e9eda019d88eff4478d811ea2110b83f02a3966be157fe91cc55def3ab0d4d",
+              "size": 248009349,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "macos",
+              "arch": "aarch64",
+              "format": "tar.gz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-macos15-arm64.tar.gz",
+              "sha256": "6ca4a361a45f5019fbf6d500997986b4aaf6f0e30ff9c41179d1e8ecd635f3db",
+              "size": 172353282,
+              "stripComponents": 1
+            },
+            {
+              "os": "macos",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-macos15-x86_64.tar.gz",
+              "sha256": "8590bc6c3203fe17f51f757dc9132fb755d1b73cbdad9d12a67f85025a3c3b8f",
+              "size": 176499229,
+              "stripComponents": 1
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.xz",
+              "url": "https://cdn.mysql.com/Downloads/MySQL-8.0/mysql-8.0.46-linux-glibc2.28-x86_64.tar.xz",
+              "sha256": "0fcdb2e88b5bb151118420745070a34621463dd85a50e1eacd7c3aa1b9d1f4a2",
+              "size": 892567132,
               "stripComponents": 1
             }
           ]

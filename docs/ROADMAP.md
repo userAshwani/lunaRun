@@ -59,7 +59,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
   - [x] PHP for Windows (releases.json, php.net support dates), Node (index.json, SHASUMS, release schedule)
   - [x] Composer (one `composer.phar` per platform), Caddy (SHA-512 verified, SHA-256 pinned)
   - [x] MariaDB (Windows and Linux x64, long-term-support lines)
-  - [ ] MySQL
+  - [x] MySQL (LTS lines and 8.0, signature-verified, D-017)
   - [ ] PHP for macOS and Linux (static builds, no upstream checksums, decide Q3 first)
 - [ ] Bundle the generated `registry.json` as a fallback
 - [ ] Decide registry hosting (RUNTIMES §5) and record it in DECISIONS.md

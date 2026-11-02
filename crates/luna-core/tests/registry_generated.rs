@@ -18,7 +18,10 @@ fn registry() -> Registry {
 fn the_generated_registry_is_accepted_by_the_parser() {
     let registry = registry();
     let ids: Vec<&str> = registry.runtime_ids().collect();
-    assert_eq!(ids, ["caddy", "composer", "mariadb", "node", "php"]);
+    assert_eq!(
+        ids,
+        ["caddy", "composer", "mariadb", "mysql", "node", "php"]
+    );
     for id in ids {
         let runtime = registry.runtime(id).unwrap();
         assert!(!runtime.releases.is_empty(), "{id} has no versions");
@@ -166,5 +169,34 @@ fn mariadb_is_offered_on_windows_and_linux_x64_only() {
     assert!(
         lines.contains_key("10.6"),
         "the end-of-life line is still listed"
+    );
+}
+
+#[test]
+fn mysql_is_offered_on_windows_macos_and_linux_x64_and_flags_the_old_line() {
+    // Linux arm64 is left out on purpose (docs/DECISIONS.md D-017).
+    let registry = registry();
+    let today = CalDate::new(2026, 11, 2).unwrap();
+    let offered = |os, arch| {
+        registry
+            .available_versions(os, arch, today)
+            .iter()
+            .any(|r| r.runtime == "mysql" && r.available)
+    };
+    assert!(offered(Os::Windows, Arch::X86_64));
+    assert!(offered(Os::Macos, Arch::Aarch64));
+    assert!(offered(Os::Macos, Arch::X86_64));
+    assert!(offered(Os::Linux, Arch::X86_64));
+    assert!(!offered(Os::Linux, Arch::Aarch64));
+
+    let rows = registry.available_versions(Os::Windows, Arch::X86_64, today);
+    let old = rows
+        .iter()
+        .find(|r| r.runtime == "mysql" && r.line == "8.0")
+        .expect("MySQL 8.0 is listed");
+    assert!(old.eol, "MySQL 8.0 ended 2026-04-30");
+    assert!(
+        rows.iter().any(|r| r.runtime == "mysql" && !r.eol),
+        "a supported MySQL line exists"
     );
 }

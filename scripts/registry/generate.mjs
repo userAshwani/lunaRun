@@ -15,7 +15,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildCaddy } from "./caddy.mjs";
 import { buildComposer } from "./composer.mjs";
 import { registryText, validateRegistry } from "./lib.mjs";
+import { downloadVerified } from "./gpg.mjs";
 import { buildMariadb } from "./mariadb.mjs";
+import { MYSQL_RELEASE_KEY, buildMysql } from "./mysql.mjs";
 import { buildNode } from "./node.mjs";
 import { buildPhp } from "./php.mjs";
 
@@ -23,6 +25,7 @@ export const BUILDERS = {
   caddy: buildCaddy,
   composer: buildComposer,
   mariadb: buildMariadb,
+  mysql: buildMysql,
   node: buildNode,
   php: buildPhp,
 };
@@ -71,7 +74,7 @@ export async function generate(
 }
 
 /** The real upstreams. Every request identifies lunaRun and fails on a bad HTTP status. */
-export function liveSource(fetchFn = fetch) {
+export function liveSource(fetchFn = fetch, { spawnFn, gpg = process.env.GPG ?? "gpg" } = {}) {
   const headers = {
     "user-agent": "lunaRun-registry-generator (+https://github.com/userAshwani/lunaRun)",
   };
@@ -107,6 +110,17 @@ export function liveSource(fetchFn = fetch) {
       (await get("https://downloads.mariadb.org/rest-api/mariadb/")).json(),
     mariadbLine: async (line) =>
       (await get(`https://downloads.mariadb.org/rest-api/mariadb/${line}/`)).json(),
+    mysqlCycles: async () => (await get("https://endoflife.date/api/mysql.json")).json(),
+    /** Download once, check the detached signature against the pinned MySQL key, return SHA-256, size and signer. */
+    downloadVerified: async (url, sigUrl) =>
+      downloadVerified(url, sigUrl, {
+        get,
+        keyText: await (
+          await get(`https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${MYSQL_RELEASE_KEY}`)
+        ).text(),
+        gpg,
+        ...(spawnFn && { spawnFn }),
+      }),
     composerVersions: async () => (await get("https://getcomposer.org/versions")).json(),
     composerChecksum: async (path) =>
       (await get(`https://getcomposer.org${path}.sha256sum`)).text(),

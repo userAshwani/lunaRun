@@ -2,6 +2,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { MYSQL_RELEASE_KEY } from "./mysql.mjs";
 import { parseChecksums } from "./lib.mjs";
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
@@ -13,7 +15,7 @@ export const json = (name) => JSON.parse(text(name));
  * `hash` answers like an honest download of the real Caddy asset (the SHA-512 the authors published, the
  * SHA-256 GitHub shows, the real size).
  */
-export function fakeSource({ size = (url) => url.length * 1000, hash } = {}) {
+export function fakeSource({ size = (url) => url.length * 1000, hash, downloadVerified } = {}) {
   const assets = json("caddy-releases.json").flatMap((release) => release.assets);
   const honestHash = async (url) => {
     const file = url.split("/").pop();
@@ -41,6 +43,15 @@ export function fakeSource({ size = (url) => url.length * 1000, hash } = {}) {
     caddyReleases: async () => json("caddy-releases.json"),
     caddyChecksums: async (tag, version) => text(`caddy-checksums-${version}.txt`),
     hash: hash ?? honestHash,
+    mysqlCycles: async () => json("endoflife-mysql.json"),
+    // An honest signed download: the pinned signer, the size the server announced, a hash that depends on the url.
+    downloadVerified:
+      downloadVerified ??
+      (async (url) => ({
+        sha256: createHash("sha256").update(url).digest("hex"),
+        size: size(url),
+        signer: MYSQL_RELEASE_KEY,
+      })),
     size: async (url) => size(url),
   };
 }
