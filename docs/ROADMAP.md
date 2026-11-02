@@ -61,8 +61,8 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
   - [x] MariaDB (Windows and Linux x64, long-term-support lines)
   - [x] MySQL (LTS lines and 8.0, signature-verified, D-017)
   - [x] PHP for macOS and Linux (upstream static-php `common` builds, CLI and FPM as two variants, no upstream checksum, Q3 default)
-- [ ] Bundle the generated `registry.json` as a fallback
-- [ ] Decide registry hosting (RUNTIMES §5) and record it in DECISIONS.md
+- [x] Bundle the generated `registry.json` as a fallback (the build embeds `registry/registry.json` itself, no second copy)
+- [x] Decide registry hosting (RUNTIMES §5) and record it in DECISIONS.md (D-018) + daily `registry.yml` workflow
 
 ### M1.3 Runtime manager
 - [ ] `RuntimeAdapter` trait + adapters: php, composer, node, mysql, mariadb, caddy

@@ -21,15 +21,18 @@ use crate::state::write_atomic;
 /// local file path or `file://` URL.
 pub const REGISTRY_URL_ENV: &str = "LUNA_REGISTRY_URL";
 
-/// Where the registry is published. Hosting is decided in M1.2 task 5 (docs/RUNTIMES.md section 5); until
-/// the generator publishes a file here the address answers 404 and the bundled copy is used.
+/// Where the registry is published: the generated file in the main repository (D-018), which is public so
+/// no authentication is needed. A separate registry repository stays possible, only this address changes.
 pub const DEFAULT_REGISTRY_URL: &str =
     "https://raw.githubusercontent.com/userAshwani/lunaRun/main/registry/registry.json";
 
 /// A registry is a few hundred kilobytes at most. Anything bigger is not one.
 pub const MAX_REGISTRY_BYTES: u64 = 8 * 1024 * 1024;
 
-const BUNDLED: &str = include_str!("bundled.json");
+/// The generated registry itself, not a copy of it: the build embeds exactly the file `pnpm registry`
+/// writes, so the fallback cannot drift from it or be edited by hand. A daily workflow refreshes that
+/// file, so every build ships a recent list. Anything building this crate needs the repository checkout.
+const BUNDLED: &str = include_str!("../../../../registry/registry.json");
 
 /// Where the registry that was returned came from.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,7 +72,7 @@ pub fn cache_path(home: &LunaHome) -> PathBuf {
     home.cache_dir().join("registry.json")
 }
 
-/// The registry built into this build.
+/// The registry built into this build (the last resort when there is no network and no saved copy).
 pub fn bundled_registry() -> Result<Registry> {
     Registry::parse(BUNDLED).map_err(|err| {
         LunaError::internal(format!("the bundled registry is invalid: {}", err.message))

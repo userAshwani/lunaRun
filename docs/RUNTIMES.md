@@ -168,13 +168,19 @@ DB `data/` dirs are removed only with an explicit `deleteData = true` (FR-RT-06)
   (the `generatedAt` stamp only moves when the data does), and a runtime whose upstream fails keeps its
   previous entry while the run exits non-zero. PHP for Windows reports its rebuilds as `8.3.36-1`; the
   registry says `8.3.36` (the file name keeps the real name), since the app would read `-1` as a pre-release.
-- A scheduled GitHub Actions workflow (`registry.yml`, daily) runs the generator and opens a PR (or
-  commits to a `registry` branch) when something changed. A human merges it.
-- **Hosting:** the app must fetch the registry **without authentication**. While the main repo is
-  private, `raw.githubusercontent.com` and private release assets are **not** reachable by the app.
-  Options, in order of preference:
-  1. A small separate **public** repo `lunarun-registry` (only the JSON, served via GitHub Pages or raw).
-  2. Until that exists, during development: the bundled fallback registry plus `LUNA_REGISTRY_URL` pointing at a local file.
+- A scheduled GitHub Actions workflow (`.github/workflows/registry.yml`, daily at 04:17 UTC and on demand) runs
+  the generator, checks the result with the app's own parser tests, and opens a pull request when something
+  changed. A human merges it. A runtime whose upstream failed keeps its previous entry and turns the run red.
+  Pull requests opened with the workflow token do not start CI, so the parser tests run inside the workflow.
+  The repository setting *Settings > Actions > General > Allow GitHub Actions to create and approve pull
+  requests* must be on, otherwise the branch is pushed and a warning gives the link to open it by hand.
+- **Hosting (D-018):** the generated file in the **main repository**, `registry/registry.json`, served by
+  `raw.githubusercontent.com/userAshwani/lunaRun/main/registry/registry.json` (the constant
+  `DEFAULT_REGISTRY_URL`). The repository is public, so no authentication is needed. Merging the refresh pull
+  request is what publishes a new list (raw content is cached for about five minutes). A separate public
+  `lunarun-registry` repository remains possible later: only that constant changes.
+- **Offline fallback:** the app embeds `registry/registry.json` itself at build time (no second copy), so
+  an installer always carries the list as of its build, and a fresh offline start can still install.
 
 ## 6. Licensing
 

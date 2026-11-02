@@ -13,7 +13,8 @@ use std::sync::{Arc, Mutex};
 
 use luna_core::download::{DownloadOptions, Downloader};
 use luna_core::registry::{
-    LoadedRegistry, MAX_REGISTRY_BYTES, RegistrySource, bundled_registry, cache_path, load_registry,
+    LoadedRegistry, MAX_REGISTRY_BYTES, Registry, RegistrySource, bundled_registry, cache_path,
+    load_registry,
 };
 use luna_core::{ErrorCode, LunaHome};
 use support::{Server, respond};
@@ -92,7 +93,19 @@ fn cached_text(home: &LunaHome) -> String {
 #[test]
 fn the_bundled_registry_is_valid() {
     // The last resort must always work. A broken bundled file would fail every offline start.
-    bundled_registry().unwrap();
+    let bundled = bundled_registry().unwrap();
+
+    // It is the generated registry, so an offline first start still has something to install.
+    let ids: Vec<&str> = bundled.runtime_ids().collect();
+    assert_eq!(
+        ids,
+        ["caddy", "composer", "mariadb", "mysql", "node", "php"]
+    );
+    assert!(bundled.runtime("php").unwrap().releases.len() >= 6);
+
+    // And it is exactly the file in the repository, never a second copy that could drift.
+    let file = Registry::parse(include_str!("../../../registry/registry.json")).unwrap();
+    assert_eq!(bundled, file);
 }
 
 #[tokio::test]

@@ -1,0 +1,104 @@
+name: Registry
+
+# Refreshes registry/registry.json (the list of runtime versions lunaRun can download) from the upstream
+# indexes and proposes the change as a pull request that a human merges (docs/RUNTIMES.md section 5, D-018).
+# Daily, and on demand from the Actions tab.
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+# One refresh at a time, and never cancel one halfway.
+concurrency:
+  group: registry
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  refresh:
+    name: Refresh the registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - name: Check gpg (needed to verify MySQL downloads)
+        run: gpg --version | head -1
+
+      # A runtime whose upstream fails keeps its previous entry and the generator exits non-zero. That must
+      # not stop us proposing the other changes, so the exit code is kept and the job fails at the very end.
+      - name: Generate
+        id: generate
+        env:
+          # Lets the generator use the GitHub API for Caddy at a higher rate limit. Sent only to api.github.com.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          node scripts/registry/generate.mjs
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Did the registry change?
+        id: diff
+        run: |
+          if git diff --quiet -- registry/registry.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The registry is up to date." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A pull request opened with the workflow token does not start CI, so prove here that the app's own
+      # parser accepts the new file and that its expectations still hold, before anyone is asked to merge it.
+      - name: Check the new registry with the app's parser
+        if: steps.diff.outputs.changed == 'true'
+        run: cargo test -p luna-core --test registry_generated --test registry_load --test registry
+
+      - name: Open a pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GENERATE_STATUS: ${{ steps.generate.outputs.status }}
+        run: |
+          branch="registry/update-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add registry/registry.json
+          git commit -m "chore(registry): refresh the list of downloadable runtimes"
+          git push origin "$branch"
+
+          {
+            echo "Automatic refresh of \`registry/registry.json\` from the upstream indexes (\`pnpm registry\`)."
+            echo
+            echo "- The app's own parser and the registry tests passed on this file inside the workflow."
+            echo "- CI does not run on pull requests opened by a workflow. If you want it, close and reopen this pull request."
+            if [ "$GENERATE_STATUS" != "0" ]; then
+              echo "- **Some runtimes failed to refresh and kept their previous entries.** See the workflow run."
+            fi
+            echo "- Review the diff, then merge. Builds embed this file as the offline fallback."
+          } > body.md
+
+          # An older refresh nobody merged is now out of date: close it so there is only one open.
+          for old in $(gh pr list --state open --limit 100 --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("registry/update-")) | select(.headRefName != "'"$branch"'") | .number'); do
+            gh pr close "$old" --delete-branch --comment "Superseded by a newer refresh."
+          done
+
+          if ! gh pr create --base main --head "$branch" \
+              --title "chore(registry): refresh the list of downloadable runtimes" --body-file body.md; then
+            echo "::warning::The branch $branch was pushed but the pull request could not be opened. Enable Settings > Actions > General > 'Allow GitHub Actions to create and approve pull requests', or open it from https://github.com/${GITHUB_REPOSITORY}/compare/${branch}?expand=1"
+            echo "Branch \`$branch\` pushed, pull request not opened (see the warning)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Fail loudly if an upstream failed
+        if: steps.generate.outputs.status != '0'
+        run: |
+          echo "::error::At least one runtime could not be refreshed. Its previous entry was kept. See the Generate step."
+          exit 1
