@@ -12,6 +12,7 @@
 //!   SHA-256 and a non-zero size, and names that become folder names (runtime ids, versions) must be
 //!   safe path components. Anything else is `REGISTRY_INVALID`, with a message naming the culprit.
 
+mod load;
 mod version;
 
 use std::collections::{BTreeMap, HashSet};
@@ -26,6 +27,10 @@ use crate::error::{ErrorCode, LunaError, Result};
 use crate::extract::ArchiveFormat;
 use crate::paths::component;
 
+pub use load::{
+    DEFAULT_REGISTRY_URL, LoadedRegistry, MAX_REGISTRY_BYTES, REGISTRY_URL_ENV, RegistrySource,
+    bundled_registry, cache_path, load_registry, registry_location,
+};
 pub use version::{CalDate, RuntimeVersion};
 
 /// The newest registry `schema` this build understands.

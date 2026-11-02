@@ -215,6 +215,50 @@ impl Downloader {
         Ok(final_path)
     }
 
+    /// Fetch a small document into memory, with the same URL, redirect and proxy rules as
+    /// [`download`](Self::download). For things that have no published checksum, such as the registry
+    /// itself, so the caller must validate the content. One attempt, no retries: callers have a
+    /// fallback. Larger than `max_bytes` is an error, checked on the announced and on the real size.
+    pub async fn fetch_bytes(&self, url: &str, max_bytes: u64) -> Result<Vec<u8>> {
+        let url = self.parse_url(url)?;
+        let response = self
+            .client
+            .get(url.clone())
+            .send()
+            .await
+            .map_err(|err| network_error(format!("request to {url} failed: {err}"), &url))?;
+        let status = response.status();
+        if !status.is_success() {
+            return Err(network_error(format!("{url} answered HTTP {status}"), &url)
+                .with_details(json!({ "url": url.as_str(), "status": status.as_u16() })));
+        }
+        let too_large = || {
+            network_error(
+                format!("{url} is larger than the allowed {max_bytes} bytes"),
+                &url,
+            )
+        };
+        if response.content_length().is_some_and(|len| len > max_bytes) {
+            return Err(too_large());
+        }
+
+        let mut bytes = Vec::new();
+        let mut body = response.bytes_stream();
+        while let Some(chunk) = body.next().await {
+            let chunk = chunk.map_err(|err| {
+                network_error(
+                    format!("the connection to {url} was interrupted: {err}"),
+                    &url,
+                )
+            })?;
+            if bytes.len() as u64 + chunk.len() as u64 > max_bytes {
+                return Err(too_large());
+            }
+            bytes.extend_from_slice(&chunk);
+        }
+        Ok(bytes)
+    }
+
     fn parse_url(&self, text: &str) -> Result<Url> {
         let invalid = |why: &str| {
             LunaError::new(
