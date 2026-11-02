@@ -58,7 +58,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [ ] `scripts/registry/generate.mjs` (`pnpm registry`), one runtime at a time:
   - [x] PHP for Windows (releases.json, php.net support dates), Node (index.json, SHASUMS, release schedule)
   - [x] Composer (one `composer.phar` per platform), Caddy (SHA-512 verified, SHA-256 pinned)
-  - [ ] MariaDB
+  - [x] MariaDB (Windows and Linux x64, long-term-support lines)
   - [ ] MySQL
   - [ ] PHP for macOS and Linux (static builds, no upstream checksums, decide Q3 first)
 - [ ] Bundle the generated `registry.json` as a fallback

@@ -15,12 +15,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildCaddy } from "./caddy.mjs";
 import { buildComposer } from "./composer.mjs";
 import { registryText, validateRegistry } from "./lib.mjs";
+import { buildMariadb } from "./mariadb.mjs";
 import { buildNode } from "./node.mjs";
 import { buildPhp } from "./php.mjs";
 
 export const BUILDERS = {
   caddy: buildCaddy,
   composer: buildComposer,
+  mariadb: buildMariadb,
   node: buildNode,
   php: buildPhp,
 };
@@ -101,6 +103,10 @@ export function liveSource(fetchFn = fetch) {
       (await get("https://raw.githubusercontent.com/nodejs/Release/main/schedule.json")).json(),
     nodeShasums: async (version) =>
       (await get(`https://nodejs.org/dist/v${version}/SHASUMS256.txt`)).text(),
+    mariadbMajors: async () =>
+      (await get("https://downloads.mariadb.org/rest-api/mariadb/")).json(),
+    mariadbLine: async (line) =>
+      (await get(`https://downloads.mariadb.org/rest-api/mariadb/${line}/`)).json(),
     composerVersions: async () => (await get("https://getcomposer.org/versions")).json(),
     composerChecksum: async (path) =>
       (await get(`https://getcomposer.org${path}.sha256sum`)).text(),

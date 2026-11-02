@@ -194,7 +194,7 @@ describe("generate", () => {
     expect(errors).toEqual([]);
     expect(registry.schema).toBe(1);
     expect(registry.generatedAt).toBe("2026-11-02T00:00:00.000Z");
-    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "node", "php"]);
+    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "mariadb", "node", "php"]);
   });
 
   it("makes the same bytes from the same data and keeps the timestamp until the data changes", async () => {
@@ -251,7 +251,7 @@ describe("generate", () => {
     };
     const { registry, errors } = await generate(broken);
     expect(errors.map((e) => e.runtime)).toEqual(["php"]);
-    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "node"]);
+    expect(Object.keys(registry.runtimes)).toEqual(["caddy", "composer", "mariadb", "node"]);
   });
 });
 

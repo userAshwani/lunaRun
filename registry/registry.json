@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-02T10:28:03.794Z",
+  "generatedAt": "2026-11-02T10:53:16.209Z",
   "runtimes": {
     "caddy": {
       "displayName": "Caddy",
@@ -333,6 +333,172 @@
               "sha256": "0915af36eb01e3f0e16cd309adff7051832b9ef014e38371756804b20425cd5a",
               "size": 2009028,
               "stripComponents": 0
+            }
+          ]
+        }
+      ]
+    },
+    "mariadb": {
+      "displayName": "MariaDB",
+      "license": {
+        "name": "GPL v2",
+        "url": "https://mariadb.com/kb/en/mariadb-license/"
+      },
+      "lines": {
+        "12.3": {
+          "eol": "2029-06-12"
+        },
+        "11.8": {
+          "eol": "2030-02-13"
+        },
+        "11.4": {
+          "eol": "2029-05-29"
+        },
+        "10.11": {
+          "eol": "2028-02-16"
+        },
+        "10.6": {
+          "eol": "2026-07-06"
+        }
+      },
+      "versions": [
+        {
+          "version": "12.3.3",
+          "channel": "stable",
+          "releasedAt": "2026-08-22",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://archive.mariadb.org/mariadb-12.3.3/winx64-packages/mariadb-12.3.3-winx64.zip",
+              "sha256": "4b5706b47148b47c8f36963c8352d1ddee37a1287b4690428f631a74b09b85a0",
+              "size": 104081715,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://archive.mariadb.org/mariadb-12.3.3/bintar-linux-systemd-x86_64/mariadb-12.3.3-linux-systemd-x86_64.tar.gz",
+              "sha256": "a12bf7bce08a896cdd01f174f04b4ce1d5da43ec250a5e7fceb9972119514329",
+              "size": 491853347,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "11.8.9",
+          "channel": "stable",
+          "releasedAt": "2026-08-22",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://archive.mariadb.org/mariadb-11.8.9/winx64-packages/mariadb-11.8.9-winx64.zip",
+              "sha256": "830c46727d9278eae212ae3eca44eeb9e71b2a68704e95f344a64fba7b1963f5",
+              "size": 97016251,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://archive.mariadb.org/mariadb-11.8.9/bintar-linux-systemd-x86_64/mariadb-11.8.9-linux-systemd-x86_64.tar.gz",
+              "sha256": "32f8871a2aa38b36aa418b7f4abc6fc0c6ef1ba5a45798cacb2afa52c8a6113b",
+              "size": 447936227,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "11.4.13",
+          "channel": "stable",
+          "releasedAt": "2026-08-22",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://archive.mariadb.org/mariadb-11.4.13/winx64-packages/mariadb-11.4.13-winx64.zip",
+              "sha256": "d62986d433eeebfde218560b276103831604a61e929e87f1a17f5aebd80257e2",
+              "size": 95024126,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://archive.mariadb.org/mariadb-11.4.13/bintar-linux-systemd-x86_64/mariadb-11.4.13-linux-systemd-x86_64.tar.gz",
+              "sha256": "3cebf63914df3154b7cb6d548337eb2be42c773aeb641110446b72e2746cfed7",
+              "size": 358652272,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "10.11.19",
+          "channel": "stable",
+          "releasedAt": "2026-08-22",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://archive.mariadb.org/mariadb-10.11.19/winx64-packages/mariadb-10.11.19-winx64.zip",
+              "sha256": "398ea30e5036010bbebe01d2b1804280424dcc2626e36d8e95155c04d25a0490",
+              "size": 93557290,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://archive.mariadb.org/mariadb-10.11.19/bintar-linux-systemd-x86_64/mariadb-10.11.19-linux-systemd-x86_64.tar.gz",
+              "sha256": "7efb257927f31f4422f496246b32590d0b7617f3d9dd900e575de761b302d919",
+              "size": 357390930,
+              "stripComponents": 1
+            }
+          ]
+        },
+        {
+          "version": "10.6.28",
+          "channel": "stable",
+          "releasedAt": "2026-08-13",
+          "artifacts": [
+            {
+              "os": "windows",
+              "arch": "x86_64",
+              "format": "zip",
+              "url": "https://archive.mariadb.org/mariadb-10.6.28/winx64-packages/mariadb-10.6.28-winx64.zip",
+              "sha256": "a4e5cd01587d1662728f0cf0d8bb3d1aaedc6861b272cec18f504ab4ba8b2f72",
+              "size": 87852101,
+              "stripComponents": 1,
+              "requires": [
+                "vcredist-14-x64"
+              ]
+            },
+            {
+              "os": "linux",
+              "arch": "x86_64",
+              "format": "tar.gz",
+              "url": "https://archive.mariadb.org/mariadb-10.6.28/bintar-linux-systemd-x86_64/mariadb-10.6.28-linux-systemd-x86_64.tar.gz",
+              "sha256": "80ca39575e5dd9670d9015b674835cd1d37548576547425763694d1bcc686ce2",
+              "size": 326718696,
+              "stripComponents": 1
             }
           ]
         }

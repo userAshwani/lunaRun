@@ -18,7 +18,7 @@ fn registry() -> Registry {
 fn the_generated_registry_is_accepted_by_the_parser() {
     let registry = registry();
     let ids: Vec<&str> = registry.runtime_ids().collect();
-    assert_eq!(ids, ["caddy", "composer", "node", "php"]);
+    assert_eq!(ids, ["caddy", "composer", "mariadb", "node", "php"]);
     for id in ids {
         let runtime = registry.runtime(id).unwrap();
         assert!(!runtime.releases.is_empty(), "{id} has no versions");
@@ -142,4 +142,29 @@ fn composer_is_a_single_file_and_caddy_is_an_archive() {
         .artifact_for("caddy", caddy.version.as_str(), Os::Windows, Arch::X86_64)
         .unwrap();
     assert_eq!(windows.artifact.format, ArtifactFormat::Zip);
+}
+
+#[test]
+fn mariadb_is_offered_on_windows_and_linux_x64_only() {
+    // MariaDB publishes no macOS binaries and no Linux arm64 ones (docs/RUNTIMES.md section 2).
+    let registry = registry();
+    let today = CalDate::new(2026, 11, 2).unwrap();
+    let offered = |os, arch| {
+        registry
+            .available_versions(os, arch, today)
+            .iter()
+            .any(|r| r.runtime == "mariadb" && r.available)
+    };
+    assert!(offered(Os::Windows, Arch::X86_64));
+    assert!(offered(Os::Linux, Arch::X86_64));
+    assert!(!offered(Os::Linux, Arch::Aarch64));
+    // An Apple silicon Mac must not get an Intel Linux or Windows build by mistake.
+    assert!(!offered(Os::Macos, Arch::Aarch64));
+    assert!(!offered(Os::Macos, Arch::X86_64));
+
+    let lines = &registry.runtime("mariadb").unwrap().lines;
+    assert!(
+        lines.contains_key("10.6"),
+        "the end-of-life line is still listed"
+    );
 }

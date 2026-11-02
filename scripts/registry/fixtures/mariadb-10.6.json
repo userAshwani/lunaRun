@@ -1,0 +1,235 @@
+{
+ "releases": {
+  "10.6.28": {
+   "release_id": "10.6.28",
+   "release_name": "MariaDB Server 10.6.28",
+   "date_of_release": "2026-08-13",
+   "release_notes_url": "",
+   "change_log": "",
+   "files": [
+    {
+     "file_id": 16960,
+     "file_name": "mariadb-10.6.28-linux-systemd-x86_64.tar.gz",
+     "package_type": "gzipped tar file",
+     "os": "Linux",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "cb4e5b4b034db7013dadb4d258b086f8",
+      "sha1sum": "4c8d50e9a80858b98e8499c0683deaf934319bf0",
+      "sha256sum": "80ca39575e5dd9670d9015b674835cd1d37548576547425763694d1bcc686ce2",
+      "sha512sum": "75d8b4f23476c2dec6438fd1cd1829fab7590ce285d7c5db31e1fbc3f263ec564525cd9254f68abd30aa7be9c6400cb9909ea12a2454ea63f4d43a187abca097"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-linux-systemd-x86_64.tar.gz",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmp9lvgACgkQ8WVvJMdM\n0dj4HRAAyXIjM0NjzhlOlpC0TObPTvIKv5v5hzz2x4Z6/uJ0Tm32TcmkedHIrvqy\nNuvleX6vlHSFqamGj7EL8CpV6MmTWS3utoypRqB0g2KaomSa/j/vwYPld7RQcuUH\nwof/mDvw1FO3exbmwGqv7J+IOpQgmgjaueE+cf9jN7lnG1DHoWy7TGB9Ft8rQ98H\nvDD74xjfsIlwE4DYiXKyy91M5neDyoLck+ZBFmD7HbUpochNJP6o7XDcE4V3GnyT\nzWo2nDvUKa/tx5bJ0QlygsEWGpGj3SFG5584ZbxGV4t5YwOkFq1MT5UWhF/V3UUv\nRUts364a6w8hnPlVO8S6A8n5QASs24D6fQEVgatZNo5fOpmyWvs5JMubuV67Q4lx\nfEUyfIsts+VbUGe9YeEWpkJrbeLPOdWeOQFAcjdLbFpoosaaXqmxOzru9gNgWdU3\nYrMXS1oKWleMcZBdxsGkbeTwKwa56adLARCkzsf8naIA5mcKz1XwrKOkGU+JWPg2\nSXyM6fOMeY5MP7M9yPplaEH3p540DmQQ0owUmtLMhjx2LBXhl1LOBQSQX/YLaSGv\nzWHvN3OJ9OaP/oR4AaR6VMfReyyuGLAagr6Z8mMBujpUJXltFgZXpVLWykxhmg9b\n/mTowtiDezIIQ5GLA+PR4c6E2AV72T5OULiywD2MMpwF2JhU9vo=\n=I9mv\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-linux-systemd-x86_64.tar.gz/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-linux-systemd-x86_64.tar.gz/signature/"
+    },
+    {
+     "file_id": 16965,
+     "file_name": "mariadb-10.6.28-winx64.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "187306c5c9b64a78ee25c47ac8b58c31",
+      "sha1sum": "1c9cf0f5cc4ae5633d7344affc5535253a5beeed",
+      "sha256sum": "a4e5cd01587d1662728f0cf0d8bb3d1aaedc6861b272cec18f504ab4ba8b2f72",
+      "sha512sum": "dabc2368a8ab1596beff07455257ced5ca91ea0ba4d178d9d7cd8950816700b25f004794c0ea3b618703479725af1e020ac4c2169f35a7590c8989db1c691215"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmp9ArYACgkQ8WVvJMdM\n0di/sg/9HfIOzgb4QEAhvrDBbb9y+zr6QK8FmX9JS8UrJumye4j0Re4MGJOFR14g\nqE5Npg3gwwHsD1pQvxjHLuceERAbn/odMQIOKgb9Qn857eHZI1/GoyQK4eNgRvUc\nfbbdSGYeU/3loKoInm01nzk9YqHpAnLg+6I6OaGFNtI5CEtRYcdqXiHXHYV2MUEt\nLkNaR4wHwFILgExzrUVTNY9YpBbmRwNu4hWQaRiCvEh/E983DGdCaBgnc4NKXZcu\nzG3GB7JkrP0GucZEt5ppVCNZhRPJmswvjdZXLmZ8UFxoWt/j5FeI8xrdRfCB4mXX\nLnYzJz2+/AUdObmw8CCtjH7/i6bctV8domad5bovzOqz6wpHwL+JvlSw1sh+SeWY\ndbsCFHdur7cQWjChlFOosgwaepzQ2gINkRf5qNjJ2ElypXdjlPV2POFLR0kYOnm1\nYfDIApJgoqNl79t4pai4K8phy9Znun0Oo5keaTI2DSjNygf4AFn2qaXcLJgh+qxV\n7C1h6SJuGe3pzoz+E7zd5GIm5M8+rRrCyKcdh5U61znoQj1BD8nxlpkb/aYyiM/B\noJCXIgRs6HXFRk7VRGkd0Uauc76lnmCsm+LILliJJhX5dK+s/7lCpdPc3O4LE8sJ\nVk29Eav+pAv7kAvmuDBYT1exkFcd/0kxznmVgMMHdNgxgBhb2HI=\n=m/kS\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.zip/signature/"
+    },
+    {
+     "file_id": 16963,
+     "file_name": "mariadb-10.6.28-winx64-debugsymbols.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "062faa1171461e6abf9a7500ac7a4db1",
+      "sha1sum": "fd77a6abec2eabebd04dd250972b44e802ed86df",
+      "sha256sum": "cccbbbeacd9f6769482b372b1b4d848e63729d87cde225e1b123c93e159d3778",
+      "sha512sum": "a0c9213b25e6b6e6a1a0be66e71075f7e8958d16eccf851d90f2827cece7c5fc357fcb96093769f823da190badd9750e8365014c1d4c2fc499e2e80fb3aa9591"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64-debugsymbols.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmp9ArUACgkQ8WVvJMdM\n0djKig/8DlD129Aid5MAxo+puiTgECexyHdvS4edokuFwBmTd+4cMbfmjbtuJYT3\nBfvkIWWktWV9gQuZW5+syB4pXT/T1FFrDbct5PAB38FiNOIYD7O1CAa/yVETbHCa\n1oI2/8Y9iYveyEZ+xSXy9685Gzp4SbpskSnm55lW/alxew+NWdr4v9mAsYFGGJv0\nXTkYTvw/Bn4YYIvRuL+i7jSl/lja6SotPuJMDuy3Ndpl805sFxct/RGTEwbnG07b\nsJ/Etim9cfkT/Tp9aKIN5DfWnpiofhIPlcV6/RgV7sFGC8P1CdGRF6gMwUzqUu2k\nrnsTM+F8Snh4RoSOsCTAhERDUg+96xNtENwz0vtLZ0mhR3cM4u00FFZYzws3dvXv\nh352D7JhCeS6Gdo0P4fwwtmKQXmDuBAW4krBc61PxS++Nx1FyMyvnM28bWNZO0ab\nwPqwuwsH/ySVIU+rLQONdSySvEdfb7SZauXuRc/+/8uxe6LKRHgXu4VugYaWrqM1\nXBTSBpbVlFrMuO+iVsrZzkUIF9MarnkFpr+EK+8WjThTil3go09IUbKITUk+JWJE\n9yRF9EU7PVMN/tEt1ixbL9bU6wneWRZZRTvJOc2bHRx/w+YE7Y8Id7ixsDz3c3V9\nOftW9H5ZA1IMedxtmmOGAInFqeYTFbw6IoEUrGYc8KXYR3b3cmo=\n=cAH+\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64-debugsymbols.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64-debugsymbols.zip/signature/"
+    },
+    {
+     "file_id": 16964,
+     "file_name": "mariadb-10.6.28-winx64.msi",
+     "package_type": "MSI Package",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "fc8110ecf04809a4ad08f0febfb64a79",
+      "sha1sum": "78688ef4c34f2a8094efb99b65c8947975d5e894",
+      "sha256sum": "65b4cc90cfb93db338757f2435b8757b8a328c039f7425c9929500946ef25840",
+      "sha512sum": "26f0c667d1613fc52d19edf36d0301111880c7023155a5677d28442c958789d0aa44206a616dab7dcbbe29f723b3a4485b044532906bfd3e9d6a4cc7422ee706"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.msi",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmp9ArcACgkQ8WVvJMdM\n0djgGg/6Aj/MUMkonO4yQY0YF39p+bpeGDY2TArQp8Z2z1QLuVkwFTh7WnRK7d2O\nbh+DhO7QSVhJgCcWBS//c5dx1YkPW1LmQYDjLGNQr0MdKOpBqMZ4BqLa1OMy+PJf\nl4SB8QUtoPg2bTslPwnWeZAK5uvswp6mflMNMgCtmRBpZ2xhfqts5rPnfrjy8vTA\nKj9eUVejG/dTPA/AdGJ/vRpnPcVDOFua6z39PvI2z2CyUweb3hFsb1c8fFPMSVYf\nRQRLwAhkSDUJtqPVsQJie6O8XCD0R9pc8woI3+emDrkh3xvQMd7pvpwdin8fZBkN\nPE2Xaj0Bz8nR9JGcyJV2PKIVTxY7V2YPWjB8ZZ/2zLYIqsvUtwVLI/zKKOwBRkDI\nBZfdIWx3VopNip+szpPDj0YvY3DpzjVhfpQHFgYNVkOdfA0BL0un/yr6ZLgt/buB\nMqzrCPanTDZRldvPHetROGtdbngHsJPYX8tCvDkLA7mzdLSfbjIbySzqM+wJXub1\nsAmvnxdpLeyboPLW/qEwleigAOqmY4YiLyZ7H7ZGC2J6Cjy1R/Ew4PZEBTuh36C9\nbMjbAvOc0B+psRWcrq2BlVuXynhUyUAc8k8BI/AJ3KFL/8qUdqnmKunldOZ6N0fQ\nVYD0SDo2vNv71xKduODPY8GVzgzeR+HS/dEISi36ClfJC54dREc=\n=IPjc\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.msi/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.28/mariadb-10.6.28-winx64.msi/signature/"
+    }
+   ]
+  },
+  "10.6.27": {
+   "release_id": "10.6.27",
+   "release_name": "MariaDB Server 10.6.27",
+   "date_of_release": "2026-05-28",
+   "release_notes_url": "",
+   "change_log": "",
+   "files": [
+    {
+     "file_id": 16878,
+     "file_name": "mariadb-10.6.27-winx64.msi",
+     "package_type": "MSI Package",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "2fa114c6ac6ad88ed80fb9b4f03e9e46",
+      "sha1sum": "34336e602a440551e8b75b418382a0a304c5648d",
+      "sha256sum": "1ec817fb34c648f4ff3ebc88f8df3414c6cee080f533b34b19cb8cf84f31c6bb",
+      "sha512sum": "a169d8a69bbf5345133e4047ba2fa9c7beeca255cb71b08cc480ab139d483b11e0620d006744572488744e292672c1ffdb7db65cfe30a1453249fe6e1467e254"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.msi",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoVoSoACgkQ8WVvJMdM\n0dgPtRAAmHBqm9OGUnCSqo8EnSVjbOMmD1w7HamVV6MD/KbIOBoFnpHfAwwiLXZr\nr9VDb4Kk0nAkpuYI/c3iOKMdwIfoB5wgREjbruMtJwFnA0vBnW7D40Nec3Fc5u9j\nTRmCOTiOCXhvRwcSLUzmn9WDqNERB79k3248vY1WI+tBpQ7A5wPc5m++C/JgHG/A\nGtDR1bvjNbu4OjKAM/4Vdl/txI+3Ks2aXIgE5t8exYjbdDetdbqrTOwec5Li5tOj\n0swjmwfTExjdvymnVz/YgCKFJqqC4Q6pOXMQOAs1cB/CyphQkJpaPsPrTJ3v/9X0\nvILoizzBD/zn9TBnIZ+bvHSphpy2KBAwUnJQzXKcW2FaCTgNPpFXTdzl4C2PLYDi\n9gWHT//oQ5s2zDwktgp8/paCRzQdP86WVr+tt/2wddIkrbBD2IMChaoH3ruInvk5\nRGoC7THig6UcG6YIVnfuYCdadUYfP0dM1EtAS2KST5falfKhP47edpufRYsdz8wU\nb/QTIG7SlpL8Qn998a9+qMeo5rm5uH4UYkNzaEMF+qflMq9CFBTEeId2boC2x9iE\n8bx+yA4a0+cUdC7QDiXJprbgFrafG385fQiFF9zJHFIHqILrLMyEgRFgKBy5H427\nJYPjuYf+g59SNGIOKvnO29yrcVhphDT/cqdJtzN0dza70+6P6Hs=\n=7UW5\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.msi/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.msi/signature/"
+    },
+    {
+     "file_id": 16873,
+     "file_name": "mariadb-10.6.27-linux-systemd-x86_64.tar.gz",
+     "package_type": "gzipped tar file",
+     "os": "Linux",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "4de1a59fec937b3adf502b2e1b34e127",
+      "sha1sum": "5386f99ce03f0dab553dab89d6ca8d302decf407",
+      "sha256sum": "dd5dd6b7d123a95db5bbd929ab66d18bd6d9c12d5ec85bd9577c03dd33ef8900",
+      "sha512sum": "cfffdb38f608d09789f07432920537e94024f750dd4e1135ba844cd6ea049194f75300e575d46ae5dfbd440a505e8f9a5710cf528f474b3abe47f389fc9fbd5b"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-linux-systemd-x86_64.tar.gz",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoVn8cACgkQ8WVvJMdM\n0dhinA//ZsBDcenuudlJCZ8Fi7FP1aI4X93Qn7qDDC62QiqfLobRtI3vrbzVg8DM\nOdCeYhXae6eHrCUWZQN0LWf+FM6CkptEB+Snx/jEKVhXGRh2FL9qWqzm1LHDz9h1\nW1aB79dMct2BIWhB1eQzO2bDzrH7Qn/KYXrZRtcgw0Me9L3GiO008p0GcHhfQ0wF\nGwpqSoZLrHBmz7UnYF848C5dKIwlX/1rOP4K0zfAiPiMIMH1imimIgzzQuzx0Tsy\nBFtgre9YB8NSjQze6ZxJrC1nSQR9Eh59FdoPTQEtptO4PtKUvEoAnYftyC88ScOO\np2wu8XlwfW/4HQY1jyswRaV77mH/R2TL3S+n0rNNhteVc68GDdGuxwf1piVk95YQ\nwEtEt3TNPiBHJnvl7ec5bZHuq33nS1lJe9KkLq1xo7lfGoET6P9Fjp6pUtIW7Ma8\n80lUQNaOzKIkmYaaSADCOWi6q21QCwC3ZaJUvi0RkEywrP9n20wyfUCcDEfg8b3S\n332L+lNQ+7xAzK7ln6Z0UB4ForYUo0oBW18qwsa7OZnivDYcAkqdoNlAgTI58deC\n2HUngry0F6iaZlYqUZyXUOC8kpjXYoCiK2biBP1s4z0FsrMursWUyP8F/BLsfwof\n+U4N5q5OWQGvjkYpIGqH5EkaTrKAvUAaBdlsvbGV/2B5bT4EphQ=\n=h6hV\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-linux-systemd-x86_64.tar.gz/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-linux-systemd-x86_64.tar.gz/signature/"
+    },
+    {
+     "file_id": 16879,
+     "file_name": "mariadb-10.6.27-winx64.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "1df6bb91c024742cc0450ec90097a301",
+      "sha1sum": "31d6d41458aecef56b4794dbbc2be8df6200ffc1",
+      "sha256sum": "cc18bc6a0d42df6990ed91d1d7695e893b15168779272df43adf45dd75705a50",
+      "sha512sum": "5d2acdf34ac4039cb450772455505d23304e515f0b1d3d329be3877b5a1c2fb2469b654cb30dc463dfca54f012b0d1df69e9e496cec954487983622a29996337"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoVoSkACgkQ8WVvJMdM\n0dgYMRAAwg2iLRk0SwERXJZJSVhkEVxOG4T4tx7ALbyLveIv3EyApfCiu2JZQpBZ\nz9OGSAKkcLer4TRHXSCSMm1i57MVQx83sD4iVQJQJeNdIK3WiZ7Bp3jlMnbVkTMy\nGK3jEiPEkhfkohNU9eaTjGXmiGXJT6VW6cuKLzF02k5LnaTxVfEJ6VMQwe0jJsv5\nRdnAXZUrWkSXOhAzk6d0Sye67G+c38NmfH5jbidpUiCrNnbVBqRWf1GBXmP2KgPY\nVZGQG9/B567N40HCPUAEE97DkSIiS9Suilp1bNOmpj4OmYS0KZD7A+F6q+2CwRO+\nQdzw8pOEoGRvUkLBXD6EmMuvRRwKknob2JbD3tSWTcj0vLMI0N3wg6wyanWGyfyy\nFwr9UqQIU//PVD0KRjoqPkeinIXZJo5r49RGCPkHeNUEgHZRRgGSsYracmTNuqAm\nkYsPpGAhM0eS/g/3OW+z/4h3BWnZip5kNAxuajVD8pkQmi6mFGcJD0s6rujC0qju\nz5K/0+IR8bGQ1iIkbjpHHdHHrPa8TOKPAym7NA6QncGpRBL4hRXd+yHVtPJBL6Zt\nd1KUazLMJSLqPPFRzOYsn6goXkCCkICSqkrBmtBRhA4WhDKOI9XPp+joDOvpYNi+\nnyvowqadh99vgbu91tyDKeE1kJjIVhWMiv/YzoebW1vGxfNYfbQ=\n=Bn13\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64.zip/signature/"
+    },
+    {
+     "file_id": 16877,
+     "file_name": "mariadb-10.6.27-winx64-debugsymbols.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "c2c6bb32befb20393879c986448a4df7",
+      "sha1sum": "f030ef502459bdc769e45df36ea58c742c17fd85",
+      "sha256sum": "86abaf688264b8084fa0b98fdeb078ac906ce3f3e372438f28fecc3b3b4ad961",
+      "sha512sum": "82fb0d5b2120b48da6c94efb5441421038c2c03dbfc83f37a8eab27da8be16ea5969f089224bda942db02524887ecf0b1a26a675a2a7b24b28c352e59a30d454"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64-debugsymbols.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoVoSgACgkQ8WVvJMdM\n0diPJRAAgl9rpa1axg9ToWuMAymwwAO9+3ATheOcHXtORk4L5VJM75xnkjbyLycC\nI61q5XIkDPppRJ5xBwpOoHtg0KvnbpPAgkPc7Air/neMUqEWjX04wZM0Q9pSNgHR\n4yIY0tpgAtcTJ+opVhesBhbcS2HCRhUClmKMWTIpOKiQQ2/WVt/hsJNAMrxlSW3P\nxApFhHAzm5T3/IQzR8qFDmSnRReh90MBI9A1Oj46PImRZbYw+kXTyxHq6H/8Al2E\nvyPXdGVqVK2XK/MGOYuQoPKlXeRuvP+qpMgllWYvAVw/02x9JJeNkUADW/KhZDAB\nkGng56ycXhlK8DojXiIjErVtuFt0iycLeBSrwI0IWsfeUu2HrVB1RMkWS0jeKdOz\nfTf8lt10AfZiUPYuSTNFJc0FjJX1Xj3sr5utwQrAZCveBMWcjVZLzv3apbfjMWZF\nzdXj/pHXLMLhTcWxRIQ+U+JFVx6o6dYzEjq+d069NeQwWwLEZQqT2bJNp9sfyeBt\n0wTricm40YkiaaCXuyToGaIHQptTyA1b5r8oFOEyNFcqzM1m257c0m4Q8te7GPmR\nNpE9XTAIhr1Fg0xbNxHAx0h+oBV8eHmwNRklymii9HR7+h6v8/wjiU6HpuGNW5w8\nNujt/dZ6t8hSqv1oMisz6UlcTY+hTGA6oS/4I9X4YfzzEcfjP2U=\n=XUCQ\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64-debugsymbols.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.27/mariadb-10.6.27-winx64-debugsymbols.zip/signature/"
+    }
+   ]
+  },
+  "10.6.26": {
+   "release_id": "10.6.26",
+   "release_name": "MariaDB Server 10.6.26",
+   "date_of_release": "2026-05-18",
+   "release_notes_url": "",
+   "change_log": "",
+   "files": [
+    {
+     "file_id": 16857,
+     "file_name": "mariadb-10.6.26-winx64-debugsymbols.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "8e3751f3b3374906f916ecf5b18e3d24",
+      "sha1sum": "07b419a12cae331e771e4e0d2d242ce479777d49",
+      "sha256sum": "c5d24285f55205b527500f900be85ceadc3765d1f9675c99f1cf5ac2ccae6d8d",
+      "sha512sum": "bac4efc42db06b23ae73af68a6a8361cf3d07139978e5e51af32f48d25001f45819b7a6d96c458bffdde71529f66cf077f85c9f762744031ca1172c22cb6d943"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64-debugsymbols.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoEcX8ACgkQ8WVvJMdM\n0djH5g/6Amp4uvdrmzNxkJ+TcAy2mFl0yovKCxmziCJOxYCJ7OB9IA1DPuFBfsvT\nmshd8lJBd3WAjGUxL+/pNI+Z27iKkl/Oo19AgIgFpU7JAag716mG666v2kr7GCp0\nzsQ5cb5aOJi2DQcEdwoqCV2eFtdy8aEh3SctvbVTbsByN+y55uLZzD67edC761v3\nAU7Uavl9uIUnI5T13+gL/1kylE0NpeHOJzzHiI7OYWjY0T9QoenDQMLlRqEh+Tag\n/ySA9N2qtiilmZuIFjbDfG+YqGD91v2nYM+eMTRzTRe/jGmnx2m1gqGO8abs1uls\n3vZ9rjH+VTUYRwkuVBY3Wml0YvgrwSc0zwqTOFMRk8JbHozhs685Fd9OwfFXvLbm\nL0GAD0eN5bw2/2wzxoAKY0/bzvTxnL2+NDf3BOMwC7yLT51ZhcBTSmL1D4nxLOG2\n64qMbL0DrQMeD3KcZ5DdSkR4Okxbeo+m/MfGdUCtNBge1RXaSazMfZBZ0bpEaaJb\nHya9YUKzR0gdTEnng4PBICh0tMTS0wep4F8bzbtbXw5cCiQLIYQPM8C3vzchKLa6\nLT/2k0d8V2Cr1lzNOpsRLLBsAfDpPoDCFQoE5zxXfN9Qw5HqlpLJ2ZS2mHQAxWNj\n85aa2jOY+9AdVC6CH1imW+1LTWhhLhtp58LrO3CjuK3TByJudoo=\n=of/C\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64-debugsymbols.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64-debugsymbols.zip/signature/"
+    },
+    {
+     "file_id": 16858,
+     "file_name": "mariadb-10.6.26-winx64.msi",
+     "package_type": "MSI Package",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "1289877bec74c421fe96329921407606",
+      "sha1sum": "8f3d522b9ca177f07e9e45392ffed0bf2c4da1f0",
+      "sha256sum": "8d021c6e36b144bbaf37852b25d887d3f1ee9ef5b923d31677255ac224bf065a",
+      "sha512sum": "7b400f94bc2c14cf777f70ae51386ca5b8a147e27d88824471bd7dd250d1d2129bc0ef12f286cc8f83ea968ba130ca986b26144535767aef69109b27cb62b5a7"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.msi",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoEcX8ACgkQ8WVvJMdM\n0djWaQ//Wcnf1462bv1e6jEJLchl7G4kI7XLosLqzwwMgcUC8cD13Ai8LHyE+67L\nQxhbcPUfRxCFkAiODEQbM/fxKVHm6YcTlMCF4mIG4216gMuVSm/TRwus6fYWoOEV\na4hNTiygpcqMPpd5nf/x+m6xPx1ZFoTA3seiG/dwOxk8xdhHPXm7lIl0qj4AdORG\nIRj3cH0MDOYT3KV0vd7fwBwftp7Ewzo65d1HDut3I/V/FQJzFSKYRY5Xjj9heMXK\nkcKjckdRp7xttwOQ7P+3ki8yui+HCZQIuDpH83EpvUO/61fMFf7QUPgkqRNA9Clk\nI6AXf5MjjlKKpKVXQNOpqmpD3UdC9x23E5ZqPEIhlzFfCtYddTk6TIkPdARPKJXQ\nP8EyQGK97c9Ftxf/DYM7d7sYKT+eUPShSdJdzgLgKQWhEKiy6ll3xsi9n75xXweo\nY2Jp0bYonzVNIE2w3cxan6BjZpk+fFC5ozong2iSeqBGrhH2RPxR/6+OntuRTObu\n0y2Q+pkPMt2bTTvMYIMz2dNcbyx8pevm5jvFHGuq38cR61oIAdBkxZiTJYGl7Gu4\nvyCMIVXe1OKsFwxVrtB3+1TVFjce+UHWAWwYn+Eoox7BLIGJ5BEOdvCBaTi8fIRy\nJ3BZKW+7RZo8kg9Hm2UDH7lDcO1gmpMJukOcQYRzMxKTSxifM7I=\n=el79\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.msi/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.msi/signature/"
+    },
+    {
+     "file_id": 16853,
+     "file_name": "mariadb-10.6.26-linux-systemd-x86_64.tar.gz",
+     "package_type": "gzipped tar file",
+     "os": "Linux",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "e9ea8b420a339c5297f6c5d2840ce5f6",
+      "sha1sum": "e410a462dd6b4c86857ba3134a75447ab2ceca99",
+      "sha256sum": "7bae128cac80b940d2ead2933cd25e81a56dcf91725a9e1519951e9226013b64",
+      "sha512sum": "5720a504c0451479c37c4137bf353c9cac1ef4cf92a3d5f6159cac0cb3eaa5c31b2362b822fe1e81ab39cd15327a780f6007bc81156dc0837f3106bf6eead2af"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-linux-systemd-x86_64.tar.gz",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoDv/8ACgkQ8WVvJMdM\n0digGQ//UvtFwWSdvQBIjKUNc83OrfkmucWPIKBK4DFJIa8x42Khszc7NAOqglGA\nlTFW1bX3gv54LH79C2d0DSwT9FI7YHFKhqLVVvI3J67nc8J4JCSPX9cAzp/EsXGu\nRPTUwucpSav6+3QV5RtKYHAIqE3Bk97itot0mdug9aj70phln95ZzHcYdfQA/hbn\n0Vio3+Km/MHR2oyhZ4FF26jQwvwxWWidAG7XEoj+je1cdqtVqc3jtdC2hCVmPcus\nhktJtfyoa6ugwNB7fHloiDIuwUTYtRXlxpRZZZpZXd9E9OevtFOkIrIE1aPyd5DH\njOhAlL3f2woiI3bLlJMvwC42cHwCcurR3iJSF+tVGfrs9QlheirEp2S1MoQLvFkb\npPVmFD+AxpdIjOXVZpaWq7AjNLNLQKchXM/g3hNbvKPsM1TQ99Qi4J8y0ewLgRA0\nxst5mbYixiKv4GIIMrvspip2jlS5JHIhHdI8alt1lETics70m0f7b675+JgTswpQ\nbDnCJZKz4xex7/lVg9KbZ5ghaDcrdNm75EEzGSaNNcvwfuKModTantiaa3FbfJZH\nXdUTKp64qwOvG55VAABZ5ROkiiPMC7XW2ryZtIhamAyB2MJeHeWrybGDwQoYw3ii\nP97OShWtoalcTvFvKIwF2SNkgN1M9VT7rfumA6jfZI8BHHsgi74=\n=Yi0j\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-linux-systemd-x86_64.tar.gz/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-linux-systemd-x86_64.tar.gz/signature/"
+    },
+    {
+     "file_id": 16859,
+     "file_name": "mariadb-10.6.26-winx64.zip",
+     "package_type": "ZIP file",
+     "os": "Windows",
+     "cpu": "x86_64",
+     "checksum": {
+      "md5sum": "325c86526ba28cd0db3e33922804c06c",
+      "sha1sum": "8531d3baa5c14e562cabe3d6fe06778cdd2924d6",
+      "sha256sum": "9e8efff6327cf87e63dc78ee008ba38b192a09022fda5e1ddcffebf7c51493b1",
+      "sha512sum": "1415d1f81f88692c7eac0181b7e8cec07764a1e52d28e1497ed9dc8841af607f31bc61f3b99a679855ce6b06cc19f9ad770b357b608eae85f8a78e15ae7b952f"
+     },
+     "file_download_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.zip",
+     "signature": "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCgAdFiEEF39AEP5WyjM2MAMF8WVvJMdM0dgFAmoEcX0ACgkQ8WVvJMdM\n0dhJDQ//XRuMt/ZvpbL6a7Xzf+5GjDhlw5ZYw4YKMmAdxnFzdYVbycUodbWeHH0P\npqpXt+CMD6dwvKEzTTEEOb1R3u2/8JMZHkC5512V3o5gRNw7vtjUgvKdLZbIEK1p\nFI4X1NU3gj6VCPk2bUHffZxJvnw8sIhSqZgUAlPj0WKTCGfrWQxOUGcuxnMq/36n\nVutMQ49BB5keJvrzej6sQ3jUVeuMTP+7ApSnyDLT6Oh876cOsfzddOKw3LuhJuOA\n0XzDfYOi3ppBViVC+YDwySYW4UuMcJPIgAPhKG5ZY5WMKbKPIkQPOCek1sJU1QyG\nQo2xAdtd1h4DPAbRvAONiPGrYgJ1e3PQc98WhFXDoFoswhAcR8oFjxMb5QDj9/0i\nRYln/1Uzkp7EtArIFKuyP8ZcBghba2cD3YFi8GdNAKUL9mPhC9VqbzOrxKvByIUi\nzATJ+Sk02wnWVG43Jk6H/XBpmEPCt8MvGlT7WZqsLEOMT4/39jY00KFMjQlnEPRT\nmsKjKbQhVPUm9mdudNe+IN5g2W+Sr3fkxIwALt8Fl28OvtsmvEMmLJz4+k+eFHH1\nqfbNhaAVyKkLRM1uVdgYaNbScdagt1imqAqnoj2AmHIuYYb5H7fkJQgpbvATPO+5\nwkfxNGQX17yZaok6sK0gdyvHwWfwJLIgTNJfhFj/x0RA5BeiUlc=\n=nkwz\n-----END PGP SIGNATURE-----\n",
+     "checksum_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.zip/checksum/",
+     "signature_url": "http://downloads.mariadb.org/rest-api/mariadb/10.6.26/mariadb-10.6.26-winx64.zip/signature/"
+    }
+   ]
+  }
+ }
+}

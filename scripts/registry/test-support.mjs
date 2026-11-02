@@ -33,6 +33,8 @@ export function fakeSource({ size = (url) => url.length * 1000, hash } = {}) {
     nodeIndex: async () => json("node-index.json"),
     nodeSchedule: async () => json("node-schedule.json"),
     nodeShasums: async (version) => text(`SHASUMS256-v${version}.txt`),
+    mariadbMajors: async () => json("mariadb-majors.json"),
+    mariadbLine: async (line) => json(`mariadb-${line}.json`),
     composerVersions: async () => json("composer-versions.json"),
     composerChecksum: async (path) =>
       text(`composer-sha256-${/\/download\/([^/]+)\//.exec(path)[1]}.txt`),

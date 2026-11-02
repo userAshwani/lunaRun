@@ -19,7 +19,7 @@ Related: [PRD §7.1](PRD.md#71-runtime-manager) · [ARCHITECTURE](ARCHITECTURE.m
 | **Composer** | `getcomposer.org/download/<ver>/composer.phar` (version list: `getcomposer.org/versions`) | same | same | upstream `.sha256sum` |
 | **Node.js** | `nodejs.org/dist/v<ver>/node-v<ver>-win-x64.zip` (index: `nodejs.org/dist/index.json`) | `…-darwin-arm64.tar.gz` / `…-darwin-x64.tar.gz` | `…-linux-x64.tar.xz` | `SHASUMS256.txt` |
 | **MySQL** | Official "ZIP Archive" (`mysql-<ver>-winx64.zip`) from `dev.mysql.com` / `cdn.mysql.com` | Official macOS tar.gz (arm64 & x86_64) | Official linux-glibc tar.xz | Upstream gives MD5 + GPG. The generator verifies the GPG signature, then pins SHA-256 |
-| **MariaDB** | `archive.mariadb.org/mariadb-<ver>/winx64-packages/…zip` | **Not available in v1** (no official binaries) | `archive.mariadb.org/…/bintar-linux-systemd-x86_64/…tar.gz` | `sha256sums.txt` |
+| **MariaDB** | `archive.mariadb.org/mariadb-<ver>/winx64-packages/…zip` | **Not available in v1** (no official binaries) | `archive.mariadb.org/…/bintar-linux-systemd-x86_64/…tar.gz` (x86_64 only, 330 to 490 MB) | The REST API `downloads.mariadb.org/rest-api/mariadb/<line>/` lists every file with its SHA-256; lines and end-of-life dates come from `…/rest-api/mariadb/`. The generator offers the newest release of each long-term-support line |
 | **Caddy** | GitHub releases `caddyserver/caddy` (`caddy_<ver>_windows_amd64.zip`) | `…_mac_arm64.tar.gz` / `…_mac_amd64.tar.gz` | `…_linux_amd64.tar.gz` | `caddy_<ver>_checksums.txt` |
 
 **Later phases:** PostgreSQL (EDB binary zips for Windows/macOS; Linux TBD), Valkey (Redis-compatible,
