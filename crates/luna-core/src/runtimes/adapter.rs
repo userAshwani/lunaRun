@@ -207,6 +207,31 @@ pub fn run_version_command(
     run_program(runtime, &command.program, &command.args, dir, timeout)
 }
 
+/// How often a start is retried when the file is momentarily "busy", and how long to wait in between.
+const BUSY_RETRIES: u32 = 8;
+const BUSY_WAIT: Duration = Duration::from_millis(50);
+
+/// Run `start`, trying again a few times when it fails with "text file busy" (`ETXTBSY`, errno 26 on
+/// Linux and macOS). A program that was written a moment ago can still be open for writing in a child
+/// that another thread forked in that instant, and `exec` refuses it until that child has exec'd too.
+/// It passes in milliseconds, so waiting is the standard answer. Does nothing on Windows.
+fn retry_if_busy<T>(mut start: impl FnMut() -> std::io::Result<T>) -> std::io::Result<T> {
+    let mut attempt = 0;
+    loop {
+        match start() {
+            Err(err) if is_busy(&err) && attempt < BUSY_RETRIES => {
+                attempt += 1;
+                thread::sleep(BUSY_WAIT);
+            }
+            other => return other,
+        }
+    }
+}
+
+fn is_busy(err: &std::io::Error) -> bool {
+    cfg!(unix) && err.raw_os_error() == Some(26)
+}
+
 fn run_program(
     runtime: &str,
     program: &Path,
@@ -226,7 +251,7 @@ fn run_program(
         use std::os::windows::process::CommandExt;
         process.creation_flags(0x0800_0000); // CREATE_NO_WINDOW: no console flashing up in the app
     }
-    let mut child = process.spawn().map_err(|err| {
+    let mut child = retry_if_busy(|| process.spawn()).map_err(|err| {
         broken(
             runtime,
             format!("{} could not be started: {err}", program.display()),
@@ -320,6 +345,44 @@ mod tests {
         }
         // A fourth number is not part of a version line.
         assert_eq!(leading_version("1.2.3.4").as_deref(), Some("1.2.3"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_busy_file_is_retried_a_few_times_and_other_errors_are_not() {
+        use std::io::{Error, ErrorKind};
+
+        let mut calls = 0;
+        let result = retry_if_busy(|| {
+            calls += 1;
+            if calls < 4 {
+                Err(Error::from_raw_os_error(26))
+            } else {
+                Ok("started")
+            }
+        });
+        assert_eq!(result.unwrap(), "started");
+        assert_eq!(calls, 4);
+
+        // Never busy forever: after the last retry the error comes back.
+        let mut calls = 0;
+        let err = retry_if_busy::<()>(|| {
+            calls += 1;
+            Err(Error::from_raw_os_error(26))
+        })
+        .unwrap_err();
+        assert_eq!(err.raw_os_error(), Some(26));
+        assert_eq!(calls, BUSY_RETRIES + 1);
+
+        // Any other failure is final at once.
+        let mut calls = 0;
+        let err = retry_if_busy::<()>(|| {
+            calls += 1;
+            Err(Error::from(ErrorKind::NotFound))
+        })
+        .unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::NotFound);
+        assert_eq!(calls, 1);
     }
 
     #[test]
