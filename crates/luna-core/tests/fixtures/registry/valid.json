@@ -38,12 +38,6 @@
               "requires": ["vcredist-14-x64"]
             },
             {
-              "os": "windows", "arch": "x86_64", "variant": "ts-vs16", "format": "zip",
-              "url": "https://windows.php.net/downloads/releases/php-8.3.14-Win32-vs16-x64.zip",
-              "sha256": "0000000000000000000000000000000000000000000000000000000000000002",
-              "size": 31300000
-            },
-            {
               "os": "macos", "arch": "x86_64", "variant": "static", "format": "tar.gz",
               "url": "https://dl.static-php.dev/php-8.3.14-macos-x86_64.tar.gz",
               "sha256": "0000000000000000000000000000000000000000000000000000000000000003",

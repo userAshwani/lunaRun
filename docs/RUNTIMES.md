@@ -117,6 +117,11 @@ Hosted as a static JSON file. The URL is configurable in settings and defaults t
 Rules:
 - `os` ∈ `windows | macos | linux`, `arch` ∈ `x86_64 | aarch64`. On macOS the app picks the native arch and falls back to `x86_64` (Rosetta) only if no native artifact exists, with a visible note.
 - Unknown fields MUST be ignored (forward compatibility). So are artifacts and versions the app cannot use (unknown `os`, `arch`, `format` or `channel`): they are skipped, never an error. Everything the app *does* use is validated strictly (https URL, 64-hex `sha256`, `size` > 0, safe names, no duplicates). A higher `schema` than supported → use the cached/bundled registry and prompt the user to update the app.
+- **Several artifacts for one OS and architecture are parts of one install, never alternatives.** The only
+  multi-part install today is static PHP (`static-cli` plus `static-fpm`). `Registry::artifacts_for` returns all
+  parts with their total size, and a test pins that the generated registry never lists alternatives side by
+  side. If a real choice between builds is ever needed (say thread-safe and non-thread-safe PHP), add an explicit
+  field for it instead of overloading `variant`.
 - Phase 2: the registry is signed (minisign/Ed25519). The app embeds the public key and rejects a remote registry with a bad signature.
 
 ## 4. Install flow

@@ -82,6 +82,7 @@ export const en = {
     REGISTRY_INVALID: "Version list is invalid",
     REGISTRY_UNSUPPORTED_SCHEMA: "Version list needs a newer lunaRun",
     NO_ARTIFACT_FOR_PLATFORM: "Not available for this computer",
+    RUNTIME_BROKEN: "Installed runtime is broken",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

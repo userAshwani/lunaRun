@@ -167,7 +167,7 @@ pub struct Release {
     pub version: RuntimeVersion,
     pub channel: Channel,
     pub released_at: Option<String>,
-    /// In registry order, which is the preference order for the same OS and architecture.
+    /// In registry order. Several artifacts for the same OS and architecture are parts of one install.
     pub artifacts: Vec<Artifact>,
 }
 
@@ -196,6 +196,26 @@ pub struct ArtifactChoice<'a> {
     pub rosetta_fallback: bool,
 }
 
+/// Everything that has to be downloaded to install one version on this computer.
+///
+/// Usually one archive. PHP on macOS and Linux is two (`static-cli` and `static-fpm`, one file each) and an
+/// install needs both. The registry lists several artifacts for the same OS and architecture only when
+/// they are parts of one install, never as alternatives (a test pins that for the generated registry).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArtifactSet<'a> {
+    /// In registry order. Never empty.
+    pub artifacts: Vec<&'a Artifact>,
+    /// An Intel build chosen for an Apple silicon Mac because no native one exists.
+    pub rosetta_fallback: bool,
+}
+
+impl ArtifactSet<'_> {
+    /// Bytes to download in total.
+    pub fn total_size(&self) -> u64 {
+        self.artifacts.iter().map(|a| a.size).sum()
+    }
+}
+
 /// One row of the "available versions" list, as the UI needs it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -208,7 +228,7 @@ pub struct AvailableVersion {
     pub channel: Channel,
     /// The line has reached its end-of-life date.
     pub eol: bool,
-    /// Download size in bytes for this computer, if there is a download for it.
+    /// Total download size in bytes for this computer (all parts of the install), if there is one.
     #[ts(type = "number | null")]
     pub size: Option<u64>,
     /// There is a download for this operating system and architecture.
@@ -401,12 +421,12 @@ impl Registry {
         self.runtimes.get(id)
     }
 
-    /// The download for `version` on this OS and architecture.
+    /// The first download for `version` on this OS and architecture.
     ///
     /// On an Apple silicon Mac the native build is preferred, and an Intel build is used only if there
-    /// is no native one (`rosetta_fallback`). Other platforms never fall back. If the registry lists
-    /// several builds (variants) for the target, the first is used: the registry orders them by
-    /// preference.
+    /// is no native one (`rosetta_fallback`). Other platforms never fall back. Several artifacts for one
+    /// target are parts of one install, so installing needs [`artifacts_for`](Self::artifacts_for); this
+    /// shortcut is right only for a runtime that has exactly one (Windows PHP, Node, Caddy, ...).
     pub fn artifact_for(
         &self,
         runtime: &str,
@@ -414,19 +434,7 @@ impl Registry {
         os: Os,
         arch: Arch,
     ) -> Result<ArtifactChoice<'_>> {
-        let release = self
-            .runtime(runtime)
-            .and_then(|r| {
-                r.releases
-                    .iter()
-                    .find(|release| release.version.as_str() == version)
-            })
-            .ok_or_else(|| {
-                LunaError::new(
-                    ErrorCode::NotFound,
-                    format!("the registry has no {runtime} {version}"),
-                )
-            })?;
+        let release = self.release(runtime, version)?;
         release.select(os, arch).ok_or_else(|| {
             LunaError::new(
                 ErrorCode::NoArtifactForPlatform,
@@ -438,6 +446,42 @@ impl Registry {
         })
     }
 
+    /// Everything to download for `version` on this OS and architecture (see [`ArtifactSet`]), with the
+    /// same Apple silicon rule as [`artifact_for`](Self::artifact_for).
+    pub fn artifacts_for(
+        &self,
+        runtime: &str,
+        version: &str,
+        os: Os,
+        arch: Arch,
+    ) -> Result<ArtifactSet<'_>> {
+        let release = self.release(runtime, version)?;
+        release.select_all(os, arch).ok_or_else(|| {
+            LunaError::new(
+                ErrorCode::NoArtifactForPlatform,
+                format!(
+                    "{runtime} {version} is not available for this computer ({os:?}, {arch:?})"
+                ),
+            )
+            .with_details(json!({ "runtime": runtime, "version": version }))
+        })
+    }
+
+    fn release(&self, runtime: &str, version: &str) -> Result<&Release> {
+        self.runtime(runtime)
+            .and_then(|r| {
+                r.releases
+                    .iter()
+                    .find(|release| release.version.as_str() == version)
+            })
+            .ok_or_else(|| {
+                LunaError::new(
+                    ErrorCode::NotFound,
+                    format!("the registry has no {runtime} {version}"),
+                )
+            })
+    }
+
     /// Every release of every runtime as UI rows: runtimes in name order, newest version first.
     /// `today` is a parameter so end-of-life flags are deterministic in tests.
     pub fn available_versions(&self, os: Os, arch: Arch, today: CalDate) -> Vec<AvailableVersion> {
@@ -445,14 +489,14 @@ impl Registry {
             .values()
             .flat_map(|runtime| {
                 runtime.releases.iter().map(move |release| {
-                    let choice = release.select(os, arch);
+                    let choice = release.select_all(os, arch);
                     AvailableVersion {
                         runtime: runtime.id.clone(),
                         version: release.version.to_string(),
                         line: runtime.line_of(&release.version),
                         channel: release.channel,
                         eol: runtime.is_eol(&release.version, today),
-                        size: choice.as_ref().map(|c| c.artifact.size),
+                        size: choice.as_ref().map(ArtifactSet::total_size),
                         available: choice.is_some(),
                         rosetta_fallback: choice.is_some_and(|c| c.rosetta_fallback),
                     }
@@ -463,6 +507,34 @@ impl Registry {
 }
 
 impl Release {
+    /// Every artifact of the target the platform uses: the native architecture if the release has one,
+    /// else (Apple silicon only) the Intel build.
+    fn select_all(&self, os: Os, arch: Arch) -> Option<ArtifactSet<'_>> {
+        let all = |wanted: Arch| -> Vec<&Artifact> {
+            self.artifacts
+                .iter()
+                .filter(|a| a.os == os && a.arch == wanted)
+                .collect()
+        };
+        let native = all(arch);
+        if !native.is_empty() {
+            return Some(ArtifactSet {
+                artifacts: native,
+                rosetta_fallback: false,
+            });
+        }
+        if os == Os::Macos && arch == Arch::Aarch64 {
+            let intel = all(Arch::X86_64);
+            if !intel.is_empty() {
+                return Some(ArtifactSet {
+                    artifacts: intel,
+                    rosetta_fallback: true,
+                });
+            }
+        }
+        None
+    }
+
     fn select(&self, os: Os, arch: Arch) -> Option<ArtifactChoice<'_>> {
         let find = |wanted: Arch| {
             self.artifacts

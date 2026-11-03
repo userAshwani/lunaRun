@@ -229,3 +229,37 @@ fn mysql_is_offered_on_windows_macos_and_linux_x64_and_flags_the_old_line() {
         "a supported MySQL line exists"
     );
 }
+
+#[test]
+fn several_downloads_for_one_platform_are_always_parts_of_one_install() {
+    // `Registry::artifacts_for` installs everything listed for a platform, so the generated registry must
+    // never list alternatives (say a thread-safe and a non-thread-safe Windows build) side by side. The only
+    // multi-part install is static PHP: a CLI archive plus an FPM archive.
+    let registry = registry();
+    for id in registry.runtime_ids() {
+        for release in &registry.runtime(id).unwrap().releases {
+            for os in [Os::Windows, Os::Macos, Os::Linux] {
+                for arch in [Arch::X86_64, Arch::Aarch64] {
+                    let on_target: Vec<_> = release
+                        .artifacts
+                        .iter()
+                        .filter(|a| a.os == os && a.arch == arch)
+                        .collect();
+                    if on_target.len() > 1 {
+                        let mut variants: Vec<_> = on_target
+                            .iter()
+                            .map(|a| a.variant.as_deref().unwrap_or(""))
+                            .collect();
+                        variants.sort_unstable();
+                        assert_eq!(
+                            (id, variants),
+                            ("php", vec!["static-cli", "static-fpm"]),
+                            "{id} {} {os:?}/{arch:?}",
+                            release.version
+                        );
+                    }
+                }
+            }
+        }
+    }
+}

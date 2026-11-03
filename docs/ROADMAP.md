@@ -65,7 +65,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Decide registry hosting (RUNTIMES §5) and record it in DECISIONS.md (D-018) + daily `registry.yml` workflow
 
 ### M1.3 Runtime manager
-- [ ] `RuntimeAdapter` trait + adapters: php, composer, node, mysql, mariadb, caddy
+- [x] `RuntimeAdapter` trait + adapters: php, composer, node, mysql, mariadb, caddy (layouts verified on the real Windows archives; macOS/Linux by listing)
 - [ ] Install flow incl. staging + atomic rename + receipt (FR-RT-13); incomplete-install cleanup on start
 - [ ] PHP post-install: php.ini generation, CA bundle, conf.d override dir (SERVICES §4); macOS ad-hoc codesign
 - [ ] Windows VC++ redist check + guidance (FR-RT-12)

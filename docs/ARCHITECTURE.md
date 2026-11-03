@@ -102,17 +102,26 @@ reusable by `luna-cli`.
 - **PortAllocator**: persistent port assignments plus live conflict checks.
 - **StateStore**: atomic JSON read/write with schema versions.
 
-### Runtime adapter trait (sketch)
+### Runtime adapter trait (`luna-core::runtimes`)
 
 ```rust
 pub trait RuntimeAdapter: Send + Sync {
-    fn id(&self) -> RuntimeId;                       // "php", "mysql", ...
-    fn post_install(&self, ctx: &InstallCtx) -> Result<()>;  // e.g. generate php.ini, codesign on macOS
-    fn executables(&self, install: &InstalledRuntime) -> Vec<PathBuf>; // dirs to put on PATH
-    fn service_specs(&self, install: &InstalledRuntime, cfg: &ServiceCfg) -> Vec<ServiceSpec>; // empty for node/composer
-    fn verify(&self, install: &InstalledRuntime) -> Result<VersionInfo>; // run `php -v` etc.
+    fn id(&self) -> &'static str;                                   // "php", "mysql", ...
+    fn binaries(&self, dir: &Path, os: Os) -> Vec<Binary>;          // every program, `required` or not
+    fn path_dirs(&self, dir: &Path, os: Os) -> Vec<PathBuf>;        // folders for a terminal's PATH
+    fn version_command(&self, dir: &Path, os: Os) -> Option<VersionCommand>; // `php -v`, `node -v`, ...
+    fn parse_version(&self, output: &str) -> Option<String>;
+    fn post_install(&self, ctx: &InstallCtx<'_>) -> Result<()>;     // php.ini, codesign (default: nothing)
+    fn verify(&self, dir: &Path, os: Os, expected: &str) -> Result<VersionInfo>; // default: files exist + run + compare
+    // service_specs(...) arrives with the supervisor (M1.4)
 }
 ```
+
+Layouts are pure functions of `(install folder, OS)`, so every platform is testable anywhere; only `verify`
+starts a process (a program inside the install folder, argument list, 30 s timeout, never a shell).
+`runtimes::list_installed` scans `runtimes/<rt>/<ver>/install.json` read-only: a folder without a valid
+receipt (right schema, matching runtime and version) is not an installed runtime. One adapter per registry
+runtime: `caddy`, `composer`, `mariadb`, `mysql`, `node`, `php` (`adapter_for(id)`).
 
 Adding a runtime = add a registry entry + an adapter. No UI changes beyond generic lists.
 

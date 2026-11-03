@@ -67,8 +67,8 @@ fn unknown_os_arch_and_format_artifacts_are_skipped_not_errors() {
         .iter()
         .find(|r| r.version.as_str() == "8.3.14")
         .unwrap();
-    // 4 usable artifacts; the freebsd, riscv64 and 7z ones are gone.
-    assert_eq!(release.artifacts.len(), 4);
+    // 3 usable artifacts; the freebsd, riscv64 and 7z ones are gone.
+    assert_eq!(release.artifacts.len(), 3);
 }
 
 #[test]
@@ -98,13 +98,19 @@ fn artifact_fields_are_carried_over_and_the_hash_is_lowercased() {
 }
 
 #[test]
-fn the_first_listed_build_wins_when_a_target_has_several_variants() {
+fn artifact_for_gives_the_first_artifact_and_artifacts_for_gives_the_whole_install() {
     let registry = valid();
-    // Two Windows builds exist for 8.3.14 with different variants; the registry lists NTS first.
+    // Several artifacts for one OS and architecture are parts of one install, never alternatives, so
+    // `artifact_for` is only a shortcut for runtimes that have exactly one (Windows PHP has one zip).
     let choice = registry
         .artifact_for("php", "8.3.14", Os::Windows, Arch::X86_64)
         .unwrap();
     assert_eq!(choice.artifact.variant.as_deref(), Some("nts-vs16"));
+    let set = registry
+        .artifacts_for("php", "8.3.14", Os::Windows, Arch::X86_64)
+        .unwrap();
+    assert_eq!(set.artifacts, [choice.artifact]);
+    assert_eq!(set.total_size(), choice.artifact.size);
 }
 
 #[test]

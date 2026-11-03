@@ -48,6 +48,9 @@ pub enum ErrorCode {
     RegistryUnsupportedSchema,
     /// The registry has no download for this operating system and processor.
     NoArtifactForPlatform,
+    /// An installed runtime is incomplete or does not run: a required file is missing, the version command
+    /// fails or times out, or it reports another version than the one that was installed.
+    RuntimeBroken,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

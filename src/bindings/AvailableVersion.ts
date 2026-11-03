@@ -14,7 +14,7 @@ line: string, channel: Channel,
  */
 eol: boolean, 
 /**
- * Download size in bytes for this computer, if there is a download for it.
+ * Total download size in bytes for this computer (all parts of the install), if there is one.
  */
 size: number | null, 
 /**
