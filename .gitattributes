@@ -5,3 +5,10 @@
 *.png binary
 *.ico binary
 *.icns binary
+
+# Test material and embedded data whose exact bytes matter: git must not convert their line endings.
+# These come after the rules above on purpose, because the last matching attribute wins.
+# The php.ini fixture is the real Windows file with CRLF line endings, and tests check that they are kept.
+crates/luna-core/tests/fixtures/php/** -text
+# The CA bundle is embedded in the app, so every build must embed the same bytes.
+crates/luna-core/data/*.pem -text
