@@ -23,6 +23,7 @@ use tokio_util::sync::CancellationToken;
 use super::adapter::{InstallCtx, RuntimeAdapter};
 use super::adapters::adapter_for;
 use super::installed::{InstallReceipt, InstalledRuntime};
+use super::prerequisites::{default_check, default_reg_path};
 use crate::diagnostics::{Arch, Os};
 use crate::download::{DownloadRequest, Downloader, Progress};
 use crate::error::{ErrorCode, IoResultExt, LunaError, Result};
@@ -79,7 +80,7 @@ pub fn downloader_fetcher(home: LunaHome, downloader: Downloader) -> Fetcher {
 pub type FreeSpace = Arc<dyn Fn(&Path) -> std::io::Result<u64> + Send + Sync>;
 
 /// Checks the `requires` of the artifacts (`vcredist-14-x64`). Returns `PREREQUISITE_MISSING` when one is
-/// not there. The Windows checks arrive with M1.3 task 4, so by default nothing is checked.
+/// not there. Without this the installer uses the real check (`prerequisites::default_check`).
 pub type Prerequisites = Arc<dyn Fn(&[String]) -> Result<()> + Send + Sync>;
 
 pub type AdapterLookup = fn(&str) -> Option<&'static dyn RuntimeAdapter>;
@@ -90,7 +91,10 @@ struct Config {
     os: Os,
     arch: Arch,
     free_space: FreeSpace,
-    prerequisites: Prerequisites,
+    /// `None`: the built-in check (`prerequisites::default_check`, the real Windows registry).
+    prerequisites: Option<Prerequisites>,
+    /// The `reg.exe` the built-in check asks (replaceable in tests).
+    reg: PathBuf,
     adapters: AdapterLookup,
 }
 
@@ -108,7 +112,8 @@ impl Installer {
             os: Os::current(),
             arch: Arch::current(),
             free_space: Arc::new(|path| fs4::available_space(path)),
-            prerequisites: Arc::new(|_| Ok(())),
+            prerequisites: None,
+            reg: default_reg_path(),
             adapters: adapter_for,
         }))
     }
@@ -121,7 +126,8 @@ impl Installer {
             os: old.os,
             arch: old.arch,
             free_space: Arc::clone(&old.free_space),
-            prerequisites: Arc::clone(&old.prerequisites),
+            prerequisites: old.prerequisites.clone(),
+            reg: old.reg.clone(),
             adapters: old.adapters,
         };
         change(&mut config);
@@ -149,7 +155,13 @@ impl Installer {
 
     #[must_use]
     pub fn with_prerequisites(self, prerequisites: Prerequisites) -> Self {
-        self.modified(|c| c.prerequisites = prerequisites)
+        self.modified(|c| c.prerequisites = Some(prerequisites))
+    }
+
+    /// Where the built-in Visual C++ check finds `reg.exe` (tests point it at a stand-in).
+    #[must_use]
+    pub fn with_reg_path(self, reg: PathBuf) -> Self {
+        self.modified(|c| c.reg = reg)
     }
 
     #[must_use]
@@ -302,7 +314,18 @@ async fn run(
         .collect();
     requires.sort();
     requires.dedup();
-    (config.prerequisites)(&requires)?;
+    match &config.prerequisites {
+        Some(check) => check(&requires)?,
+        // Reads the registry by starting `reg.exe`, so it must not run on an async worker thread.
+        None => {
+            let (wanted, reg) = (requires.clone(), config.reg.clone());
+            tokio::task::spawn_blocking(move || default_check(os, &wanted, &reg))
+                .await
+                .map_err(|err| {
+                    LunaError::internal(format!("the prerequisite check failed: {err}"))
+                })??;
+        }
+    }
 
     home.ensure_layout()?;
     let needed = set.total_size().saturating_mul(DISK_FACTOR);

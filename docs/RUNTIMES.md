@@ -46,6 +46,15 @@ Nginx (official Windows zips; macOS/Linux need self-built binaries), Xdebug (Win
   releases (8.3.32 against 8.3.36), so the registry has separate versions per platform family unless a number
   exists on both. static-php publishes **no checksum and no signature**: the SHA-256 is computed from the
   generator's own download (D-017), and each artifact has `builtAt`, the listing's date, to notice a rebuilt file.
+- **Windows prerequisite check (FR-RT-12, `luna-core::runtimes::prerequisites`):** an artifact that needs the runtime lists
+  `vcredist-14-x64` in `requires`. Before anything is downloaded the installer reads
+  `HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64` through `reg query` (argument list, no extra crate) and
+  refuses with `PREREQUISITE_MISSING` when `Installed` is not 1 or the runtime is older than **14.40** (an old 2015 runtime
+  also reports `Installed = 1` yet makes newer builds fail to start; 14.40 is the C++ library change current PHP, MySQL and
+  MariaDB builds need). The error's details carry `requirement`, `name`, `downloadUrl`
+  (`https://aka.ms/vs/17/release/vc_redist.x64.exe`), `minimum` and `found`, so the UI can offer the download without
+  parsing text. A requirement lunaRun does not know is refused, nothing is checked on macOS and Linux, and if the
+  registry cannot be read at all the install is not blocked (a wrong "missing" is worse than a clear `RUNTIME_BROKEN`).
 - **macOS arm64:** binaries must be at least ad-hoc signed or the kernel kills them. Post-install runs
   `codesign --force --sign - <binary>` on every executable that `codesign -v` reports as unsigned.
 

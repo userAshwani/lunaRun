@@ -2,6 +2,7 @@
 //!
 //! - [`installed`]: the `install.json` receipt and the read-only listing of what is installed.
 //! - [`php_config`] and [`codesign`]: what PHP needs after extraction (`php.ini`, CA bundle, user `conf.d`, macOS signing).
+//! - [`prerequisites`]: what a runtime needs that lunaRun cannot install (the Visual C++ runtime on Windows).
 //! - [`install`]: the install flow (download, extract, verify, atomic rename) and startup cleanup.
 //! - [`adapter`] and [`adapters`]: the `RuntimeAdapter` trait and one adapter per runtime (layout, version
 //!   check). The install flow itself (download, extract, post-install, atomic rename) comes next and
@@ -13,6 +14,7 @@ pub mod codesign;
 pub mod install;
 pub mod installed;
 pub mod php_config;
+pub mod prerequisites;
 
 pub use adapter::{
     Binary, InstallCtx, RuntimeAdapter, VERIFY_TIMEOUT, VersionCommand, VersionInfo,

@@ -830,6 +830,143 @@ async fn a_missing_prerequisite_stops_the_install_before_anything_is_downloaded(
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn a_windows_install_without_the_visual_cpp_runtime_is_refused_before_any_download() {
+    use luna_core::runtimes::prerequisites::{
+        VCREDIST_DOWNLOAD_URL, VCREDIST_ID, VcRedist, check_requirements,
+    };
+
+    let bench = Bench::new();
+    let mut part = Part::new(
+        "https://example.test/a.zip",
+        "zip",
+        zip(&[tool(script_name(), "1.0.0")]),
+    );
+    part.requires = vec![VCREDIST_ID];
+    let registry = bench.registry("scripted", "1.0.0", &[part]);
+
+    // The registry says Windows needs it, and the PC does not have it.
+    let missing = bench.installer().with_prerequisites(Arc::new(|requires| {
+        check_requirements(Os::Windows, requires, &|| Ok(None))
+    }));
+    let err = bench
+        .install(&missing, &registry, "scripted", "1.0.0")
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::PrerequisiteMissing);
+    assert_eq!(err.details.unwrap()["downloadUrl"], VCREDIST_DOWNLOAD_URL);
+    assert!(bench.net.fetched().is_empty(), "nothing was downloaded");
+    assert!(only_installed(&bench).is_empty());
+    assert!(bench.names("scripted").is_empty());
+
+    // Once it is installed, the same install goes through.
+    let present = bench.installer().with_prerequisites(Arc::new(|requires| {
+        check_requirements(Os::Windows, requires, &|| {
+            Ok(Some(VcRedist {
+                installed: true,
+                major: 14,
+                minor: 51,
+                build: 36247,
+                version: None,
+            }))
+        })
+    }));
+    bench
+        .install(&present, &registry, "scripted", "1.0.0")
+        .await
+        .unwrap();
+    assert_eq!(only_installed(&bench), ["scripted 1.0.0"]);
+}
+
+/// A stand-in for `reg.exe`: prints `output` and exits with `code`.
+fn fake_reg(dir: &Path, output: &str, code: i32) -> PathBuf {
+    fs::create_dir_all(dir).unwrap();
+    if cfg!(windows) {
+        let path = dir.join("reg.cmd");
+        let echoes: String = output
+            .lines()
+            .map(|l| {
+                format!(
+                    "echo {l}
+"
+                )
+            })
+            .collect();
+        fs::write(
+            &path,
+            format!(
+                "@echo off
+{echoes}exit /b {code}
+"
+            ),
+        )
+        .unwrap();
+        path
+    } else {
+        let path = dir.join("reg.sh");
+        fs::write(
+            &path,
+            format!(
+                "#!/bin/sh
+cat <<'EOF'
+{output}
+EOF
+exit {code}
+"
+            ),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        path
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_installers_own_check_reads_the_registry_through_reg_when_nothing_replaces_it() {
+    let bench = Bench::new();
+    // A Windows artifact that needs the Visual C++ runtime, installed on a "Windows PC", whatever the host.
+    let bytes = zip(&[tool(script_name(), "1.0.0")]);
+    bench.net.serve("https://example.test/a.zip", bytes.clone());
+    let text = json!({ "schema": 1, "runtimes": { "scripted": {
+        "displayName": "Scripted", "versions": [ { "version": "1.0.0", "artifacts": [ {
+            "os": "windows", "arch": "x86_64", "format": "zip", "url": "https://example.test/a.zip",
+            "sha256": sha256_hex(&bytes), "size": bytes.len(), "requires": ["vcredist-14-x64"]
+        } ] } ]
+    } } })
+    .to_string();
+    let registry = Arc::new(Registry::parse(&text).unwrap());
+    let windows = bench.installer().with_platform(Os::Windows, Arch::X86_64);
+    let tools = bench._tmp.path().join("fake tools");
+
+    // `reg` says the key does not exist: refused, before any download.
+    let absent =
+        windows
+            .clone()
+            .with_reg_path(fake_reg(&tools.join("absent"), "ERROR: key not found", 1));
+    let err = bench
+        .install(&absent, &registry, "scripted", "1.0.0")
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::PrerequisiteMissing);
+    assert!(bench.net.fetched().is_empty(), "nothing was downloaded");
+
+    // `reg` reports a recent runtime: the install goes through.
+    let output = "    Installed    REG_DWORD    0x1
+    Major    REG_DWORD    0xe
+    Minor    REG_DWORD    0x33
+    Bld    REG_DWORD    0x8d97";
+    let present = windows.with_reg_path(fake_reg(&tools.join("present"), output, 0));
+    bench
+        .install(&present, &registry, "scripted", "1.0.0")
+        .await
+        .unwrap();
+    assert_eq!(only_installed(&bench), ["scripted 1.0.0"]);
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn too_little_disk_space_stops_the_install_before_anything_is_downloaded() {
     let bench = Bench::new();
     let bytes = zip(&[tool(script_name(), "1.0.0")]);

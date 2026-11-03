@@ -238,7 +238,18 @@ fn is_busy(err: &std::io::Error) -> bool {
     cfg!(unix) && err.raw_os_error() == Some(26)
 }
 
-/// Start `program` with `args` in `cwd` and return stdout and stderr together. Kills it after `timeout`.
+/// What a program printed and how it ended, for callers that care about a non-zero exit (`reg query` exits
+/// with 1 when a key does not exist, which is an answer, not a failure).
+pub(crate) struct Finished {
+    pub success: bool,
+    /// The exit status as text, for messages.
+    pub status: String,
+    /// Stdout and stderr together.
+    pub output: String,
+}
+
+/// Start `program` with `args` in `cwd` and return stdout and stderr together. A program that cannot be
+/// started, that is killed after `timeout`, or that exits with a failure is an error.
 pub(crate) fn run_program<S: AsRef<std::ffi::OsStr>>(
     runtime: &str,
     program: &Path,
@@ -246,6 +257,31 @@ pub(crate) fn run_program<S: AsRef<std::ffi::OsStr>>(
     cwd: &Path,
     timeout: Duration,
 ) -> Result<String> {
+    let finished = run_program_raw(runtime, program, args, cwd, timeout)?;
+    if finished.success {
+        Ok(finished.output)
+    } else {
+        Err(broken(
+            runtime,
+            format!(
+                "{} exited with {}: {:?}",
+                program.display(),
+                finished.status,
+                first_line(&finished.output)
+            ),
+        ))
+    }
+}
+
+/// Like [`run_program`], but a non-zero exit is returned, not turned into an error. Failing to start the
+/// program or running past `timeout` still is one.
+pub(crate) fn run_program_raw<S: AsRef<std::ffi::OsStr>>(
+    runtime: &str,
+    program: &Path,
+    args: &[S],
+    cwd: &Path,
+    timeout: Duration,
+) -> Result<Finished> {
     let mut process = Command::new(program);
     process
         .args(args)
@@ -322,15 +358,11 @@ pub(crate) fn run_program<S: AsRef<std::ffi::OsStr>>(
             runtime,
             format!("{} did not finish within {timeout:?}", program.display()),
         )),
-        Some(status) if !status.success() => Err(broken(
-            runtime,
-            format!(
-                "{} exited with {status}: {:?}",
-                program.display(),
-                first_line(&output)
-            ),
-        )),
-        Some(_) => Ok(output),
+        Some(status) => Ok(Finished {
+            success: status.success(),
+            status: status.to_string(),
+            output,
+        }),
     }
 }
 
