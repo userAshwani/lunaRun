@@ -2,9 +2,12 @@
 
 mod commands;
 pub mod events;
+mod registry;
 
 use luna_core::LunaHome;
 use luna_core::jobs::{JobManager, JobOptions};
+use luna_core::registry::RegistryHolder;
+use luna_core::runtimes::cleanup_incomplete;
 use tauri::Manager;
 
 #[allow(
@@ -16,6 +19,18 @@ pub fn run() {
         .setup(|app| {
             let home = LunaHome::resolve()?;
             home.ensure_layout()?;
+            // Remove what an install or uninstall that died halfway left behind, before anything new starts.
+            // Failing to clean up must not stop the app from opening.
+            let _ = cleanup_incomplete(&home);
+
+            // The page can list runtimes at once from the copy built into the app, while the fresh list
+            // loads in the background and is announced with the `registry:updated` event.
+            let registry = RegistryHolder::with_bundled()?;
+            app.manage(registry.clone());
+            let (handle, refresh_home) = (app.handle().clone(), home.clone());
+            tauri::async_runtime::spawn(async move {
+                let _ = registry::refresh_and_announce(&handle, &registry, &refresh_home).await;
+            });
             app.manage(home);
 
             // Jobs run on Tauri's own Tokio runtime and report to the webview through events.
@@ -27,7 +42,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::jobs_list,
-            commands::job_cancel
+            commands::job_cancel,
+            commands::runtimes_available,
+            commands::runtimes_installed,
+            commands::registry_refresh
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

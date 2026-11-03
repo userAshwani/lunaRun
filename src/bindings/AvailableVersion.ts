@@ -14,6 +14,22 @@ line: string, channel: Channel,
  */
 eol: boolean, 
 /**
+ * The day the line stops getting security fixes (`2027-12-31`), if the registry says.
+ */
+eolDate: string | null, 
+/**
+ * Active support is over but the line still gets security fixes.
+ */
+securityOnly: boolean, 
+/**
+ * The day this version was released (`2026-10-26`), if the registry says.
+ */
+releasedAt: string | null, 
+/**
+ * The build has no upstream checksum or signature (static PHP). See [`ArtifactSet::community_build`].
+ */
+community: boolean, 
+/**
  * Total download size in bytes for this computer (all parts of the install), if there is one.
  */
 size: number | null, 

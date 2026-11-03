@@ -193,6 +193,50 @@ impl CalDate {
     pub fn new(year: u16, month: u8, day: u8) -> Option<Self> {
         Self::parse(&format!("{year:04}-{month:02}-{day:02}"))
     }
+
+    /// Today's date in UTC, read from the system clock. A clock set before the year 1 or after 9999 gives
+    /// `None`, and so does one that cannot be read.
+    pub fn today() -> Option<Self> {
+        let seconds = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()?
+            .as_secs();
+        Self::from_unix_days(i64::try_from(seconds / 86_400).ok()?)
+    }
+
+    /// The date `days` days after 1970-01-01 (negative: before). Proleptic Gregorian calendar, the
+    /// well-known days-to-civil algorithm, so no date crate is needed for this.
+    pub fn from_unix_days(days: i64) -> Option<Self> {
+        let shifted = days + 719_468; // days since 0000-03-01
+        let era = shifted.div_euclid(146_097);
+        let day_of_era = shifted.rem_euclid(146_097);
+        let year_of_era =
+            (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+        let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+        let month_index = (5 * day_of_year + 2) / 153; // 0 = March
+        let day = day_of_year - (153 * month_index + 2) / 5 + 1;
+        let month = if month_index < 10 {
+            month_index + 3
+        } else {
+            month_index - 9
+        };
+        let year = year_of_era + era * 400 + i64::from(month <= 2);
+        if year < 1 {
+            return None; // there is no year 0 in the calendar this type means
+        }
+        Self::new(
+            u16::try_from(year).ok()?,
+            u8::try_from(month).ok()?,
+            u8::try_from(day).ok()?,
+        )
+    }
+}
+
+impl std::fmt::Display for CalDate {
+    /// `2027-12-31`
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:04}-{:02}-{:02}", self.year, self.month, self.day)
+    }
 }
 
 #[cfg(test)]
@@ -301,6 +345,41 @@ mod tests {
         assert!(!v("8.3.14").is_on_line("8.x"));
         assert_eq!(v("8.3.14").major_minor(), "8.3");
         assert_eq!(v("24.22.2").major_minor(), "24.22");
+    }
+
+    #[test]
+    fn unix_days_become_calendar_dates() {
+        let date = |days| CalDate::from_unix_days(days).map(|d| d.to_string());
+        assert_eq!(date(0).as_deref(), Some("1970-01-01"));
+        assert_eq!(date(-1).as_deref(), Some("1969-12-31"));
+        assert_eq!(date(59).as_deref(), Some("1970-03-01"));
+        assert_eq!(
+            date(11_016).as_deref(),
+            Some("2000-02-29"),
+            "a leap day in a 400-year year"
+        );
+        assert_eq!(date(11_017).as_deref(), Some("2000-03-01"));
+        assert_eq!(date(19_723).as_deref(), Some("2024-01-01"));
+        assert_eq!(date(19_782).as_deref(), Some("2024-02-29"));
+        assert_eq!(date(20_027).as_deref(), Some("2024-10-31"));
+        assert_eq!(date(20_761).as_deref(), Some("2026-11-04"));
+        // 1900 and 2100 are not leap years (divisible by 100 but not by 400): no 29 February.
+        assert_eq!(date(-25_508).as_deref(), Some("1900-03-01"));
+        assert_eq!(date(-25_509).as_deref(), Some("1900-02-28"));
+        assert_eq!(date(47_541).as_deref(), Some("2100-03-01"));
+        assert_eq!(date(47_540).as_deref(), Some("2100-02-28"));
+        assert_eq!(date(-719_162).as_deref(), Some("0001-01-01"));
+        assert_eq!(date(2_932_896).as_deref(), Some("9999-12-31"));
+        assert_eq!(date(2_932_897), None, "past year 9999");
+        assert_eq!(date(-719_163), None, "before year 1");
+    }
+
+    #[test]
+    fn today_is_a_plausible_date_and_dates_print_in_iso_form() {
+        let today = CalDate::today().expect("the clock is readable");
+        assert!(today.year >= 2026, "{today}");
+        assert_eq!(CalDate::parse(&today.to_string()), Some(today));
+        assert_eq!(CalDate::new(2027, 1, 5).unwrap().to_string(), "2027-01-05");
     }
 
     #[test]

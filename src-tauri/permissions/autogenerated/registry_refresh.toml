@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-registry-refresh"
+description = "Enables the registry_refresh command without any pre-configured scope."
+commands.allow = ["registry_refresh"]
+
+[[permission]]
+identifier = "deny-registry-refresh"
+description = "Denies the registry_refresh command without any pre-configured scope."
+commands.deny = ["registry_refresh"]

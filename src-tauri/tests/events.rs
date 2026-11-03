@@ -9,8 +9,11 @@
 use std::sync::{Arc, Mutex};
 
 use luna_core::jobs::{JobDone, JobEvent, JobEventSink, JobProgress};
+use luna_core::registry::{RegistrySourceKind, RegistryStatus};
 use luna_core::{ErrorCode, LunaError};
-use lunarun_lib::events::{JOB_DONE_EVENT, JOB_PROGRESS_EVENT, TauriJobSink};
+use lunarun_lib::events::{
+    JOB_DONE_EVENT, JOB_PROGRESS_EVENT, REGISTRY_UPDATED_EVENT, TauriJobSink, emit_registry_updated,
+};
 use tauri::Listener;
 
 /// Collects the raw JSON payloads the webview would receive for `name`.
@@ -77,4 +80,29 @@ fn events_for_one_name_do_not_leak_into_the_other() {
         error: None,
     }));
     assert!(progress.lock().unwrap().is_empty());
+}
+
+#[test]
+fn a_refreshed_version_list_is_announced_with_its_status() {
+    let app = tauri::test::mock_app();
+    let updated = capture(&app, REGISTRY_UPDATED_EVENT);
+
+    emit_registry_updated(
+        app.handle(),
+        &RegistryStatus {
+            source: RegistrySourceKind::Cache,
+            age_seconds: Some(3600),
+            problem: Some(LunaError::new(ErrorCode::Network, "offline")),
+            refreshing: false,
+        },
+    );
+
+    assert_eq!(REGISTRY_UPDATED_EVENT, "registry:updated");
+    assert_eq!(
+        updated.lock().unwrap().as_slice(),
+        [serde_json::json!({
+            "source": "cache", "ageSeconds": 3600, "refreshing": false,
+            "problem": { "code": "NETWORK", "message": "offline" }
+        })]
+    );
 }

@@ -28,7 +28,7 @@ pub use install::{
     downloader_fetcher,
 };
 pub use installed::{
-    InstallReceipt, InstalledRuntime, RECEIPT_FILE, ReceiptArtifact, list_installed,
+    InstallReceipt, InstalledRuntime, InstalledView, RECEIPT_FILE, ReceiptArtifact, list_installed,
 };
 pub use php_config::{
     CA_BUNDLE, PhpConfigPaths, PhpSettings, php_config_paths, php_environment, write_php_config,

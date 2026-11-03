@@ -759,3 +759,37 @@ fn a_pre_release_install_verifies_against_the_numbers_its_binary_prints() {
     assert_eq!(run_verify(&dir, "1.2.3-rc1").unwrap().version, "1.2.3");
     assert!(run_verify(&dir, "1.2.4-rc1").is_err());
 }
+
+#[test]
+fn the_installed_view_is_plain_data_for_the_page() {
+    use luna_core::runtimes::{InstalledView, ReceiptArtifact};
+    let (_tmp, home) = home();
+    let dir = home.runtime_dir("php", "8.3.32").unwrap();
+    fs::create_dir_all(&dir).unwrap();
+    let mut receipt = InstallReceipt::new("php", "8.3.32", Os::Macos, Arch::Aarch64, true, &[]);
+    receipt.artifacts = ["static-cli", "static-fpm"]
+        .iter()
+        .map(|variant| ReceiptArtifact {
+            variant: Some((*variant).to_owned()),
+            url: format!("https://example.com/{variant}.tar.gz"),
+            sha256: "a".repeat(64),
+            size: 10,
+        })
+        .collect();
+    receipt.write(&dir).unwrap();
+
+    let installed = list_installed(&home).unwrap();
+    let view = InstalledView::from(&installed[0]);
+
+    assert_eq!(
+        (view.runtime.as_str(), view.version.as_str()),
+        ("php", "8.3.32")
+    );
+    assert_eq!(view.dir, dir.display().to_string());
+    assert!(view.rosetta);
+    assert_eq!(view.parts, 2, "PHP on macOS is two downloads");
+    assert!(view.installed_at > 1_700_000_000);
+    let json = serde_json::to_value(&view).unwrap();
+    assert_eq!(json["installedAt"], view.installed_at);
+    assert_eq!(json["parts"], 2);
+}

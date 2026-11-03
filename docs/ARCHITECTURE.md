@@ -209,9 +209,9 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 
 | Area | Command | Returns |
 |---|---|---|
-| Registry | `registry_refresh()` | `RegistryMeta` |
-| | `registry_versions(runtime)` | `AvailableVersion[]` |
-| Runtimes | `runtimes_installed(runtime?)` | `InstalledRuntime[]` |
+| Registry | `registry_refresh()` | `RegistryStatus` (where the list came from, its age, why it is not fresh) |
+| Runtimes | `runtimes_available()` | `RuntimesAvailable` (every runtime as a `RuntimeCatalog` with its `AvailableVersion[]` for this computer, plus the `RegistryStatus`) |
+| | `runtimes_installed()` | `InstalledView[]` |
 | | `runtime_install(runtime, version, variant?)` | `jobId` |
 | | `runtime_uninstall(runtime, version, deleteData)` | `()` |
 | | `runtime_usage(runtime, version)` | `ProjectRef[]` (who uses it) |
@@ -234,7 +234,7 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 **Events** (backend → UI, via `emit`):
 `job:progress {jobId, phase, bytesDone, bytesTotal, message}`, `job:done {jobId, ok, error?}`,
 `service:state {id, state, pid?, port?}`, `service:log {id, stream, line, ts}` (batched, throttled ≤ 10/s),
-`registry:updated`, `project:changed {id}` (Phase 2 file watcher).
+`registry:updated {RegistryStatus}` (the background refresh finished), `project:changed {id}` (Phase 2 file watcher).
 
 TypeScript types for these MUST be generated from Rust with `ts-rs` (D-012, output in `src/bindings/`) so the
 two sides cannot drift.

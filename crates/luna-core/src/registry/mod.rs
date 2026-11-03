@@ -12,6 +12,7 @@
 //!   SHA-256 and a non-zero size, and names that become folder names (runtime ids, versions) must be
 //!   safe path components. Anything else is `REGISTRY_INVALID`, with a message naming the culprit.
 
+mod holder;
 mod load;
 mod version;
 
@@ -27,6 +28,7 @@ use crate::error::{ErrorCode, LunaError, Result};
 use crate::extract::ArchiveFormat;
 use crate::paths::component;
 
+pub use holder::{RegistryHolder, RegistrySourceKind, RegistryStatus, RuntimesAvailable};
 pub use load::{
     DEFAULT_REGISTRY_URL, LoadedRegistry, MAX_REGISTRY_BYTES, REGISTRY_URL_ENV, RegistrySource,
     bundled_registry, cache_path, load_registry, registry_location,
@@ -214,6 +216,16 @@ impl ArtifactSet<'_> {
     pub fn total_size(&self) -> u64 {
         self.artifacts.iter().map(|a| a.size).sum()
     }
+
+    /// A build whose maker publishes no checksum or signature (static PHP, D-017): its SHA-256 comes from
+    /// lunaRun's own download, so the UI marks it as a community build.
+    pub fn community_build(&self) -> bool {
+        self.artifacts.iter().any(|a| {
+            a.variant
+                .as_deref()
+                .is_some_and(|v| v.starts_with("static-"))
+        })
+    }
 }
 
 /// One row of the "available versions" list, as the UI needs it.
@@ -228,6 +240,14 @@ pub struct AvailableVersion {
     pub channel: Channel,
     /// The line has reached its end-of-life date.
     pub eol: bool,
+    /// The day the line stops getting security fixes (`2027-12-31`), if the registry says.
+    pub eol_date: Option<String>,
+    /// Active support is over but the line still gets security fixes.
+    pub security_only: bool,
+    /// The day this version was released (`2026-10-26`), if the registry says.
+    pub released_at: Option<String>,
+    /// The build has no upstream checksum or signature (static PHP). See [`ArtifactSet::community_build`].
+    pub community: bool,
     /// Total download size in bytes for this computer (all parts of the install), if there is one.
     #[ts(type = "number | null")]
     pub size: Option<u64>,
@@ -235,6 +255,18 @@ pub struct AvailableVersion {
     pub available: bool,
     /// The download is an Intel build that runs under Rosetta on this Apple silicon Mac.
     pub rosetta_fallback: bool,
+}
+
+/// One runtime and its versions as the Runtimes page lists them.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct RuntimeCatalog {
+    pub id: String,
+    pub display_name: String,
+    pub license: Option<License>,
+    /// Newest first, with the download details for this computer.
+    pub versions: Vec<AvailableVersion>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -487,20 +519,19 @@ impl Registry {
     pub fn available_versions(&self, os: Os, arch: Arch, today: CalDate) -> Vec<AvailableVersion> {
         self.runtimes
             .values()
-            .flat_map(|runtime| {
-                runtime.releases.iter().map(move |release| {
-                    let choice = release.select_all(os, arch);
-                    AvailableVersion {
-                        runtime: runtime.id.clone(),
-                        version: release.version.to_string(),
-                        line: runtime.line_of(&release.version),
-                        channel: release.channel,
-                        eol: runtime.is_eol(&release.version, today),
-                        size: choice.as_ref().map(ArtifactSet::total_size),
-                        available: choice.is_some(),
-                        rosetta_fallback: choice.is_some_and(|c| c.rosetta_fallback),
-                    }
-                })
+            .flat_map(|runtime| runtime.rows(os, arch, today))
+            .collect()
+    }
+
+    /// The same rows grouped by runtime, with each runtime's name and license, for the Runtimes page.
+    pub fn catalog(&self, os: Os, arch: Arch, today: CalDate) -> Vec<RuntimeCatalog> {
+        self.runtimes
+            .values()
+            .map(|runtime| RuntimeCatalog {
+                id: runtime.id.clone(),
+                display_name: runtime.display_name.clone(),
+                license: runtime.license.clone(),
+                versions: runtime.rows(os, arch, today),
             })
             .collect()
     }
@@ -561,6 +592,39 @@ impl Release {
 }
 
 impl Runtime {
+    fn rows(&self, os: Os, arch: Arch, today: CalDate) -> Vec<AvailableVersion> {
+        self.releases
+            .iter()
+            .map(|release| {
+                let choice = release.select_all(os, arch);
+                let info = self.line_info(&release.version);
+                let eol = info.and_then(|i| i.eol).is_some_and(|eol| today >= eol);
+                AvailableVersion {
+                    runtime: self.id.clone(),
+                    version: release.version.to_string(),
+                    line: self.line_of(&release.version),
+                    channel: release.channel,
+                    eol,
+                    eol_date: info.and_then(|i| i.eol).map(|d| d.to_string()),
+                    security_only: !eol
+                        && info
+                            .and_then(|i| i.security_only_since)
+                            .is_some_and(|since| today >= since),
+                    released_at: release.released_at.clone(),
+                    community: choice.as_ref().is_some_and(ArtifactSet::community_build),
+                    size: choice.as_ref().map(ArtifactSet::total_size),
+                    available: choice.is_some(),
+                    rosetta_fallback: choice.is_some_and(|c| c.rosetta_fallback),
+                }
+            })
+            .collect()
+    }
+
+    /// What the registry knows about the line of `version`.
+    fn line_info(&self, version: &RuntimeVersion) -> Option<LineInfo> {
+        self.lines.get(&self.line_of(version)).copied()
+    }
+
     /// The line a version belongs to: the longest key of `lines` that is a prefix of the version
     /// (`8.3` over `8`), or the first two numbers when the registry lists no line for it.
     pub fn line_of(&self, version: &RuntimeVersion) -> String {
@@ -575,8 +639,7 @@ impl Runtime {
     /// Has the line of `version` reached its end-of-life date as of `today`? A line with no `eol`
     /// date (or an unknown line) is not end of life. The date itself counts as end of life.
     pub fn is_eol(&self, version: &RuntimeVersion, today: CalDate) -> bool {
-        self.lines
-            .get(&self.line_of(version))
+        self.line_info(version)
             .and_then(|info| info.eol)
             .is_some_and(|eol| today >= eol)
     }

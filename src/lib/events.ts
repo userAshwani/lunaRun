@@ -4,9 +4,11 @@ import { isTauri } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { JobDone } from "@/bindings/JobDone";
 import type { JobProgress } from "@/bindings/JobProgress";
+import type { RegistryStatus } from "@/bindings/RegistryStatus";
 
 export const JOB_PROGRESS_EVENT = "job:progress";
 export const JOB_DONE_EVENT = "job:done";
+export const REGISTRY_UPDATED_EVENT = "registry:updated";
 
 const nothingToUnsubscribe: UnlistenFn = () => {};
 
@@ -23,6 +25,16 @@ export async function onJobProgress(handler: (progress: JobProgress) => void): P
 export async function onJobDone(handler: (done: JobDone) => void): Promise<UnlistenFn> {
   if (!isTauri()) return nothingToUnsubscribe;
   return listen<JobDone>(JOB_DONE_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** The version list was refreshed in the background (or the refresh found nothing better). */
+export async function onRegistryUpdated(
+  handler: (status: RegistryStatus) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return nothingToUnsubscribe;
+  return listen<RegistryStatus>(REGISTRY_UPDATED_EVENT, (event) => {
     handler(event.payload);
   });
 }

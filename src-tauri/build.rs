@@ -1,6 +1,13 @@
 /// Commands the webview may call. Declaring them here makes Tauri generate one permission per
 /// command (`allow-<name>`), so `capabilities/default.json` grants exactly these and nothing else.
-const COMMANDS: &[&str] = &["app_info", "jobs_list", "job_cancel"];
+const COMMANDS: &[&str] = &[
+    "app_info",
+    "jobs_list",
+    "job_cancel",
+    "runtimes_available",
+    "runtimes_installed",
+    "registry_refresh",
+];
 
 fn main() {
     // Unit tests that use Tauri's mock runtime need the Common Controls v6 manifest on Windows, or the

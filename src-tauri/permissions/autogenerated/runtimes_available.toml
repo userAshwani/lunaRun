@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-runtimes-available"
+description = "Enables the runtimes_available command without any pre-configured scope."
+commands.allow = ["runtimes_available"]
+
+[[permission]]
+identifier = "deny-runtimes-available"
+description = "Denies the runtimes_available command without any pre-configured scope."
+commands.deny = ["runtimes_available"]

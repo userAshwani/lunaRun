@@ -122,6 +122,37 @@ pub(crate) fn arch_name(arch: Arch) -> &'static str {
     }
 }
 
+/// An installed runtime as the Runtimes page lists it: plain data, no paths as `PathBuf`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct InstalledView {
+    pub runtime: String,
+    pub version: String,
+    /// The install folder, for "show in folder" and for diagnostics.
+    pub dir: String,
+    /// Seconds since 1970-01-01 UTC.
+    #[ts(type = "number")]
+    pub installed_at: u64,
+    /// An Intel build running under Rosetta on an Apple silicon Mac.
+    pub rosetta: bool,
+    /// How many downloads the install was made of (PHP on macOS and Linux: two).
+    pub parts: usize,
+}
+
+impl From<&InstalledRuntime> for InstalledView {
+    fn from(installed: &InstalledRuntime) -> Self {
+        Self {
+            runtime: installed.runtime.clone(),
+            version: installed.version.clone(),
+            dir: installed.dir.display().to_string(),
+            installed_at: installed.receipt.installed_at,
+            rosetta: installed.receipt.rosetta,
+            parts: installed.receipt.artifacts.len(),
+        }
+    }
+}
+
 /// A runtime that is installed and has a valid receipt.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InstalledRuntime {

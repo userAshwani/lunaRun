@@ -13,3 +13,15 @@ export function formatBytes(bytes: number): string {
   const digits = unit === 0 || value >= 100 ? 0 : 1;
   return `${value.toFixed(digits)} ${UNITS[unit] ?? "B"}`;
 }
+
+/** `2027-12-31` (a calendar day from the version list) as a date in the user's language, never shifted by the time zone. */
+export function formatIsoDate(iso: string, locale: string): string {
+  const day = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(day.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(day);
+}
+
+/** Seconds since 1970 (as the backend sends them) as a local date in the user's language. */
+export function formatUnixDate(seconds: number, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(seconds * 1000));
+}
