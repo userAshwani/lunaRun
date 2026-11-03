@@ -13,6 +13,7 @@ workspace = true
 [dependencies]
 directories = "6.0.0"
 flate2 = "1.1.10"
+fs4 = "1.1.0"
 futures-util = "0.3.34"
 lzma-rust2 = { version = "0.24.0", default-features = false, features = ["std", "xz"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "stream", "system-proxy", "http2"] }

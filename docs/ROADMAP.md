@@ -66,7 +66,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 
 ### M1.3 Runtime manager
 - [x] `RuntimeAdapter` trait + adapters: php, composer, node, mysql, mariadb, caddy (layouts verified on the real Windows archives; macOS/Linux by listing)
-- [ ] Install flow incl. staging + atomic rename + receipt (FR-RT-13); incomplete-install cleanup on start
+- [x] Install flow incl. staging + atomic rename + receipt (FR-RT-13); incomplete-install cleanup on start (`luna-core::runtimes::install`, D-019; wiring `cleanup_incomplete` into app startup comes with the Runtimes page task)
 - [ ] PHP post-install: php.ini generation, CA bundle, conf.d override dir (SERVICES §4); macOS ad-hoc codesign
 - [ ] Windows VC++ redist check + guidance (FR-RT-12)
 - [ ] Uninstall with in-use / bound-projects checks; DB data kept unless asked (FR-RT-05/06)

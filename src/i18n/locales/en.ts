@@ -83,6 +83,9 @@ export const en = {
     REGISTRY_UNSUPPORTED_SCHEMA: "Version list needs a newer lunaRun",
     NO_ARTIFACT_FOR_PLATFORM: "Not available for this computer",
     RUNTIME_BROKEN: "Installed runtime is broken",
+    PREREQUISITE_MISSING: "A required component is missing",
+    INSUFFICIENT_DISK: "Not enough free disk space",
+    ALREADY_INSTALLED: "Already installed",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

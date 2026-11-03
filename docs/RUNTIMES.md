@@ -127,24 +127,29 @@ Rules:
 ## 4. Install flow
 
 ```
-request install(runtime, version)
+request install(runtime, version)               luna-core::runtimes::Installer (a job keyed <runtime>@<version>)
  │
- ├─ resolve artifact for (os, arch)            → NO_ARTIFACT_FOR_PLATFORM
- ├─ check prerequisites (requires[])           → PREREQUISITE_MISSING (e.g. VC++ redist)
- ├─ check free disk (size × 3)                 → INSUFFICIENT_DISK
- ├─ download → LUNA_HOME/downloads/<sha256>.part
- │     resumable (HTTP Range), progress events, cancellable, retry ×3 with backoff
+ ├─ adapter exists, not already installed      → NOT_FOUND, ALREADY_INSTALLED
+ ├─ resolve every part for (os, arch)          → NO_ARTIFACT_FOR_PLATFORM (PHP on macOS/Linux has two parts)
+ ├─ check prerequisites (requires[])           → PREREQUISITE_MISSING (e.g. VC++ redist, check arrives in M1.3 task 4)
+ ├─ check free disk (total size × 3)           → INSUFFICIENT_DISK (skipped if the free space cannot be read)
+ ├─ download each part → LUNA_HOME/downloads/<first 12 hex of sha256>-<file>
+ │     resumable (HTTP Range), progress summed over all parts, cancellable, retry ×3 with backoff
  ├─ verify sha256                              → CHECKSUM_MISMATCH (delete file)
- ├─ extract → runtimes/<rt>/.staging-<uuid>/   (zip-slip guard, strip components)
+ ├─ extract each archive → runtimes/<rt>/.extract-<job>-<n>/  (zip-slip guard, strip components)
+ │     then move its top-level entries into runtimes/<rt>/.staging-<job>/, never overwriting
+ │     (`format: file` parts are copied under the file name in their URL)
  ├─ adapter.post_install()                     (php.ini, codesign, chmod +x, …)
- ├─ adapter.verify()                           (run `php -v`, `node -v`, `mysqld --version`, …)
- ├─ write install.json receipt
- ├─ atomic rename .staging-<uuid> → runtimes/<rt>/<version>/
- └─ delete download, emit job:done
+ ├─ adapter.verify()                           (runs `php -v`, `node -v`, `mysqld --version`, … inside the staging folder)
+ ├─ write install.json receipt                 (last, so no receipt means not installed)
+ ├─ atomic rename .staging-<job> → runtimes/<rt>/<version>/
+ └─ delete the downloads, emit job:done
 ```
 
-Any failure → remove staging dir, emit `job:done {ok:false, error}`. The same version cannot be installed
-twice concurrently (job deduplication by `(runtime, version, variant)`).
+Any failure or cancel → remove the work folders and the downloads (a cancel or network error keeps them, so the
+next try resumes), emit `job:done {ok:false, error}`. `cleanup_incomplete` removes `.staging-*` and `.extract-*`
+left by a crash, at startup. The same version cannot be installed twice concurrently (job deduplication by
+`<runtime>@<version>`). See D-019.
 
 **Extraction safety** (`luna-core::extract`, D-016). Every archive is treated as hostile; nothing is ever written outside
 the staging directory. Entries with absolute paths, drive letters, UNC paths, `..` components or NUL bytes are rejected; the

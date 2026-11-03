@@ -51,6 +51,12 @@ pub enum ErrorCode {
     /// An installed runtime is incomplete or does not run: a required file is missing, the version command
     /// fails or times out, or it reports another version than the one that was installed.
     RuntimeBroken,
+    /// Something an install needs is not on this computer (for example the Visual C++ runtime on Windows).
+    PrerequisiteMissing,
+    /// There is not enough free disk space for the install.
+    InsufficientDisk,
+    /// That version of the runtime is already installed.
+    AlreadyInstalled,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }
