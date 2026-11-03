@@ -222,7 +222,7 @@ fn fake_reg(dir: &Path, output: &str, code: i32) -> PathBuf {
         fs::write(
             &path,
             format!(
-                "#!/bin/sh\necho \"$@\" >> \"$(dirname \"$0\")/calls.log\"\ncat <<'EOF'\n{output}\nEOF\nexit {code}\n"
+                "#!/bin/sh\n# printf, not echo: the echo of sh reads the backslashes of a Windows key as escapes.\nprintf '%s ' \"$@\" >> \"$(dirname \"$0\")/calls.log\"\nprintf '\\n' >> \"$(dirname \"$0\")/calls.log\"\ncat <<'EOF'\n{output}\nEOF\nexit {code}\n"
             ),
         )
         .unwrap();
