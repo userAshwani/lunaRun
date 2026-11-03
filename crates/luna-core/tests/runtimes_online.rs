@@ -8,9 +8,11 @@
 //!     # Layout only: every file an adapter expects exists. Starts nothing.
 //!     cargo test -p luna-core --test runtimes_online real_archives_have_the_layout_the_adapters_expect -- --ignored --nocapture
 //!
-//!     # Also starts every real binary (`php -v`, `node -v`, `mysqld --version`, ...) and compares the
-//!     # version it prints. Runs third-party programs downloaded from the internet, so it is a separate test.
-//!     cargo test -p luna-core --test runtimes_online real_binaries_report_the_installed_version -- --ignored --nocapture
+//!     # The real install flow for every runtime, which starts each freshly installed program (`php -v`,
+//!     # `node -v`, `mysqld --version`, ...), then checks that PHP loads the generated php.ini, its extensions and
+//!     # a real HTTPS request through the shipped CA bundle. Runs third-party programs downloaded from the
+//!     # internet, so it is a separate test.
+//!     cargo test -p luna-core --test runtimes_online real_install_runs_end_to_end_and_php_loads_its_generated_config -- --ignored --nocapture
 //!
 //! Each proves only the platform it runs on.
 
@@ -177,35 +179,139 @@ async fn real_archives_have_the_layout_the_adapters_expect() {
     assert!(problems.is_empty(), "{problems:#?}");
 }
 
-#[tokio::test]
+#[tokio::test(flavor = "multi_thread")]
 #[ignore = "needs internet access, downloads several hundred MB and RUNS the downloaded programs"]
-async fn real_binaries_report_the_installed_version() {
-    let (_tmp, home) = throw_away_home();
-    let installed = install_everything(&home).await;
-    assert!(!installed.is_empty(), "nothing to check on this platform");
+async fn real_install_runs_end_to_end_and_php_loads_its_generated_config() {
+    use std::sync::{Arc, Mutex};
 
-    let os = Os::current();
+    use luna_core::jobs::{JobManager, JobOptions};
+    use luna_core::runtimes::{Installer, php_environment};
+
+    let (_tmp, home) = throw_away_home();
+    let registry =
+        Arc::new(Registry::parse(include_str!("../../../registry/registry.json")).unwrap());
+    let (os, arch) = (Os::current(), Arch::current());
+    let installer = Installer::new(
+        home.clone(),
+        Downloader::new(DownloadOptions::default()).unwrap(),
+    );
+    let jobs = JobManager::new(
+        tokio::runtime::Handle::current(),
+        |_event| {},
+        JobOptions::default(),
+    );
+
     let mut failures = Vec::new();
-    for runtime in &installed {
-        let adapter = adapter_for(&runtime.id).unwrap();
-        match adapter.verify(&runtime.dir, os, &runtime.version) {
-            Ok(info) => eprintln!(
-                "{} {}: OK: {}",
-                runtime.id,
-                runtime.version,
-                info.output.lines().next().unwrap_or("").trim()
-            ),
-            Err(err) => {
+    let mut php_version = None;
+    for id in registry.runtime_ids() {
+        let runtime = registry.runtime(id).unwrap();
+        let Some(version) = runtime.releases.iter().find_map(|release| {
+            registry
+                .artifacts_for(id, release.version.as_str(), os, arch)
+                .ok()
+                .map(|_| release.version.to_string())
+        }) else {
+            eprintln!("{id}: no build for {os:?}/{arch:?}, skipped");
+            continue;
+        };
+
+        // The real flow: download, extract, merge, post_install (php.ini, CA bundle, codesign), verify, receipt.
+        let slot: Arc<Mutex<Option<luna_core::Result<luna_core::runtimes::InstalledRuntime>>>> =
+            Arc::default();
+        let (out, installer, registry) =
+            (Arc::clone(&slot), installer.clone(), Arc::clone(&registry));
+        let (runtime_id, version_text) = (id.to_owned(), version.clone());
+        let started = jobs.start(
+            &format!("{id}@{version}"),
+            "install",
+            move |ctx| async move {
+                let result = installer
+                    .install(&registry, &runtime_id, &version_text, &ctx)
+                    .await;
+                let outcome = result.as_ref().map(|_| ()).map_err(Clone::clone);
+                *out.lock().unwrap() = Some(result);
+                outcome
+            },
+        );
+        jobs.wait(&started.id).await.unwrap();
+        match slot.lock().unwrap().take().unwrap() {
+            Ok(installed) => {
                 eprintln!(
-                    "{} {}: FAILED: {}",
-                    runtime.id, runtime.version, err.message
+                    "{id} {version}: installed and verified in {}",
+                    installed.dir.display()
                 );
-                failures.push(format!(
-                    "{} {}: {}",
-                    runtime.id, runtime.version, err.message
-                ));
+                if id == "php" {
+                    php_version = Some((version, installed.dir));
+                }
+            }
+            Err(err) => {
+                eprintln!("{id} {version}: FAILED: {}", err.message);
+                failures.push(format!("{id} {version}: {}", err.message));
             }
         }
+    }
+
+    // PHP with the generated configuration: the extensions load and HTTPS works through the shipped CA bundle.
+    if let Some((version, dir)) = php_version {
+        let php = if os == Os::Windows {
+            dir.join("php.exe")
+        } else {
+            dir.join("php")
+        };
+        let run = |args: &[&str]| {
+            let output = std::process::Command::new(&php)
+                .args(args)
+                .envs(php_environment(&home, &version).unwrap())
+                .output()
+                .unwrap();
+            (
+                output.status.success(),
+                String::from_utf8_lossy(&output.stdout).into_owned(),
+                String::from_utf8_lossy(&output.stderr).into_owned(),
+            )
+        };
+
+        let (ok, modules, errors) = run(&["-m"]);
+        eprintln!("php -m: ok={ok}, stderr={errors:?}");
+        assert!(ok, "php -m failed: {errors}");
+        assert!(
+            errors.trim().is_empty(),
+            "php printed warnings with its generated ini: {errors}"
+        );
+        for module in [
+            "curl",
+            "mbstring",
+            "openssl",
+            "pdo_sqlite",
+            "pdo_mysql",
+            "fileinfo",
+        ] {
+            assert!(
+                modules.lines().any(|l| l.trim() == module),
+                "php -m lacks {module}:
+{modules}"
+            );
+        }
+
+        let (ok, ini, _) = run(&["-r", "echo php_ini_loaded_file();"]);
+        assert!(
+            ok && ini.contains("php.ini"),
+            "php did not load the generated ini: {ini:?}"
+        );
+        assert!(
+            ini.contains("config"),
+            "the ini it loaded is not lunaRun's: {ini:?}"
+        );
+
+        let (ok, size, errors) = run(&[
+            "-r",
+            "echo strlen((string) file_get_contents('https://curl.se/ca/cacert.pem'));",
+        ]);
+        assert!(ok, "an HTTPS request from php failed: {errors}");
+        assert!(
+            size.trim().parse::<u64>().unwrap_or(0) > 100_000,
+            "got {size:?}: {errors}"
+        );
     }
     assert!(failures.is_empty(), "{failures:#?}");
 }

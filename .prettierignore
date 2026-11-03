@@ -11,3 +11,4 @@ docs
 LICENSE
 registry/registry.json
 scripts/registry/fixtures
+crates/luna-core/data

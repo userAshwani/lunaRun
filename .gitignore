@@ -17,6 +17,8 @@ src-tauri/gen/schemas/
 !crates/luna-core/tests/fixtures/**/.env.*
 *.key
 *.pem
+# ...except the public CA certificate bundle that is embedded in the app (see THIRD-PARTY.md)
+!crates/luna-core/data/cacert.pem
 *.p12
 
 # Local lunaRun data when testing with LUNA_HOME inside the repo

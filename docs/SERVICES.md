@@ -82,18 +82,18 @@ or explains, for example, "XAMPP MySQL is running from C:\xampp\mysql\bin\mysqld
 
 ## 4. Config generation
 
-Templates are embedded in the binary (`include_str!`) and rendered with `minijinja`. Generated files are
+Templates are embedded in the binary (`include_str!`) and filled with plain string replacement (D-020: `minijinja` turned out not to be needed for `php.ini`; it may still come for the Caddyfile or `my.cnf`). Generated files are
 **owned by lunaRun and overwritten** on every relevant change. User customisation goes into
 separate override files that lunaRun **never overwrites**.
 
 ### php.ini
 
-- Base: the version's own `php.ini-development` (shipped in the Windows zips), or our template for static builds.
+- Base: the version's own `php.ini-development` (shipped in the Windows zips), edited in place so only the lines below change, or our template for static builds (`luna-core::runtimes::php_config`, D-020).
 - lunaRun sets: `extension_dir` (absolute, quoted), Laravel extensions enabled, `memory_limit=512M`,
   `upload_max_filesize=128M`, `post_max_size=128M`, `max_execution_time=120`, `date.timezone` = OS timezone,
   `opcache.enable=1`, `opcache.validate_timestamps=1`, `opcache.revalidate_freq=0`, `curl.cainfo`/`openssl.cafile` → a CA bundle we ship
   (Windows PHP has no CA store, without this Composer/HTTP calls fail with SSL errors).
-- Overrides: `config/php/<ver>/conf.d/99-user.ini`, loaded through the `PHP_INI_SCAN_DIR` env var on every PHP process we spawn (services and terminal).
+- Overrides: `config/php/<ver>/conf.d/99-user.ini`, loaded through the `PHP_INI_SCAN_DIR` env var on every PHP process we spawn (services and terminal). `php_environment(home, version)` returns `PHPRC` and `PHP_INI_SCAN_DIR` for that; use it for every PHP process.
 
 ### php-fpm.conf (macOS/Linux)
 

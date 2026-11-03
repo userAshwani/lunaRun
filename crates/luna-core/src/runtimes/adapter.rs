@@ -17,6 +17,7 @@ use serde_json::json;
 
 use crate::diagnostics::{Arch, Os};
 use crate::error::{ErrorCode, LunaError, Result};
+use crate::paths::LunaHome;
 
 /// How long `--version` and friends may take before the runtime counts as broken.
 pub const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
@@ -24,8 +25,13 @@ pub const VERIFY_TIMEOUT: Duration = Duration::from_secs(30);
 /// What an adapter gets for [`RuntimeAdapter::post_install`].
 #[derive(Debug, Clone, Copy)]
 pub struct InstallCtx<'a> {
-    /// The staging folder the archives were extracted into.
+    /// The staging folder the archives were extracted into. Files that stay in the install belong here.
     pub dir: &'a Path,
+    /// Where the install will be once it is complete. The staging folder is renamed to it, so anything that
+    /// must contain an absolute path (a php.ini's `extension_dir`) uses this one, not `dir`.
+    pub final_dir: &'a Path,
+    /// For files outside the install folder, such as `config/php/<version>/php.ini`.
+    pub home: &'a LunaHome,
     pub os: Os,
     pub arch: Arch,
     pub version: &'a str,
@@ -232,10 +238,11 @@ fn is_busy(err: &std::io::Error) -> bool {
     cfg!(unix) && err.raw_os_error() == Some(26)
 }
 
-fn run_program(
+/// Start `program` with `args` in `cwd` and return stdout and stderr together. Kills it after `timeout`.
+pub(crate) fn run_program<S: AsRef<std::ffi::OsStr>>(
     runtime: &str,
     program: &Path,
-    args: &[&str],
+    args: &[S],
     cwd: &Path,
     timeout: Duration,
 ) -> Result<String> {

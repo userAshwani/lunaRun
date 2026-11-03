@@ -21,8 +21,8 @@ use luna_core::error::ErrorCode;
 use luna_core::jobs::{JobEvent, JobManager, JobOptions, JobState};
 use luna_core::registry::Registry;
 use luna_core::runtimes::{
-    Binary, FetchRequest, Fetcher, InstalledRuntime, Installer, RECEIPT_FILE, RuntimeAdapter,
-    VersionCommand, VersionInfo, cleanup_incomplete, list_installed,
+    Binary, FetchRequest, Fetcher, InstallCtx, InstalledRuntime, Installer, RECEIPT_FILE,
+    RuntimeAdapter, VersionCommand, VersionInfo, cleanup_incomplete, list_installed,
 };
 use luna_core::{LunaError, LunaHome};
 use serde_json::{Value, json};
@@ -55,6 +55,9 @@ fn tool(path: &str, version: &str) -> Entry {
     Entry::file(path, script(version)).mode(0o755)
 }
 
+/// Every `post_install` call the test adapter saw: the staging folder and the final folder.
+static POST_INSTALL: Mutex<Vec<(PathBuf, PathBuf, PathBuf)>> = Mutex::new(Vec::new());
+
 /// An adapter for the test runtimes. `scripted` runs `tool.cmd`/`tool.sh`. `payload` has no program and
 /// only checks that its file arrived. Both refuse to verify when a receipt already exists, which proves
 /// the receipt is written last.
@@ -82,6 +85,14 @@ impl RuntimeAdapter for Scripted {
     }
     fn parse_version(&self, output: &str) -> Option<String> {
         output.split_whitespace().nth(1).map(str::to_owned)
+    }
+    fn post_install(&self, ctx: &InstallCtx<'_>) -> Result<(), LunaError> {
+        POST_INSTALL.lock().unwrap().push((
+            ctx.dir.to_path_buf(),
+            ctx.final_dir.to_path_buf(),
+            ctx.home.root().to_path_buf(),
+        ));
+        Ok(())
     }
     fn verify(&self, dir: &Path, os: Os, expected: &str) -> Result<VersionInfo, LunaError> {
         assert!(
@@ -490,6 +501,43 @@ async fn every_archive_format_installs_with_its_wrapper_folder_stripped() {
         );
         assert_eq!(only_installed(&bench), ["scripted 1.0.0"], "{format}");
     }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn post_install_is_told_the_staging_folder_the_final_folder_and_the_home() {
+    let bench = Bench::new();
+    let registry = bench.registry(
+        "scripted",
+        "1.0.0",
+        &[Part::new(
+            "https://example.test/a.zip",
+            "zip",
+            zip(&[tool(script_name(), "1.0.0")]),
+        )],
+    );
+    let installed = bench
+        .install(&bench.installer(), &registry, "scripted", "1.0.0")
+        .await
+        .unwrap();
+
+    let seen = POST_INSTALL.lock().unwrap().clone();
+    let (staging, final_dir, home_root) = seen
+        .iter()
+        .find(|(_, _, home)| home == bench.home.root())
+        .expect("post_install ran for this home");
+    assert_eq!(
+        final_dir, &installed.dir,
+        "the folder the install ends up in"
+    );
+    assert_ne!(staging, final_dir, "the work happens in a staging folder");
+    assert!(
+        staging
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .starts_with(".staging-")
+    );
+    assert_eq!(home_root, bench.home.root());
 }
 
 #[tokio::test(flavor = "multi_thread")]

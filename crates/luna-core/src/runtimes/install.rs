@@ -404,6 +404,8 @@ async fn run(
     ctx.phase("verifying", None);
     adapter.post_install(&InstallCtx {
         dir: &staging,
+        final_dir: &final_dir,
+        home,
         os,
         arch,
         version,

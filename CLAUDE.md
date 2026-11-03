@@ -120,6 +120,7 @@ cargo fmt --all
 ```
 
 `pnpm registry` regenerates `registry/registry.json` from the upstream indexes (needs internet; `--only node` refreshes one runtime; MySQL needs `gpg` on PATH or `GPG=<path>`, and a first MySQL run downloads about 4.6 GB; set `GITHUB_TOKEN` for Caddy, never print it).
+`pnpm ca-bundle` refreshes the CA certificate bundle PHP is given (`crates/luna-core/data/cacert.pem`, needs internet).
 `pnpm typecheck` runs `tsc`. `pnpm lint:fix` auto-fixes ESLint and Prettier issues. Keep this section in sync if scripts change.
 
 **Windows note:** in a fresh terminal `cargo` and `pnpm` must be on `PATH` (`%USERPROFILE%\.cargo\bin`, `%APPDATA%\npm`). The first `pnpm tauri build` compiles ~500 crates and takes several minutes; later builds are incremental.

@@ -12,7 +12,12 @@ use crate::diagnostics::Os;
 use crate::error::{ErrorCode, LunaError, Result};
 
 use super::adapter::{
-    Binary, RuntimeAdapter, VersionCommand, VersionInfo, after, exe, leading_version,
+    Binary, InstallCtx, RuntimeAdapter, VersionCommand, VersionInfo, after, exe, leading_version,
+};
+use super::codesign::{CODESIGN, ensure_signed};
+use super::php_config::{
+    PhpSettings, available_extensions, php_config_paths, render_static_ini, render_windows_ini,
+    system_timezone, write_php_config,
 };
 
 fn binary(name: &'static str, path: PathBuf, required: bool) -> Binary {
@@ -65,6 +70,64 @@ impl RuntimeAdapter for Php {
     fn parse_version(&self, output: &str) -> Option<String> {
         after(output, "PHP ").and_then(leading_version)
     }
+
+    fn post_install(&self, ctx: &InstallCtx<'_>) -> Result<()> {
+        php_post_install(ctx, Path::new(CODESIGN), &system_timezone())
+    }
+}
+
+/// What PHP needs after extraction: its generated config (`php.ini`, the shared CA bundle, the user's
+/// `conf.d`) and, on macOS, an ad-hoc signature. `codesign` and the time zone are parameters so tests can
+/// replace them.
+pub fn php_post_install(ctx: &InstallCtx<'_>, codesign: &Path, timezone: &str) -> Result<()> {
+    let paths = php_config_paths(ctx.home, ctx.version)?;
+    let broken = |why: String| {
+        LunaError::new(
+            ErrorCode::RuntimeBroken,
+            format!("the installed php does not work: {why}"),
+        )
+    };
+
+    let ini = if ctx.os == Os::Windows {
+        let base_path = ctx.dir.join("php.ini-development");
+        let base = fs::read_to_string(&base_path).map_err(|_| {
+            broken(format!(
+                "{} is missing from the download",
+                base_path.display()
+            ))
+        })?;
+        let available = available_extensions(&ctx.dir.join("ext"));
+        let extension_dir = ctx.final_dir.join("ext");
+        render_windows_ini(
+            &base,
+            &PhpSettings {
+                extension_dir: &extension_dir,
+                cafile: &paths.cacert,
+                timezone,
+                available_extensions: &available,
+            },
+        )?
+        .text
+    } else {
+        // Static builds: no `ini-development` and no `ext/`, the extensions are compiled in.
+        render_static_ini(&PhpSettings {
+            extension_dir: ctx.final_dir,
+            cafile: &paths.cacert,
+            timezone,
+            available_extensions: &Default::default(),
+        })?
+    };
+    write_php_config(&paths, &ini)?;
+
+    if ctx.os == Os::Macos {
+        for name in ["php", "php-fpm"] {
+            let binary = ctx.dir.join(name);
+            if binary.is_file() {
+                ensure_signed(codesign, &binary)?;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Composer: one `composer.phar`. It cannot run without a PHP, so the install is checked by its content
