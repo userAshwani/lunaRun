@@ -12,8 +12,7 @@ use crate::diagnostics::Os;
 use crate::error::{ErrorCode, LunaError, Result};
 
 use super::adapter::{
-    Binary, RuntimeAdapter, VersionCommand, VersionInfo, after, check_binaries, exe,
-    leading_version,
+    Binary, RuntimeAdapter, VersionCommand, VersionInfo, after, exe, leading_version,
 };
 
 fn binary(name: &'static str, path: PathBuf, required: bool) -> Binary {
@@ -98,15 +97,19 @@ impl RuntimeAdapter for Composer {
         None
     }
 
-    fn verify(&self, dir: &Path, os: Os, expected: &str) -> Result<VersionInfo> {
+    fn verify(&self, dir: &Path, _os: Os, expected: &str) -> Result<VersionInfo> {
         let phar = dir.join("composer.phar");
-        check_binaries(self.id(), &self.binaries(dir, os))?;
         let broken = |why: String| {
             LunaError::new(
                 ErrorCode::RuntimeBroken,
                 format!("the installed composer does not work: {why}"),
             )
         };
+        // Not `check_binaries`: a phar is run as `php composer.phar`, so it has no execute bit, and
+        // requiring one would report every real Unix install as broken.
+        if !phar.is_file() {
+            return Err(broken(format!("{} is missing", phar.display())));
+        }
         let size = fs::metadata(&phar)?.len();
         if size < MIN_COMPOSER_BYTES {
             return Err(broken(format!("composer.phar is only {size} bytes")));
