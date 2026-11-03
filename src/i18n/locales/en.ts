@@ -86,6 +86,9 @@ export const en = {
     PREREQUISITE_MISSING: "A required component is missing",
     INSUFFICIENT_DISK: "Not enough free disk space",
     ALREADY_INSTALLED: "Already installed",
+    RUNTIME_IN_USE: "Runtime is in use",
+    PROJECTS_BOUND: "Projects use this runtime",
+    BUSY: "Another operation is running",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

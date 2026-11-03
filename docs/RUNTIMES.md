@@ -168,9 +168,16 @@ created with `create_new`, so nothing is overwritten. Limits on total size (8 Gi
 (250,000) stop decompression bombs. Only `rwx` permission bits are kept (the `+x` bit matters for `php` and `mysqld`).
 Errors: `ARCHIVE_UNSAFE`, `ARCHIVE_CORRUPT`, `ARCHIVE_TOO_LARGE`, `CANCELLED`.
 
-**Uninstall:** refuse while a service from it is running (`RUNTIME_IN_USE`, with a "stop and uninstall" option).
-Warn when projects are bound to it (`runtime_usage`). Remove `runtimes/<rt>/<ver>` and `config/<rt>/<ver>`.
-DB `data/` dirs are removed only with an explicit `deleteData = true` (FR-RT-06).
+**Uninstall** (`luna-core::runtimes::uninstall`, D-021): the version must be installed (a valid receipt); it is
+refused with `RUNTIME_IN_USE` while a service from it runs (the UI later offers "stop and uninstall"), and with
+`PROJECTS_BOUND` while projects use it unless the caller confirms after showing the list (`runtime_usage` gives
+both). Then the folder is **renamed** to a hidden `.trash-<job>` (the point of no return: it is no longer listed
+as installed, and on Windows a program still running from it makes the rename fail as `RUNTIME_IN_USE` with
+nothing changed), the version's config is removed (`config/php/<ver>`; the shared CA bundle stays), and the trash
+is deleted (what a crash leaves is removed at the next start). DB `data/<runtime>-<line>` folders (`data/mysql-8.4`,
+`data/mariadb-11.8`) are **kept** unless `deleteData` is set (FR-RT-06), and kept even then while another installed
+version of the same line still uses the folder. Install and uninstall of the same version never run together
+(both use the job key `<runtime>@<version>`; the second start fails with `BUSY`).
 
 ## 5. Registry generation & hosting
 

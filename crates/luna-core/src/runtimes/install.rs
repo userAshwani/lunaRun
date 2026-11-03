@@ -174,21 +174,22 @@ impl Installer {
     }
 
     /// Start the install as a background job keyed `<runtime>@<version>`. A second request for the same
-    /// runtime and version while one runs returns the running job.
+    /// runtime and version while an install runs returns that job. While an **uninstall** of that version
+    /// runs, it is refused with `BUSY`: both use the same key, so they can never overlap.
     pub fn start(
         &self,
         jobs: &JobManager,
         registry: Arc<Registry>,
         runtime: &str,
         version: &str,
-    ) -> StartedJob {
+    ) -> Result<StartedJob> {
         let installer = self.clone();
         let (runtime_id, version_text) = (runtime.to_owned(), version.to_owned());
         let name = registry
             .runtime(runtime)
             .map_or(runtime, |r| r.display_name.as_str());
-        let label = format!("Install {name} {version}");
-        jobs.start(
+        let label = format!("{INSTALL_LABEL}{name} {version}");
+        let started = jobs.start(
             &format!("{runtime}@{version}"),
             &label,
             move |ctx| async move {
@@ -197,7 +198,9 @@ impl Installer {
                     .await
                     .map(|_| ())
             },
-        )
+        );
+        refuse_if_other_operation(jobs, &started, INSTALL_LABEL, runtime, version)?;
+        Ok(started)
     }
 
     /// Install `runtime` `version` and return it. See the module docs for the steps. Progress goes to `ctx`,
@@ -264,6 +267,35 @@ impl Drop for Work<'_> {
             self.finish(true);
         }
     }
+}
+
+/// The start of an install job's label. The label is how a running job of the other kind is recognised.
+pub(crate) const INSTALL_LABEL: &str = "Install ";
+
+/// `jobs.start` returns the already running job when the key is taken. That is right for a repeated request
+/// of the same kind and wrong when the running job is the other kind (an uninstall while installing, or the
+/// reverse), which has to be refused instead of pretending the new operation started.
+pub(crate) fn refuse_if_other_operation(
+    jobs: &JobManager,
+    started: &StartedJob,
+    own_label: &str,
+    runtime: &str,
+    version: &str,
+) -> Result<()> {
+    if !started.already_running {
+        return Ok(());
+    }
+    let running_is_own_kind = jobs
+        .get(&started.id)
+        .is_some_and(|job| job.label.starts_with(own_label));
+    if running_is_own_kind {
+        return Ok(());
+    }
+    Err(LunaError::new(
+        ErrorCode::Busy,
+        format!("{runtime} {version} is being installed or uninstalled right now, wait for that to finish"),
+    )
+    .with_details(json!({ "runtime": runtime, "version": version, "job": started.id })))
 }
 
 fn cancelled() -> LunaError {
@@ -509,8 +541,8 @@ fn merge_top_level(from: &Path, to: &Path, runtime: &str, version: &str) -> Resu
     Ok(())
 }
 
-/// Remove what an install that died halfway left behind: every `.staging-*` and `.extract-*` folder under
-/// `runtimes/<runtime>/`. Run it at startup, before any install. Partial downloads are kept on purpose
+/// Remove what an install or an uninstall that died halfway left behind: every `.staging-*`, `.extract-*` and
+/// `.trash-*` folder under `runtimes/<runtime>/`. Run it at startup, before any install. Partial downloads are kept on purpose
 /// (they let the next try resume). Returns the folders it removed.
 pub fn cleanup_incomplete(home: &LunaHome) -> Result<Vec<PathBuf>> {
     let root = home.runtimes_dir();
@@ -528,7 +560,9 @@ pub fn cleanup_incomplete(home: &LunaHome) -> Result<Vec<PathBuf>> {
         };
         for child in children.flatten() {
             let name = child.file_name().to_string_lossy().into_owned();
-            let is_work_folder = name.starts_with(".staging-") || name.starts_with(".extract-");
+            let is_work_folder = name.starts_with(".staging-")
+                || name.starts_with(".extract-")
+                || name.starts_with(".trash-");
             if is_work_folder && child.file_type().is_ok_and(|t| t.is_dir()) {
                 home.safe_remove(&child.path())?;
                 removed.push(child.path());

@@ -69,8 +69,10 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Install flow incl. staging + atomic rename + receipt (FR-RT-13); incomplete-install cleanup on start (`luna-core::runtimes::install`, D-019; wiring `cleanup_incomplete` into app startup comes with the Runtimes page task)
 - [x] PHP post-install: php.ini generation, CA bundle, conf.d override dir (SERVICES §4); macOS ad-hoc codesign (`luna-core::runtimes::php_config` + `codesign`, D-020)
 - [x] Windows VC++ redist check + guidance (FR-RT-12) (`luna-core::runtimes::prerequisites`: refusal with name, download address and found version; the guidance screen itself arrives with the Runtimes page)
-- [ ] Uninstall with in-use / bound-projects checks; DB data kept unless asked (FR-RT-05/06)
+- [x] Uninstall with in-use / bound-projects checks; DB data kept unless asked (FR-RT-05/06) (`luna-core::runtimes::uninstall`, D-021; the running-services and bound-projects checks are hooks until M1.4 and M1.7)
 - [ ] **UI: Runtimes page** — tabs per runtime, Installed / Available lists, install progress, EOL badges, license link
+  - [ ] 6a: read side: app state (registry loading with its source and problem, startup `cleanup_incomplete`), IPC `runtimes_available`, `runtimes_installed`, `registry_refresh`, and the read-only page (tabs, lists, EOL badges, license link, four states), real-window check
+  - [ ] 6b: write side: IPC `runtime_install`, `runtime_uninstall`, `runtime_usage`, the install and uninstall actions (progress from the job events, Cancel, confirm dialog listing bound projects with the delete-databases choice, Visual C++ guidance, error messages), real-window check of live progress and Cancel with a real install
 
 ### M1.4 Supervisor & services
 - [ ] Supervisor with state machine, ready checks, restart policy (SERVICES §2)

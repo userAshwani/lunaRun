@@ -81,6 +81,21 @@ pub trait RuntimeAdapter: Send + Sync {
     /// The version inside that command's output.
     fn parse_version(&self, output: &str) -> Option<String>;
 
+    /// Folders outside the install folder that belong to this version and go with it when it is uninstalled
+    /// (PHP's `config/php/<version>`). Nothing by default.
+    fn config_dirs(&self, home: &LunaHome, version: &str) -> Vec<PathBuf> {
+        let _ = (home, version);
+        Vec::new()
+    }
+
+    /// Folders that hold the user's **data** for this version, a database's data directory. Uninstalling
+    /// keeps them unless the user asks to delete them (FR-RT-06), and keeps them while another installed
+    /// version still names the same folder (patch versions of one line share it). Nothing by default.
+    fn data_dirs(&self, home: &LunaHome, version: &str) -> Vec<PathBuf> {
+        let _ = (home, version);
+        Vec::new()
+    }
+
     /// Work after extraction that is specific to the runtime (a `php.ini`, `codesign` on macOS).
     /// Nothing yet: M1.3 task 3.
     fn post_install(&self, ctx: &InstallCtx<'_>) -> Result<()> {

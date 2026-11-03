@@ -57,6 +57,13 @@ pub enum ErrorCode {
     InsufficientDisk,
     /// That version of the runtime is already installed.
     AlreadyInstalled,
+    /// The runtime cannot be removed because it is running: a service started from it, or a program still
+    /// open from its folder.
+    RuntimeInUse,
+    /// Projects are bound to the runtime and the removal was not confirmed.
+    ProjectsBound,
+    /// Another operation on the same runtime and version (an install or an uninstall) is already running.
+    Busy,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

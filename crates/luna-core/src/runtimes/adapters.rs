@@ -10,6 +10,8 @@ use std::path::{Path, PathBuf};
 
 use crate::diagnostics::Os;
 use crate::error::{ErrorCode, LunaError, Result};
+use crate::paths::LunaHome;
+use crate::registry::RuntimeVersion;
 
 use super::adapter::{
     Binary, InstallCtx, RuntimeAdapter, VersionCommand, VersionInfo, after, exe, leading_version,
@@ -19,6 +21,18 @@ use super::php_config::{
     PhpSettings, available_extensions, php_config_paths, render_static_ini, render_windows_ini,
     system_timezone, write_php_config,
 };
+
+/// `data/<runtime>-<major.minor>` for a database version, or nothing for a version that is not a number.
+fn line_data_dir(home: &LunaHome, runtime: &str, version: &str) -> Vec<PathBuf> {
+    RuntimeVersion::parse(version)
+        .map(|v| {
+            vec![
+                home.data_dir()
+                    .join(format!("{runtime}-{}", v.major_minor())),
+            ]
+        })
+        .unwrap_or_default()
+}
 
 fn binary(name: &'static str, path: PathBuf, required: bool) -> Binary {
     Binary {
@@ -73,6 +87,14 @@ impl RuntimeAdapter for Php {
 
     fn post_install(&self, ctx: &InstallCtx<'_>) -> Result<()> {
         php_post_install(ctx, Path::new(CODESIGN), &system_timezone())
+    }
+
+    /// `config/php/<version>`: the generated `php.ini` and the user's `conf.d`. The shared CA bundle in
+    /// `config/php/` stays, other versions still use it.
+    fn config_dirs(&self, home: &LunaHome, version: &str) -> Vec<PathBuf> {
+        php_config_paths(home, version)
+            .map(|paths| vec![paths.dir])
+            .unwrap_or_default()
     }
 }
 
@@ -269,6 +291,11 @@ impl RuntimeAdapter for Mysql {
     fn parse_version(&self, output: &str) -> Option<String> {
         after(output, " Ver ").and_then(leading_version)
     }
+
+    /// `data/mysql-8.4`: one data folder per line, shared by its patch versions (docs/SERVICES.md section 4).
+    fn data_dirs(&self, home: &LunaHome, version: &str) -> Vec<PathBuf> {
+        line_data_dir(home, "mysql", version)
+    }
 }
 
 /// MariaDB. `bin/mariadbd` (the old name `mysqld` also exists on Windows), the client tools and
@@ -306,6 +333,11 @@ impl RuntimeAdapter for Mariadb {
     /// `mariadbd  Ver 11.8.9-MariaDB for Win64 on AMD64 (mariadb.org binary distribution)`
     fn parse_version(&self, output: &str) -> Option<String> {
         after(output, " Ver ").and_then(leading_version)
+    }
+
+    /// `data/mariadb-11.8`: one data folder per line, shared by its patch versions.
+    fn data_dirs(&self, home: &LunaHome, version: &str) -> Vec<PathBuf> {
+        line_data_dir(home, "mariadb", version)
     }
 }
 

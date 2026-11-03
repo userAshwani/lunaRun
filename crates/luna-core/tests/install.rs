@@ -1279,7 +1279,8 @@ async fn cancelling_during_the_download_keeps_the_partial_file_and_installs_noth
     bench.net.block.store(true, Ordering::SeqCst);
     let started = bench
         .installer()
-        .start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0");
+        .start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0")
+        .unwrap();
 
     // Wait until the fetch is really running, then cancel through the job manager.
     while bench.net.calls.load(Ordering::SeqCst) == 0 {
@@ -1346,8 +1347,12 @@ async fn a_second_request_for_the_same_runtime_and_version_joins_the_running_job
     bench.net.block.store(true, Ordering::SeqCst);
     let installer = bench.installer();
 
-    let first = installer.start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0");
-    let second = installer.start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0");
+    let first = installer
+        .start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0")
+        .unwrap();
+    let second = installer
+        .start(&bench.jobs, Arc::clone(&registry), "scripted", "1.0.0")
+        .unwrap();
     assert!(!first.already_running);
     assert!(second.already_running);
     assert_eq!(first.id, second.id);
@@ -1379,7 +1384,8 @@ async fn the_started_job_installs_and_is_labelled_with_the_runtime_name() {
     );
     let started = bench
         .installer()
-        .start(&bench.jobs, registry, "scripted", "1.0.0");
+        .start(&bench.jobs, registry, "scripted", "1.0.0")
+        .unwrap();
     let info = bench.jobs.wait(&started.id).await.unwrap();
 
     assert_eq!(info.state, JobState::Succeeded);
