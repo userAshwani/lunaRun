@@ -44,6 +44,7 @@ fn this_process_can_be_looked_up_and_nonsense_numbers_cannot() {
     let exe = process_exe(me).expect("the OS names our own program");
     assert!(same_program(&exe, &std::env::current_exe().unwrap()));
 
+    // 0 and 1 are never a service, whatever the OS would say about them (macOS names launchd, for one).
     for nonsense in [0, 1, 999_999_999, u32::MAX] {
         assert!(!process_alive(nonsense), "{nonsense}");
         assert_eq!(process_exe(nonsense), None, "{nonsense}");
@@ -68,6 +69,14 @@ fn programs_are_compared_after_links_and_case_are_resolved() {
         let link = bench.home.run_dir().join("link-to-stub");
         std::os::unix::fs::symlink(&bench.stub, &link).unwrap();
         assert!(same_program(&bench.stub, &link));
+        // Two names of one file are one program: the OS may report either of them.
+        let hard = bench.home.run_dir().join("hard-link-to-stub");
+        fs::hard_link(&bench.stub, &hard).unwrap();
+        assert!(same_program(&bench.stub, &hard));
+        // A different file with the same content is another program.
+        let copy = bench.home.run_dir().join("copy-of-stub");
+        fs::copy(&bench.stub, &copy).unwrap();
+        assert!(!same_program(&bench.stub, &copy));
     }
 }
 
@@ -178,7 +187,13 @@ async fn when_lunarun_dies_hard_the_service_is_killed_on_windows_and_found_again
         tokio::time::sleep(Duration::from_millis(500)).await;
         assert!(process_alive(service));
         let found = supervisor.scan_leftovers();
-        assert_eq!(found.len(), 1);
+        assert_eq!(
+            found.len(),
+            1,
+            "found {found:?}; the service is alive: {}, the OS says it runs {:?}",
+            process_alive(service),
+            process_exe(service)
+        );
         assert_eq!(
             (found[0].id.as_str(), found[0].pid, found[0].port),
             ("orphan-test", service, Some(port))

@@ -9,20 +9,39 @@ use std::path::{Path, PathBuf};
 #[cfg(any(windows, unix))]
 use std::time::Duration;
 
+/// Process numbers that are never a service: 0 is not a process (to `kill` it is the caller's whole process group)
+/// and 1 is `init` or `launchd`. Asking about them says "no", so a damaged PID file can never point lunaRun at the
+/// system.
+fn never_a_service(pid: u32) -> bool {
+    pid <= 1
+}
+
 /// The process with this number exists and is running (a zombie that only waits to be reaped does not count).
 pub fn process_alive(pid: u32) -> bool {
-    imp::alive(pid)
+    !never_a_service(pid) && imp::alive(pid)
 }
 
 /// The program file the process was started from, when the OS tells us. `None`: no such process, or it belongs
 /// to somebody else and the OS will not say.
 pub fn process_exe(pid: u32) -> Option<PathBuf> {
+    if never_a_service(pid) {
+        return None;
+    }
     imp::exe(pid)
 }
 
-/// The same program file? Compares after resolving links (and ignoring case and the `\\?\` prefix on Windows).
-/// A path that no longer exists is compared as written.
+/// The same program file? On macOS and Linux that means the same file on disk (device and inode), so a link, a hard
+/// link and the original are one program: the OS may report any of the names of a file. Elsewhere, and for a path
+/// that does not exist, the paths are compared after resolving links, ignoring case and the `\\?\` prefix on
+/// Windows.
 pub fn same_program(a: &Path, b: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if let (Ok(x), Ok(y)) = (std::fs::metadata(a), std::fs::metadata(b)) {
+            return x.dev() == y.dev() && x.ino() == y.ino();
+        }
+    }
     normal(a) == normal(b)
 }
 
