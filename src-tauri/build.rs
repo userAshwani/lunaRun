@@ -7,6 +7,9 @@ const COMMANDS: &[&str] = &[
     "runtimes_available",
     "runtimes_installed",
     "registry_refresh",
+    "runtime_install",
+    "runtime_uninstall",
+    "runtime_usage",
 ];
 
 fn main() {

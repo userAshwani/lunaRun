@@ -130,6 +130,7 @@ export const en = {
     tabsLabel: "Runtimes",
     loading: "Loading runtimes",
     loadError: "Could not load the runtimes",
+    jobsError: "Could not load the background tasks, so install progress cannot be shown.",
     refresh: {
       action: "Check for updates",
       running: "Checking...",
@@ -166,6 +167,7 @@ export const en = {
         version: "Version",
         installedOn: "Installed",
         location: "Location",
+        actions: "Actions",
       },
       rosetta: "Runs under Rosetta",
       parts_one: "{{count}} download",
@@ -180,6 +182,7 @@ export const en = {
         released: "Released",
         size: "Download",
         notes: "Notes",
+        actions: "Actions",
       },
       showEol: "Show end-of-life versions ({{count}})",
       hideEol: "Hide end-of-life versions",
@@ -188,6 +191,75 @@ export const en = {
         "The version list has no {{name}} download for your operating system and processor.",
       allEndOfLife: "Every available {{name}} version has reached end of life.",
       license: "License: {{name}}",
+    },
+    actions: {
+      install: "Install",
+      installLabel: "Install {{name}} {{version}}",
+      cancel: "Cancel",
+      cancelLabel: "Cancel the installation of {{name}} {{version}}",
+      uninstall: "Uninstall",
+      uninstallLabel: "Uninstall {{name}} {{version}}",
+      installing: "Installing {{name}} {{version}}",
+      removing: "Removing...",
+      removingLabel: "Removing {{name}} {{version}}",
+      progressLabel: "Progress of the installation of {{name}} {{version}}",
+    },
+    toast: {
+      installed: "{{name}} {{version}} installed.",
+      uninstalled: "{{name}} {{version}} uninstalled.",
+      installCancelled:
+        "Installation of {{name}} {{version}} cancelled. What was downloaded is kept, so installing again carries on from there.",
+      uninstallCancelled: "Uninstall of {{name}} {{version}} cancelled. Nothing was removed.",
+    },
+    uninstall: {
+      title: "Uninstall {{name}} {{version}}?",
+      description:
+        "This removes the program files from your lunaRun folder. Your project files are not touched.",
+      location: "Location",
+      confirm: "Uninstall",
+      confirmAnyway: "Uninstall anyway",
+      confirmAndDelete: "Uninstall and delete databases",
+      cancel: "Keep it",
+      loading: "Checking what uses {{name}} {{version}}",
+      loadError: "Could not check what uses {{name}} {{version}}",
+      servicesTitle: "Stop these services first",
+      servicesHint: "{{name}} {{version}} cannot be removed while a service runs from it.",
+      projectsTitle: "These projects use this version",
+      projectsHint:
+        "They will have no {{name}} until you pick another version for them. Their files are not changed.",
+      data: {
+        label: "Also delete the databases of this version",
+        where: "Databases are kept in:",
+        kept: "They are kept unless you tick this box.",
+        warning: "Deleted databases cannot be brought back.",
+        shared:
+          "Another installed version uses the same databases, so they are kept even if you uninstall this one.",
+      },
+    },
+    problem: {
+      dismiss: "Dismiss",
+      installFailed: "Could not install {{name}} {{version}}",
+      uninstallFailed: "Could not uninstall {{name}} {{version}}",
+      disk: "{{name}} {{version}} needs {{needed}} and only {{free}} is free on the disk that holds your lunaRun folder. Free up some space and try again.",
+      alreadyInstalled: "{{name}} {{version}} is already installed.",
+      inUseServices:
+        "{{name}} {{version}} is in use by {{services}}. Stop it first, then uninstall.",
+      inUse:
+        "A program from {{name}} {{version}} is still running, so it cannot be removed. Close it and try again.",
+      projectsBound: "These projects still use {{name}} {{version}}: {{projects}}.",
+      busy: "{{name}} {{version}} is already being installed or removed. Wait for that to finish.",
+      checksum:
+        "The download of {{name}} {{version}} did not match its checksum, so nothing was installed. Try again. If it keeps happening, press Check for updates: the source file may have changed.",
+      network:
+        "Could not download {{name}} {{version}}. Check your internet connection and try again. What was already downloaded is kept, so it carries on where it stopped.",
+      noBuild: "{{name}} {{version}} has no download for this computer.",
+      prerequisite: "{{name}} {{version}} needs {{component}} first.",
+      prerequisiteFound: "lunaRun found version {{found}} and needs {{minimum}} or newer.",
+      prerequisiteMissing: "It is not installed on this computer.",
+      prerequisiteDownload: "Download and install it from this address, then press Install again:",
+      copyAddress: "Copy address",
+      copiedAddress: "Copied",
+      copyFailed: "Copy failed",
     },
     badge: {
       installed: "Installed",
@@ -223,16 +295,24 @@ export const en = {
       failed: "Failed",
       cancelled: "Cancelled",
     },
+    // The phase names the backend reports (`ctx.phase(...)` in luna-core).
     phase: {
       starting: "Starting",
-      download: "Downloading",
-      verify: "Verifying",
-      extract: "Extracting",
+      preparing: "Preparing",
+      downloading: "Downloading",
+      verifying: "Verifying",
+      extracting: "Extracting",
+      finishing: "Finishing",
+      removing: "Removing files",
     },
     bytes: {
       of: "{{done}} of {{total}}",
       done: "{{done}} so far",
     },
+  },
+  toast: {
+    region: "Notifications",
+    dismiss: "Dismiss notification",
   },
   theme: {
     label: "Theme",

@@ -25,7 +25,7 @@ const job = (overrides: Partial<JobInfo> = {}): JobInfo => ({
   key: "php@8.3.14",
   label: "Install PHP 8.3.14",
   state: "running",
-  phase: "download",
+  phase: "downloading",
   bytesDone: 40 * MB,
   bytesTotal: 100 * MB,
   message: null,
@@ -82,12 +82,25 @@ describe("JobsCard", () => {
   });
 
   it("shows an indeterminate bar when the total size is unknown", async () => {
-    serveJobs([job({ phase: "extract", bytesTotal: null, bytesDone: 3 * MB })]);
+    serveJobs([job({ phase: "extracting", bytesTotal: null, bytesDone: 3 * MB })]);
     renderCard();
     const bar = await screen.findByRole("progressbar");
     expect(bar).not.toHaveAttribute("aria-valuenow");
     expect(screen.getByText("Extracting")).toBeInTheDocument();
     expect(screen.getByText(/3\.0 MB so far/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ["preparing", "Preparing"],
+    ["downloading", "Downloading"],
+    ["verifying", "Verifying"],
+    ["extracting", "Extracting"],
+    ["finishing", "Finishing"],
+    ["removing", "Removing files"],
+  ])("labels the %s phase the installer and uninstaller really report", async (phase, text) => {
+    serveJobs([job({ phase })]);
+    renderCard();
+    expect(await screen.findByText(text)).toBeInTheDocument();
   });
 
   it("falls back to the raw phase name for a phase this build does not know", async () => {
@@ -135,7 +148,7 @@ describe("JobsCard", () => {
     act(() => {
       emitEvent(JOB_PROGRESS_EVENT, {
         jobId: "job-1",
-        phase: "extract",
+        phase: "extracting",
         bytesDone: 75 * MB,
         bytesTotal: 100 * MB,
         message: null,

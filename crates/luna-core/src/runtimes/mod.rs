@@ -33,4 +33,6 @@ pub use installed::{
 pub use php_config::{
     CA_BUNDLE, PhpConfigPaths, PhpSettings, php_config_paths, php_environment, write_php_config,
 };
-pub use uninstall::{RuntimeUsage, UninstallOptions, UninstallReport, Uninstaller, UsageChecker};
+pub use uninstall::{
+    RuntimeUsage, UninstallOptions, UninstallReport, Uninstaller, UsageChecker, UsageReport,
+};

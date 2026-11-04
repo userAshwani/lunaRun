@@ -104,6 +104,9 @@ fn the_runtimes_commands_are_among_them() {
         "runtimes_available",
         "runtimes_installed",
         "registry_refresh",
+        "runtime_install",
+        "runtime_uninstall",
+        "runtime_usage",
     ] {
         assert!(functions.contains(command), "{command}");
     }

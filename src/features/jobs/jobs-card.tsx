@@ -8,16 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useErrorCategory } from "@/lib/errors";
-import { formatBytes } from "@/lib/format";
-import { percent } from "./jobs-state";
+import { useJobProgressText } from "./job-progress";
 import { useCancelJob, useJobs } from "./use-jobs";
-
-const KNOWN_PHASES = ["starting", "download", "verify", "extract"] as const;
-type KnownPhase = (typeof KNOWN_PHASES)[number];
-
-function isKnownPhase(phase: string): phase is KnownPhase {
-  return (KNOWN_PHASES as readonly string[]).includes(phase);
-}
 
 const STATE_BADGE = {
   running: { variant: "info", icon: LoaderCircle },
@@ -29,18 +21,11 @@ const STATE_BADGE = {
 function JobRow({ job, onCancel }: { job: JobInfo; onCancel: (id: string) => void }) {
   const { t } = useTranslation();
   const categoryOf = useErrorCategory();
+  const describe = useJobProgressText();
   const badge = STATE_BADGE[job.state];
   const Icon = badge.icon;
   const running = job.state === "running";
-  const value = percent(job.bytesDone, job.bytesTotal);
-
-  const phase = isKnownPhase(job.phase) ? t(`jobs.phase.${job.phase}`) : job.phase;
-  const bytes =
-    job.bytesTotal !== null
-      ? t("jobs.bytes.of", { done: formatBytes(job.bytesDone), total: formatBytes(job.bytesTotal) })
-      : job.bytesDone > 0
-        ? t("jobs.bytes.done", { done: formatBytes(job.bytesDone) })
-        : null;
+  const { phase, bytes, value } = describe(job);
 
   return (
     <li className="flex flex-col gap-2.5 py-4 first:pt-0 last:pb-0">

@@ -1,14 +1,9 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AvailableVersion } from "@/bindings/AvailableVersion";
-import type { InstalledView } from "@/bindings/InstalledView";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimeCatalog } from "@/bindings/RuntimeCatalog";
-import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
 import { REGISTRY_UPDATED_EVENT } from "@/lib/events";
-import { createQueryClient } from "@/lib/query-client";
 import {
   backendError,
   callsTo,
@@ -16,102 +11,20 @@ import {
   isTauriMock,
   listenerCount,
   resetBackend,
-  respondTo,
 } from "@/test/backend";
-import { RuntimesPage } from "./runtimes-page";
+import {
+  available,
+  backendWith,
+  fresh,
+  installedPhp,
+  node,
+  php,
+  renderPage,
+  version,
+} from "@/test/runtimes-fixtures";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(), isTauri: vi.fn() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn() }));
-
-function version(runtime: string, number: string, extra: Partial<AvailableVersion> = {}) {
-  const line = number.split(".").slice(0, 2).join(".");
-  return {
-    runtime,
-    version: number,
-    line,
-    channel: "stable",
-    eol: false,
-    eolDate: null,
-    securityOnly: false,
-    releasedAt: null,
-    community: false,
-    size: 31_457_280,
-    available: true,
-    rosettaFallback: false,
-    ...extra,
-  } satisfies AvailableVersion;
-}
-
-const php: RuntimeCatalog = {
-  id: "php",
-  displayName: "PHP",
-  license: { name: "PHP License v3.01", url: "https://www.php.net/license/" },
-  versions: [
-    version("php", "8.4.2", { eolDate: "2028-12-31", releasedAt: "2026-10-26" }),
-    version("php", "8.3.9", {
-      securityOnly: true,
-      eolDate: "2027-12-31",
-      community: true,
-    }),
-    version("php", "8.1.30", { eol: true, eolDate: "2025-12-31", size: 1_048_576 }),
-    version("php", "7.4.33", { eol: true, eolDate: "2022-11-28" }),
-    version("php", "9.0.0", { available: false, size: null }),
-  ],
-};
-const node: RuntimeCatalog = {
-  id: "node",
-  displayName: "Node.js",
-  license: null,
-  versions: [version("node", "24.1.0", { rosettaFallback: true })],
-};
-const caddy: RuntimeCatalog = {
-  id: "caddy",
-  displayName: "Caddy",
-  license: null,
-  versions: [version("caddy", "2.9.0", { available: false, size: null })],
-};
-
-const fresh: RegistryStatus = {
-  source: "fresh",
-  ageSeconds: null,
-  problem: null,
-  refreshing: false,
-};
-
-function available(registry: RegistryStatus = fresh, runtimes = [caddy, node, php]) {
-  return { runtimes, registry } satisfies RuntimesAvailable;
-}
-
-const installedPhp: InstalledView = {
-  runtime: "php",
-  version: "8.3.9",
-  dir: "D:\\DIGITALLY BIRD\\lüna home\\runtimes\\php\\8.3.9",
-  installedAt: 1_767_225_600, // 2026-01-01 UTC
-  rosetta: false,
-  parts: 1,
-};
-
-function renderPage() {
-  return render(
-    <QueryClientProvider client={createQueryClient()}>
-      <RuntimesPage />
-    </QueryClientProvider>,
-  );
-}
-
-function backendWith(
-  handlers: {
-    available?: () => unknown;
-    installed?: () => unknown;
-    refresh?: () => unknown;
-  } = {},
-) {
-  respondTo({
-    runtimes_available: handlers.available ?? (() => available()),
-    runtimes_installed: handlers.installed ?? (() => [installedPhp]),
-    registry_refresh: handlers.refresh ?? (() => fresh),
-  });
-}
 
 beforeEach(() => {
   resetBackend();

@@ -1,9 +1,11 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { PackageOpen } from "lucide-react";
+import { LoaderCircle, PackageOpen, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { InstalledView } from "@/bindings/InstalledView";
+import type { JobInfo } from "@/bindings/JobInfo";
 import { ErrorState } from "@/components/error-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -16,15 +18,19 @@ import {
   TableScroll,
 } from "@/components/ui/table";
 import { formatUnixDate } from "@/lib/format";
+import { jobKey } from "./runtime-jobs";
 
 interface InstalledCardProps {
   runtimeId: string;
   name: string;
   /** Owned by the page, which also needs it for the tab counts: one request, one error to show. */
   query: UseQueryResult<InstalledView[]>;
+  /** The newest install or uninstall job of each version, by job key. */
+  jobs: ReadonlyMap<string, JobInfo>;
+  onUninstall: (entry: InstalledView) => void;
 }
 
-export function InstalledCard({ runtimeId, name, query }: InstalledCardProps) {
+export function InstalledCard({ runtimeId, name, query, jobs, onUninstall }: InstalledCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -51,6 +57,8 @@ export function InstalledCard({ runtimeId, name, query }: InstalledCardProps) {
           <InstalledTable
             rows={query.data.filter((entry) => entry.runtime === runtimeId)}
             name={name}
+            jobs={jobs}
+            onUninstall={onUninstall}
           />
         )}
       </CardContent>
@@ -58,7 +66,14 @@ export function InstalledCard({ runtimeId, name, query }: InstalledCardProps) {
   );
 }
 
-function InstalledTable({ rows, name }: { rows: readonly InstalledView[]; name: string }) {
+interface InstalledTableProps {
+  rows: readonly InstalledView[];
+  name: string;
+  jobs: ReadonlyMap<string, JobInfo>;
+  onUninstall: (entry: InstalledView) => void;
+}
+
+function InstalledTable({ rows, name, jobs, onUninstall }: InstalledTableProps) {
   const { t, i18n } = useTranslation();
   if (rows.length === 0) {
     // Compact on purpose: this sits inside a card, and the list of versions to install is right below.
@@ -82,26 +97,61 @@ function InstalledTable({ rows, name }: { rows: readonly InstalledView[]; name: 
             <TableHead>{t("runtimes.installed.columns.version")}</TableHead>
             <TableHead>{t("runtimes.installed.columns.installedOn")}</TableHead>
             <TableHead>{t("runtimes.installed.columns.location")}</TableHead>
+            <TableHead className="text-right">
+              <span className="sr-only">{t("runtimes.installed.columns.actions")}</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((entry) => (
-            <TableRow key={`${entry.runtime}@${entry.version}`}>
-              <TableCell className="font-medium whitespace-nowrap tabular-nums">
-                {entry.version}
-                {entry.rosetta && <Badge className="ml-2">{t("runtimes.installed.rosetta")}</Badge>}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
-                {formatUnixDate(entry.installedAt, i18n.language)}
-              </TableCell>
-              <TableCell
-                className="max-w-0 truncate font-mono text-xs text-muted-foreground"
-                title={entry.dir}
-              >
-                {entry.dir}
-              </TableCell>
-            </TableRow>
-          ))}
+          {rows.map((entry) => {
+            const removing = jobs.get(jobKey(entry.runtime, entry.version))?.state === "running";
+            const who = { name, version: entry.version };
+            return (
+              <TableRow key={`${entry.runtime}@${entry.version}`}>
+                <TableCell className="font-medium whitespace-nowrap tabular-nums">
+                  {entry.version}
+                  {entry.rosetta && (
+                    <Badge className="ml-2">{t("runtimes.installed.rosetta")}</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
+                  {formatUnixDate(entry.installedAt, i18n.language)}
+                </TableCell>
+                <TableCell
+                  className="max-w-0 truncate font-mono text-xs text-muted-foreground"
+                  title={entry.dir}
+                >
+                  {entry.dir}
+                </TableCell>
+                <TableCell className="text-right">
+                  {removing ? (
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground"
+                      aria-label={t("runtimes.actions.removingLabel", who)}
+                    >
+                      <LoaderCircle
+                        className="size-4 animate-spin motion-reduce:animate-none"
+                        aria-hidden
+                      />
+                      {t("runtimes.actions.removing")}
+                    </span>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label={t("runtimes.actions.uninstallLabel", who)}
+                      onClick={() => {
+                        onUninstall(entry);
+                      }}
+                    >
+                      <Trash2 aria-hidden />
+                      {t("runtimes.actions.uninstall")}
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableScroll>

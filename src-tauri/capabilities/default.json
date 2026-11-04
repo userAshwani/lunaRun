@@ -10,6 +10,9 @@
     "allow-job-cancel",
     "allow-runtimes-available",
     "allow-runtimes-installed",
-    "allow-registry-refresh"
+    "allow-registry-refresh",
+    "allow-runtime-install",
+    "allow-runtime-uninstall",
+    "allow-runtime-usage"
   ]
 }

@@ -27,6 +27,7 @@
   --accent: oklch(0.96 0.006 255);
   --accent-foreground: oklch(0.25 0.025 265);
   --destructive: oklch(0.56 0.22 27);
+  --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.55 0.15 155);
   --warning: oklch(0.62 0.15 70);
   --info: oklch(0.55 0.15 235);
@@ -53,6 +54,8 @@
   --accent: oklch(0.28 0.02 265);
   --accent-foreground: oklch(0.96 0.005 255);
   --destructive: oklch(0.7 0.19 22);
+  /* Dark text on the lighter dark-theme red: white would be about 3:1, dark is above 7:1 (WCAG AA). */
+  --destructive-foreground: oklch(0.2 0.03 27);
   --success: oklch(0.72 0.15 155);
   --warning: oklch(0.78 0.14 75);
   --info: oklch(0.72 0.12 235);
@@ -84,6 +87,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);

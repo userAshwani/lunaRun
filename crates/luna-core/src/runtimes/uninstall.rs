@@ -22,7 +22,9 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
 use serde_json::json;
+use ts_rs::TS;
 
 use super::adapter::RuntimeAdapter;
 use super::adapters::adapter_for;
@@ -42,6 +44,21 @@ pub struct RuntimeUsage {
     pub running_services: Vec<String>,
     /// Names of the projects bound to it. They are listed so the user can confirm.
     pub bound_projects: Vec<String>,
+}
+
+/// What the confirmation dialog shows before an uninstall (`runtime_usage` in the IPC list).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct UsageReport {
+    /// Names of the running services started from this version. The uninstall is refused while any run.
+    pub running_services: Vec<String>,
+    /// Names of the projects bound to this version.
+    pub bound_projects: Vec<String>,
+    /// Existing folders that hold the user's databases for this version (empty for most runtimes).
+    pub data_dirs: Vec<String>,
+    /// Another installed version uses the same data folders, so asking to delete them would keep them.
+    pub data_shared: bool,
 }
 
 /// Looks up what uses `(runtime, version)`. Replaced by the supervisor and the project store when they exist.
@@ -112,6 +129,39 @@ impl Uninstaller {
     /// What uses this version right now, for the confirmation dialog (`runtime_usage` in the IPC list).
     pub fn usage(&self, runtime: &str, version: &str) -> Result<RuntimeUsage> {
         (self.0.usage)(runtime, version)
+    }
+
+    /// Everything the confirmation dialog needs about `(runtime, version)`: what uses it and where its
+    /// databases are. Read-only. `NOT_FOUND` when that version is not installed.
+    pub fn usage_report(&self, runtime: &str, version: &str) -> Result<UsageReport> {
+        let home = &self.0.home;
+        let installed = list_installed(home)?;
+        let target = installed
+            .iter()
+            .find(|i| i.runtime == runtime && i.version == version)
+            .ok_or_else(|| {
+                LunaError::new(
+                    ErrorCode::NotFound,
+                    format!("{runtime} {version} is not installed"),
+                )
+            })?;
+        let usage = (self.0.usage)(runtime, version)?;
+        // The same plan an uninstall that deletes data would make: what it would delete is not shared,
+        // what it would keep is.
+        let plan = plan_data(home, (self.0.adapters)(runtime), target, &installed, true);
+        let data_shared = !plan.keep.is_empty();
+        let data_dirs = plan
+            .delete
+            .iter()
+            .chain(&plan.keep)
+            .map(|dir| dir.display().to_string())
+            .collect();
+        Ok(UsageReport {
+            running_services: usage.running_services,
+            bound_projects: usage.bound_projects,
+            data_dirs,
+            data_shared,
+        })
     }
 
     /// Start the uninstall as a background job keyed `<runtime>@<version>`, the key an install uses too, so the

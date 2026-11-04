@@ -116,8 +116,10 @@ impl Default for JobOptions {
     }
 }
 
-/// Result of [`JobManager::start`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Result of [`JobManager::start`] (and of the IPC commands that start a job).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub struct StartedJob {
     pub id: String,
     /// True when a job with the same key was already running, so nothing new was started.

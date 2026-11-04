@@ -18,7 +18,8 @@ use luna_core::jobs::{JobManager, JobOptions, JobState};
 use luna_core::registry::Registry;
 use luna_core::runtimes::{
     InstallReceipt, Installer, RECEIPT_FILE, RuntimeUsage, UninstallOptions, UninstallReport,
-    Uninstaller, cleanup_incomplete, list_installed, php_config_paths, write_php_config,
+    Uninstaller, UsageReport, cleanup_incomplete, list_installed, php_config_paths,
+    write_php_config,
 };
 use tempfile::TempDir;
 use tokio::runtime::Handle;
@@ -444,6 +445,67 @@ async fn the_usage_for_the_confirmation_dialog_can_be_asked_without_uninstalling
         [("php".to_owned(), "8.3.14".to_owned())]
     );
     assert_eq!(bench.installed(), ["php 8.3.14"], "asking changes nothing");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_usage_report_lists_users_and_the_database_folders_without_changing_anything() {
+    let bench = Bench::new();
+    bench.install("mysql", "8.4.12");
+    bench.install("mysql", "8.4.13");
+    bench.install("php", "8.3.14");
+    let shared = data_dir(&bench, "mysql-8.4");
+    let uninstaller = Uninstaller::new(bench.home.clone())
+        .with_usage(Arc::new(|_, _| Ok(usage(&["mysql"], &["shop", "blog"]))));
+
+    // Two patch versions of one line share the folder: deleting it would be refused for the first.
+    let report = uninstaller.usage_report("mysql", "8.4.13").unwrap();
+    assert_eq!(
+        report,
+        UsageReport {
+            running_services: vec!["mysql".into()],
+            bound_projects: vec!["shop".into(), "blog".into()],
+            data_dirs: vec![shared.display().to_string()],
+            data_shared: true,
+        }
+    );
+
+    // Alone on its line, the folder would go with it.
+    fs::remove_dir_all(bench.home.runtime_dir("mysql", "8.4.12").unwrap()).unwrap();
+    let report = uninstaller.usage_report("mysql", "8.4.13").unwrap();
+    assert_eq!(report.data_dirs, [shared.display().to_string()]);
+    assert!(!report.data_shared);
+
+    // A runtime without databases, and a version that is not installed.
+    let report = uninstaller.usage_report("php", "8.3.14").unwrap();
+    assert!(report.data_dirs.is_empty() && !report.data_shared);
+    let missing = uninstaller.usage_report("php", "9.9.9").unwrap_err();
+    assert_eq!(missing.code, ErrorCode::NotFound);
+
+    assert!(shared.exists(), "asking changes nothing");
+    assert_eq!(bench.installed(), ["mysql 8.4.13", "php 8.3.14"]);
+}
+
+#[test]
+fn the_dialog_and_the_commands_get_camel_case_json() {
+    let report = UsageReport {
+        running_services: vec![],
+        bound_projects: vec!["shop".into()],
+        data_dirs: vec![r"D:\data".into()],
+        data_shared: false,
+    };
+    let value = serde_json::to_value(report).unwrap();
+    assert_eq!(value["boundProjects"][0], "shop");
+    assert_eq!(value["dataShared"], false);
+    assert!(value["runningServices"].as_array().unwrap().is_empty());
+    assert!(value["dataDirs"].is_array());
+
+    let started = serde_json::to_value(luna_core::jobs::StartedJob {
+        id: "job-3".into(),
+        already_running: true,
+    })
+    .unwrap();
+    assert_eq!(started["id"], "job-3");
+    assert_eq!(started["alreadyRunning"], true);
 }
 
 #[tokio::test(flavor = "multi_thread")]

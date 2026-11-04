@@ -1,7 +1,8 @@
-import { Boxes } from "lucide-react";
+import { Boxes, Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { InstalledView } from "@/bindings/InstalledView";
+import type { JobInfo } from "@/bindings/JobInfo";
 import type { RuntimeCatalog } from "@/bindings/RuntimeCatalog";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -16,15 +17,29 @@ import {
   TableScroll,
 } from "@/components/ui/table";
 import { formatBytes, formatIsoDate } from "@/lib/format";
+import { InstallProgress } from "./install-progress";
+import { jobKey, jobKind } from "./runtime-jobs";
 import { VersionBadges } from "./version-badges";
+
+interface AvailableCardProps {
+  catalog: RuntimeCatalog;
+  installed: readonly InstalledView[] | undefined;
+  /** The newest install or uninstall job of each version, by job key. */
+  jobs: ReadonlyMap<string, JobInfo>;
+  /** An install request is on its way to the backend: no second one yet. */
+  starting: boolean;
+  onInstall: (version: string) => void;
+  onCancel: (jobId: string) => void;
+}
 
 export function AvailableCard({
   catalog,
   installed,
-}: {
-  catalog: RuntimeCatalog;
-  installed: readonly InstalledView[] | undefined;
-}) {
+  jobs,
+  starting,
+  onInstall,
+  onCancel,
+}: AvailableCardProps) {
   const { t, i18n } = useTranslation();
   const [showEol, setShowEol] = useState(false);
   const name = catalog.displayName;
@@ -99,23 +114,62 @@ export function AvailableCard({
                   <TableHead className="text-right">
                     {t("runtimes.available.columns.size")}
                   </TableHead>
+                  <TableHead className="text-right">
+                    <span className="sr-only">{t("runtimes.available.columns.actions")}</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {visible.map((version) => (
-                  <TableRow key={version.version}>
-                    <TableCell className="font-medium tabular-nums">{version.version}</TableCell>
-                    <TableCell>
-                      <VersionBadges version={version} installed={have.has(version.version)} />
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
-                      {version.releasedAt ? formatIsoDate(version.releasedAt, i18n.language) : ""}
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap text-muted-foreground tabular-nums">
-                      {version.size === null ? "" : formatBytes(version.size)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {visible.map((version) => {
+                  const job = jobs.get(jobKey(catalog.id, version.version));
+                  const running = job?.state === "running" ? job : undefined;
+                  const who = { name, version: version.version };
+                  return (
+                    <TableRow key={version.version}>
+                      <TableCell className="font-medium tabular-nums">{version.version}</TableCell>
+                      <TableCell>
+                        <VersionBadges version={version} installed={have.has(version.version)} />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
+                        {version.releasedAt ? formatIsoDate(version.releasedAt, i18n.language) : ""}
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap text-muted-foreground tabular-nums">
+                        {version.size === null ? "" : formatBytes(version.size)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {running && jobKind(running) === "install" ? (
+                          <InstallProgress
+                            job={running}
+                            name={name}
+                            version={version.version}
+                            onCancel={onCancel}
+                          />
+                        ) : running ? (
+                          <span className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                            <LoaderCircle
+                              className="size-4 animate-spin motion-reduce:animate-none"
+                              aria-hidden
+                            />
+                            {t("runtimes.actions.removing")}
+                          </span>
+                        ) : have.has(version.version) ? null : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={starting}
+                            aria-label={t("runtimes.actions.installLabel", who)}
+                            onClick={() => {
+                              onInstall(version.version);
+                            }}
+                          >
+                            <Download aria-hidden />
+                            {t("runtimes.actions.install")}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableScroll>

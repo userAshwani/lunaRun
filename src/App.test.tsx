@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "@/app/router";
 import { NAV_ITEMS } from "@/app/routes";
 import { ThemeProvider } from "@/app/theme-provider";
+import { ToastProvider } from "@/components/toast";
 import { createQueryClient } from "@/lib/query-client";
 
 function renderAt(path: string) {
@@ -13,7 +14,9 @@ function renderAt(path: string) {
   return render(
     <QueryClientProvider client={createQueryClient()}>
       <ThemeProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>,
   );

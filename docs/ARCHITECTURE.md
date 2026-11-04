@@ -212,9 +212,9 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | Registry | `registry_refresh()` | `RegistryStatus` (where the list came from, its age, why it is not fresh) |
 | Runtimes | `runtimes_available()` | `RuntimesAvailable` (every runtime as a `RuntimeCatalog` with its `AvailableVersion[]` for this computer, plus the `RegistryStatus`) |
 | | `runtimes_installed()` | `InstalledView[]` |
-| | `runtime_install(runtime, version, variant?)` | `jobId` |
-| | `runtime_uninstall(runtime, version, deleteData)` | `()` |
-| | `runtime_usage(runtime, version)` | `ProjectRef[]` (who uses it) |
+| | `runtime_install(runtime, version)` | `StartedJob` (`{ id, alreadyRunning }`; job key `<runtime>@<version>`) |
+| | `runtime_uninstall(runtime, version, deleteData, confirmBoundProjects)` | `StartedJob` (same key, so it never overlaps an install) |
+| | `runtime_usage(runtime, version)` | `UsageReport` (running services, bound projects, database folders; read-only) |
 | Jobs | `job_cancel(jobId)` / `jobs_list()` | |
 | Services | `services_list()` | `ServiceStatus[]` |
 | | `service_start(id)` / `service_stop(id)` / `service_restart(id)` | `()` |

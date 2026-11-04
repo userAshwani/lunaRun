@@ -7,6 +7,8 @@ import type { JobInfo } from "@/bindings/JobInfo";
 import type { LunaError } from "@/bindings/LunaError";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
+import type { StartedJob } from "@/bindings/StartedJob";
+import type { UsageReport } from "@/bindings/UsageReport";
 
 /** Thrown by every IPC call. Carries the backend's typed error so the UI can map `code` to text. */
 export class IpcError extends Error {
@@ -59,4 +61,19 @@ export const ipc = {
   runtimesInstalled: () => call<InstalledView[]>("runtimes_installed"),
   /** Look for a fresher version list now. Resolves with the status once it has been used. */
   registryRefresh: () => call<RegistryStatus>("registry_refresh"),
+  /** Start installing a version as a background job. Progress arrives as `job:*` events. */
+  runtimeInstall: (runtime: string, version: string) =>
+    call<StartedJob>("runtime_install", { runtime, version }),
+  /**
+   * Start uninstalling a version as a background job. `deleteData` also deletes the databases of that
+   * version; `confirmBoundProjects` says the user saw the projects that use it.
+   */
+  runtimeUninstall: (
+    runtime: string,
+    version: string,
+    options: { deleteData: boolean; confirmBoundProjects: boolean },
+  ) => call<StartedJob>("runtime_uninstall", { runtime, version, ...options }),
+  /** What uses a version and where its databases are, for the uninstall dialog. Read-only. */
+  runtimeUsage: (runtime: string, version: string) =>
+    call<UsageReport>("runtime_usage", { runtime, version }),
 } as const;

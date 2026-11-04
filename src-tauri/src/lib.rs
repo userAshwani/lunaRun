@@ -1,13 +1,14 @@
 //! Thin Tauri adapter: maps commands and events to `luna-core`. No business logic here.
 
-mod commands;
+pub mod commands;
 pub mod events;
 mod registry;
 
 use luna_core::LunaHome;
+use luna_core::download::{DownloadOptions, Downloader};
 use luna_core::jobs::{JobManager, JobOptions};
 use luna_core::registry::RegistryHolder;
-use luna_core::runtimes::cleanup_incomplete;
+use luna_core::runtimes::{Installer, Uninstaller, cleanup_incomplete};
 use tauri::Manager;
 
 #[allow(
@@ -31,6 +32,13 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 let _ = registry::refresh_and_announce(&handle, &registry, &refresh_home).await;
             });
+            // Installing and uninstalling share the job manager below. Nothing reports a version as in use
+            // until the supervisor (M1.4) and the project store (M1.7) can say so.
+            app.manage(Installer::new(
+                home.clone(),
+                Downloader::new(DownloadOptions::default())?,
+            ));
+            app.manage(Uninstaller::new(home.clone()));
             app.manage(home);
 
             // Jobs run on Tauri's own Tokio runtime and report to the webview through events.
@@ -45,7 +53,10 @@ pub fn run() {
             commands::job_cancel,
             commands::runtimes_available,
             commands::runtimes_installed,
-            commands::registry_refresh
+            commands::registry_refresh,
+            commands::runtime_install,
+            commands::runtime_uninstall,
+            commands::runtime_usage
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
