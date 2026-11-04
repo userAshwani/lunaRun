@@ -62,8 +62,11 @@ pub enum ErrorCode {
     RuntimeInUse,
     /// Projects are bound to the runtime and the removal was not confirmed.
     ProjectsBound,
-    /// Another operation on the same runtime and version (an install or an uninstall) is already running.
+    /// Another operation on the same thing is already running: an install or an uninstall of one runtime
+    /// version, or a start of a service that is not stopped.
     Busy,
+    /// A service did not start: it could not be launched, exited before it was ready, or was not ready in time.
+    ServiceStartFailed,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

@@ -75,7 +75,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
   - [x] 6b: write side: IPC `runtime_install`, `runtime_uninstall`, `runtime_usage`, the install and uninstall actions (progress from the job events, Cancel, confirm dialog listing bound projects with the delete-databases choice, Visual C++ guidance, error messages), real-window check of live progress and Cancel with a real install
 
 ### M1.4 Supervisor & services
-- [ ] Supervisor with state machine, ready checks, restart policy (SERVICES §2)
+- [x] Supervisor with state machine, ready checks, restart policy (SERVICES §2) (`luna-core::services`, D-023; UI-free, nothing wired into the app yet; process containment is the next box)
 - [ ] Windows Job Objects; Unix process groups; PID files + adopt/kill on launch (FR-SV-07)
 - [ ] Log capture, rotation, ring buffer, throttled events (FR-SV-05)
 - [ ] PortAllocator + owner lookup per OS (FR-SV-03)

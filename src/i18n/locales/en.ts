@@ -89,6 +89,7 @@ export const en = {
     RUNTIME_IN_USE: "Runtime is in use",
     PROJECTS_BOUND: "Projects use this runtime",
     BUSY: "Another operation is running",
+    SERVICE_START_FAILED: "A service did not start",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

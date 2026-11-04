@@ -9,6 +9,7 @@ pub mod jobs;
 pub mod paths;
 pub mod registry;
 pub mod runtimes;
+pub mod services;
 pub mod state;
 
 pub use error::{ErrorCode, LunaError, Result};

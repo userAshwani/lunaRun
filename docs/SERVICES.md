@@ -31,12 +31,17 @@ One `Supervisor` (tokio task) owns all children. The UI and tray send it command
 Stopped ────────► Starting ──────────────────► Running
    ▲                 │ timeout / exit             │  exit (unexpected)
    │                 ▼                            ▼
-   │               Error ◄──── retries exhausted ─ Crashed ──(auto-restart ≤3 in 60s)──► Starting
+   │               Error                         Crashed ──(auto-restart ≤3 in 60s)──► Starting
    │                                                  
    └──────── Stopping ◄──────── stop() ───────── Running
 ```
 
-- **Ready check** per type: TCP connect to the port (PHP, Caddy); for MySQL/MariaDB `mysqladmin --protocol=TCP -P <port> ping`. Timeout 30 s (DB first-run init: 120 s).
+- **`Error` vs `Crashed`** (as built in `luna-core::services`, D-023): `Error` is a start that never worked (the program
+  could not be launched, it exited before it was ready, or it was not ready in time). It is not retried, because a bad
+  configuration or a taken port will not fix itself. `Crashed` is a process that died while running. When the automatic
+  restarts run out the service **stays `Crashed`** with `gave_up` set (FR-SV-06), it does not become `Error`. A restart that
+  fails before it is ready counts as one more crash. Stopping a `Crashed` or `Error` service makes it `Stopped`.
+- **Ready check** per type: TCP connect to the port (PHP, Caddy); for MySQL/MariaDB `mysqladmin --protocol=TCP -P <port> ping`. Timeout 30 s (DB first-run init: 120 s). The TCP check retries every 100 ms with a 100 ms connect timeout: it is always loopback, and on Windows a connection to a port that is not open yet takes about 500 ms to be refused, so a longer timeout would notice a service that is up half a second late.
 - **Restart policy** (FR-SV-06): unexpected exit → wait 1 s, 2 s, 4 s → after 3 failures in 60 s → `Crashed`, plus a desktop notification.
 - **Windows php-cgi** exits by design after `PHP_FCGI_MAX_REQUESTS` (set to 500). That is a normal recycle: restart the worker straight away without counting it as a crash.
 
