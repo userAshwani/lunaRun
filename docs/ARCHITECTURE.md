@@ -21,7 +21,7 @@ Related: [PRD](PRD.md) · [DECISIONS](DECISIONS.md) · [RUNTIMES](RUNTIMES.md) �
 versions from memory. Suggested crates: `reqwest` (rustls), `sha2`, `zip`, `tar`, `flate2`, `xz2`,
 `serde`/`serde_json`, `thiserror`, `anyhow` (only at the app edge), `tracing` + `tracing-appender`,
 `directories`, `minijinja` (config templates), `uuid`, `time`/`chrono`, `notify` (file watching, Phase 2),
-`sysinfo` (process lookup), `windows` crate (Job Objects, registry) under `cfg(windows)`.
+`windows-sys` (Job Objects, process lookup) under `cfg(windows)`; process lookup elsewhere is `/proc` and `libproc` declared by hand. `sysinfo` was planned for this and is not used (D-024).
 
 ## 2. Repository layout
 

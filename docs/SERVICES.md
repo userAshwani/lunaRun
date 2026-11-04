@@ -58,9 +58,11 @@ On app **Quit**: stop sites → PHP pools → DBs, in parallel within each group
 
 ### No orphans (FR-SV-07)
 
-- **Windows:** every child is assigned to a **Job Object** with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, so if lunaRun crashes, the OS kills the children. (A crashed DB then does InnoDB crash recovery on next start. That is acceptable and documented.)
-- **macOS/Linux:** children run in their own process group. On normal exit, signal the group. If the app crashes, children may survive, so:
-- **PID files** in `LUNA_HOME/run/<service-id>.pid` hold `{pid, exe, startedAt, port}`. On launch, for each PID file: if the process is alive **and** its executable path matches → offer **Adopt** (track it, health-check it) or **Stop**. Otherwise delete the stale PID file.
+As built in `luna-core::services` (D-024):
+
+- **Windows:** every service gets its own **Job Object** with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, so if lunaRun crashes the OS kills the children. When a service ends normally its job is closed, which kills what it left behind. (A crashed DB then does InnoDB crash recovery on next start. That is acceptable and documented.)
+- **macOS/Linux:** every service runs in its **own process group**, and when it ends the whole group is killed (`kill(-pgid, SIGKILL)`). If lunaRun crashes, the children survive, so:
+- **PID files** in `LUNA_HOME/run/<service-id>.pid` hold `{pid, exe, startedAt, port}` (written atomically, with a `schema` field). They are written when the process starts and removed when it ends. On launch, `Supervisor::scan_leftovers` looks at each file: if the process is alive **and** its executable path matches, it is a leftover and the UI offers **Adopt** (`adopt(spec)`: tracked again with the normal lifecycle and restart policy, after the ready check passes) or **Stop** (`stop_leftover(id)`: ask it to leave, kill it after 10 s). Otherwise the file is stale and is deleted.
 
 ### Logs (FR-SV-05)
 

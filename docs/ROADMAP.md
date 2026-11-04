@@ -76,7 +76,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 
 ### M1.4 Supervisor & services
 - [x] Supervisor with state machine, ready checks, restart policy (SERVICES §2) (`luna-core::services`, D-023; UI-free, nothing wired into the app yet; process containment is the next box)
-- [ ] Windows Job Objects; Unix process groups; PID files + adopt/kill on launch (FR-SV-07)
+- [x] Windows Job Objects; Unix process groups; PID files + adopt/kill on launch (FR-SV-07) (`luna-core::services::{containment, pidfile, os}` and `Supervisor::{scan_leftovers, adopt, stop_leftover}`, D-024; the prompt to the user comes with the Services page)
 - [ ] Log capture, rotation, ring buffer, throttled events (FR-SV-05)
 - [ ] PortAllocator + owner lookup per OS (FR-SV-03)
 - [ ] Services: `php-fcgi@` (Win), `php-fpm@` (mac/Linux), `mysql@`, `mariadb@` (incl. first-run init), `caddy`

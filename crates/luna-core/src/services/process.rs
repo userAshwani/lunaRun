@@ -1,4 +1,4 @@
-//! Starting, probing and stopping one child process. No state and no policy here: the supervisor decides.
+//! Starting, probing and stopping one process. No state and no policy here: the supervisor decides.
 
 use std::process::{ExitStatus, Stdio};
 use std::time::Duration;
@@ -8,6 +8,8 @@ use tokio::net::TcpStream;
 use tokio::process::{Child, Command};
 use tokio::time::{sleep, timeout};
 
+use super::containment::Containment;
+use super::os::{self, Leave};
 use super::spec::{HelperCommand, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
 use crate::error::{ErrorCode, LunaError, Result};
 
@@ -17,29 +19,8 @@ use crate::error::{ErrorCode, LunaError, Result};
 const CONNECT_TIMEOUT: Duration = Duration::from_millis(100);
 /// A ready-check helper (`mysqladmin ping`) that takes longer than this counts as "not ready yet".
 const HELPER_TIMEOUT: Duration = Duration::from_secs(5);
-
-/// Where children are kept from outliving lunaRun (FR-SV-07). The supervisor calls it around every launch.
-///
-/// The Windows Job Object (`KILL_ON_JOB_CLOSE`) and the Unix process group are the next M1.4 task and plug in
-/// here: `before_spawn` puts the child in its own group, `after_spawn` assigns it to the job. Until then
-/// [`NoContainment`] does nothing, and the only safety net is that a child is killed when its task is dropped.
-pub trait Containment: Send + Sync + 'static {
-    /// Adjust the command before it is spawned (for example `process_group(0)`).
-    fn before_spawn(&self, command: &mut Command) {
-        let _ = command;
-    }
-
-    /// Called once with the live child (for example to assign it to a Job Object). An error stops the child.
-    fn after_spawn(&self, child: &Child) -> Result<()> {
-        let _ = child;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct NoContainment;
-
-impl Containment for NoContainment {}
+/// After the process was killed, how long to wait for the OS to report it gone.
+const KILL_WAIT: Duration = Duration::from_secs(5);
 
 /// Windows: do not open a console window for a background service.
 #[cfg(windows)]
@@ -117,16 +98,16 @@ pub(super) async fn wait_ready(check: &ReadyCheck, limit: Duration, poll: Durati
     .is_ok()
 }
 
-/// Make the process leave: ask the way `plan` says, wait up to the grace period, then kill it. Returns when the
-/// process is gone and has been reaped.
+/// Make our own child leave: ask the way `plan` says, wait up to the grace period, then kill it. Returns when
+/// the process is gone and has been reaped.
 pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) {
     match &plan.method {
         StopMethod::Kill => {
             let _ = child.kill().await;
             return;
         }
-        StopMethod::Terminate => ask_to_leave(child, Signal::Terminate),
-        StopMethod::Quit => ask_to_leave(child, Signal::Quit),
+        StopMethod::Terminate => ask_child(child, Leave::Terminate),
+        StopMethod::Quit => ask_child(child, Leave::Quit),
         StopMethod::Command(helper) => {
             // The helper may fail or hang (the service may already be gone); either way the grace period
             // below decides, so its result does not matter.
@@ -139,38 +120,35 @@ pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) {
     }
 }
 
-/// Kill without asking (a start that timed out).
+fn ask_child(child: &Child, how: Leave) {
+    if let Some(pid) = child.id() {
+        os::ask_to_leave(pid, how);
+    }
+}
+
+/// Kill our own child without asking (a start that timed out).
 pub(super) async fn kill_now(child: &mut Child) {
     let _ = child.kill().await;
 }
 
-#[derive(Clone, Copy)]
-enum Signal {
-    Terminate,
-    Quit,
-}
-
-#[cfg(unix)]
-fn ask_to_leave(child: &mut Child, signal: Signal) {
-    // Both numbers are the same on Linux and macOS.
-    let number = match signal {
-        Signal::Terminate => 15,
-        Signal::Quit => 3,
-    };
-    if let Some(pid) = child.id().and_then(|pid| i32::try_from(pid).ok()) {
-        // An error means the process is already gone, which is what we wanted.
-        let _ = kill(pid, number);
+/// Make a process that is **not our child** leave (one adopted after a crash of lunaRun, or found left over):
+/// the same plan, but with the process number only, so "gone" is judged by asking the OS.
+pub(super) async fn stop_pid(pid: u32, plan: &StopPlan) {
+    match &plan.method {
+        StopMethod::Kill => {}
+        StopMethod::Terminate => os::ask_to_leave(pid, Leave::Terminate),
+        StopMethod::Quit => os::ask_to_leave(pid, Leave::Quit),
+        StopMethod::Command(helper) => {
+            let _ = timeout(plan.grace, run_helper(helper)).await;
+        }
     }
-}
-
-#[cfg(unix)]
-unsafe extern "C" {
-    /// POSIX `kill(2)`, which `std` already links. Safe to call with any numbers: a bad pid is an error code.
-    safe fn kill(pid: i32, signal: i32) -> i32;
-}
-
-/// Windows has no polite signal for a background process without a window: terminate it.
-#[cfg(windows)]
-fn ask_to_leave(child: &mut Child, _signal: Signal) {
-    let _ = child.start_kill();
+    let grace = if matches!(plan.method, StopMethod::Kill) {
+        Duration::ZERO
+    } else {
+        plan.grace
+    };
+    if !os::wait_gone(pid, grace).await {
+        os::terminate_process(pid);
+        os::wait_gone(pid, KILL_WAIT).await;
+    }
 }
