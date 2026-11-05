@@ -93,6 +93,8 @@ export const en = {
     PORT_IN_USE: "A port is already in use",
     NO_FREE_PORT: "No free port",
     DATABASE_INIT_FAILED: "The database could not be set up",
+    CONFIG_INVALID: "The generated configuration was rejected",
+    RELOAD_FAILED: "The service could not load its new configuration",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

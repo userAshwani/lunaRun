@@ -22,10 +22,12 @@
 //!
 //! The PHP and Caddy service definitions are the next M1.4 task.
 
+mod caddy;
 mod containment;
 mod databases;
 mod logs;
 mod os;
+mod php;
 mod pidfile;
 mod port_owner;
 mod ports;
@@ -35,10 +37,12 @@ mod spec;
 mod state;
 mod supervisor;
 
+pub use caddy::{CaddyDefinition, Site, caddy_definition};
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
+pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition};
 pub use port_owner::{PortOwner, port_owners};
 pub use ports::{PortAllocator, PortAssignment, PortPurpose, PortRanges, check_ports};
 pub use restart::{Decision, RestartPolicy, RestartTracker};

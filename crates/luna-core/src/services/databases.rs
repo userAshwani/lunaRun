@@ -109,12 +109,12 @@ struct ConfigValues<'a> {
 }
 
 /// A path as the option file wants it: forward slashes (they work on Windows too, and need no escaping), in quotes.
-fn quoted(path: &Path) -> Result<String> {
+pub(super) fn quoted(path: &Path) -> Result<String> {
     Ok(format!("\"{}\"", plain(path)?))
 }
 
 /// The same without quotes (`!include` takes the rest of the line as the path).
-fn plain(path: &Path) -> Result<String> {
+pub(super) fn plain(path: &Path) -> Result<String> {
     let text = path.to_string_lossy().replace('\\', "/");
     if text.contains(['"', '\n', '\r']) {
         return Err(LunaError::new(

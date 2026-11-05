@@ -79,9 +79,9 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Windows Job Objects; Unix process groups; PID files + adopt/kill on launch (FR-SV-07) (`luna-core::services::{containment, pidfile, os}` and `Supervisor::{scan_leftovers, adopt, stop_leftover}`, D-024; the prompt to the user comes with the Services page)
 - [x] Log capture, rotation, ring buffer, throttled events (FR-SV-05) (`luna-core::services::logs`, D-025; the viewer comes with the Services page)
 - [x] PortAllocator + owner lookup per OS (FR-SV-03) (`luna-core::services::{ports, port_owner}`, D-026; `Supervisor::start` checks `ServiceSpec::ports`; the "use another port" dialog comes with the Services page)
-- [ ] Services: `php-fcgi@` (Win), `php-fpm@` (mac/Linux), `mysql@`, `mariadb@` (incl. first-run init), `caddy`
+- [x] Services: `php-fcgi@` (Win), `php-fpm@` (mac/Linux), `mysql@`, `mariadb@` (incl. first-run init), `caddy`
   - [x] 5a: the databases: `mysql@<line>` and `mariadb@<line>` as `ServiceSpec`s built from an installed runtime (generated `my.ini`/`my.cnf` with a user override file, first-run initialisation, `mysqladmin` ready check and clean shutdown, error log as a tab, port from the allocator)
-  - [ ] 5b: PHP and Caddy: `php-fcgi@<version>` (Windows pool) and `php-fpm@<version>` (macOS, Linux) with `php-fpm.conf`, `caddy` with the generated Caddyfile (admin port, sites, validate and reload)
+  - [x] 5b: PHP and Caddy: `php-fcgi@<version>` (Windows pool) and `php-fpm@<version>` (macOS, Linux) with `php-fpm.conf`, `caddy` with the generated Caddyfile (admin port, sites, validate and reload)
 - [ ] Graceful shutdown ordering on quit
 - [ ] **UI: Services page** — list, state badges, start/stop/restart, live log viewer, port conflict dialog
 

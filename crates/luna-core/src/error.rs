@@ -74,6 +74,12 @@ pub enum ErrorCode {
     /// A database could not be set up for its first start (the program that creates its data folder failed, timed
     /// out or was cancelled). The partly made data folder was removed, so it can be tried again.
     DatabaseInitFailed,
+    /// A generated config was rejected by the program's own check (`caddy validate`). The running service is
+    /// untouched; `details.tail` has what the program said.
+    ConfigInvalid,
+    /// A running service could not be told to load its new config (`caddy reload`). The service keeps the old
+    /// config; `details.tail` has what the program said.
+    ReloadFailed,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

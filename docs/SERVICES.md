@@ -13,6 +13,8 @@ Related: [PRD §7.2, §7.4](PRD.md#72-services) · [ARCHITECTURE](ARCHITECTURE.m
 | `caddy` | Caddy runtime | `caddy run --config <Caddyfile> --adapter caddyfile` | site ports; admin API `127.0.0.1:2119` |
 | `worker@<project>/<name>` (Phase 3) | project | `php artisan queue:work`, `npm run dev`, … | — |
 
+On Windows each `php-cgi` of a pool is a service of its own, `php-fcgi@<version>-w<n>` (D-028): the supervisor owns one process per service.
+
 **PHP pools start on demand**: a pool runs only while at least one running site is bound to that version.
 Several PHP versions can run at the same time (FR-SV-02). A pool is identified by its **exact** version.
 A project bound to line `8.3` uses the highest installed 8.3.x when it starts.
@@ -115,6 +117,11 @@ separate override files that lunaRun **never overwrites**.
 One pool, `listen = 127.0.0.1:<port>`, `pm = dynamic`, `pm.max_children = 8`, `catch_workers_output = yes`,
 `clear_env = no`, error log → `logs/`.
 
+**As built** (`luna_core::services::php`, D-028): `php_definition(home, ports, runtime, os, workers)` returns the specs, the
+FastCGI ports and the pool id. The file is `config/php/<version>/php-fpm.conf`, rewritten on every definition, with
+`daemonize = no` and the error log in `logs/php-fpm-<version>.log` (the tab `PHP-FPM log`). On Windows there is no such
+file: each `php-cgi.exe -b 127.0.0.1:<port> -c <php.ini>` is its own service.
+
 ### my.cnf / my.ini
 
 ```ini
@@ -150,7 +157,8 @@ data folder when it fails. Ready check and shutdown are `mysqladmin`/`mariadb-ad
 }
 
 # one block per running site
-http://localhost:8101 {
+http://localhost:8101, http://127.0.0.1:8101 {
+	bind 127.0.0.1
 	root * "D:/Work/shop/public"
 	encode gzip
 	php_fastcgi 127.0.0.1:9101 127.0.0.1:9102 127.0.0.1:9103 127.0.0.1:9104
@@ -164,6 +172,15 @@ http://localhost:8101 {
 - Windows paths use forward slashes and are quoted.
 - Changing a site's PHP version or adding/removing a site → re-render, then `caddy reload --config … --address 127.0.0.1:2119`. No restart, other sites stay up (FR-ST-03).
 - Validate with `caddy validate` before reloading. On failure keep the old config and show the error.
+
+**As built** (`luna_core::services::caddy`, D-028): `caddy_definition(home, ports, runtime, sites, os)` writes
+`config/caddy/Caddyfile` (rewritten every time) and returns the spec (ready when the first site answers, stopped with
+`caddy stop --address`, every site port checked before a start, one access-log tab per site, Caddy's state inside
+LUNA_HOME through `XDG_DATA_HOME` and `XDG_CONFIG_HOME`). `CaddyDefinition::validate` and `reload` run the two commands
+above with their output kept in `logs/caddy.check.log` (`CONFIG_INVALID`, `RELOAD_FAILED`). `bind 127.0.0.1` and the second
+host name `127.0.0.1` are additions to the template above: a site is not offered to the network, and a block for the
+name `localhost` alone would not answer a request for `127.0.0.1`. A project folder is only written down as text and a
+name with braces (Caddy's placeholders) is refused.
 
 **Phase 2:** host-based blocks `shop.test { … }` on :80/:443 with `tls internal` (Caddy's local CA,
 trusted once via `caddy trust` with elevation), plus hosts-file entries managed between
