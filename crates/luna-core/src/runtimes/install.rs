@@ -20,7 +20,7 @@ use reqwest::Url;
 use serde_json::json;
 use tokio_util::sync::CancellationToken;
 
-use super::adapter::{InstallCtx, RuntimeAdapter};
+use super::adapter::{InstallCtx, RuntimeAdapter, rename_dir};
 use super::adapters::adapter_for;
 use super::installed::{InstallReceipt, InstalledRuntime};
 use super::prerequisites::{default_check, default_reg_path};
@@ -486,7 +486,7 @@ async fn run(
         // Someone else installed it while we were working.
         return Err(already_installed(runtime, version));
     }
-    fs::rename(&staging, &final_dir).at_path(&final_dir)?;
+    rename_dir(&staging, &final_dir).at_path(&final_dir)?;
     work.folders.retain(|folder| folder != &staging);
 
     Ok(InstalledRuntime {

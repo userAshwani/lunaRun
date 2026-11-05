@@ -92,6 +92,7 @@ export const en = {
     SERVICE_START_FAILED: "A service did not start",
     PORT_IN_USE: "A port is already in use",
     NO_FREE_PORT: "No free port",
+    DATABASE_INIT_FAILED: "The database could not be set up",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

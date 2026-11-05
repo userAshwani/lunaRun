@@ -253,6 +253,42 @@ fn is_busy(err: &std::io::Error) -> bool {
     cfg!(unix) && err.raw_os_error() == Some(26)
 }
 
+/// How often a folder move is retried when Windows refuses it, and how long to wait in between (10 s in all).
+const RENAME_RETRIES: u32 = 40;
+const RENAME_WAIT: Duration = Duration::from_millis(250);
+
+/// Windows refuses to move a folder while any file in it is open without the "may be moved" permission, and the
+/// virus scanner and the search indexer open every freshly written program that way for a moment: a MySQL that
+/// was just unpacked and run for its version check could not be moved into place ("Access is denied", error 5;
+/// 32 is the sharing violation). It passes within seconds, so the move is tried again for a while. Other errors,
+/// and every error on macOS and Linux, are returned at once.
+fn is_held_by_another_program(err: &std::io::Error) -> bool {
+    cfg!(windows) && matches!(err.raw_os_error(), Some(5 | 32))
+}
+
+fn retry_while_held<T>(
+    mut op: impl FnMut() -> std::io::Result<T>,
+    retries: u32,
+    wait: Duration,
+) -> std::io::Result<T> {
+    let mut attempt = 0;
+    loop {
+        match op() {
+            Err(err) if is_held_by_another_program(&err) && attempt < retries => {
+                attempt += 1;
+                thread::sleep(wait);
+            }
+            other => return other,
+        }
+    }
+}
+
+/// `std::fs::rename` for a runtime folder that a scanner may still be looking at (see
+/// [`is_held_by_another_program`]).
+pub(crate) fn rename_dir(from: &Path, to: &Path) -> std::io::Result<()> {
+    retry_while_held(|| std::fs::rename(from, to), RENAME_RETRIES, RENAME_WAIT)
+}
+
 /// What a program printed and how it ended, for callers that care about a non-zero exit (`reg query` exits
 /// with 1 when a key does not exist, which is an answer, not a failure).
 pub(crate) struct Finished {
@@ -286,6 +322,16 @@ pub(crate) fn run_program<S: AsRef<std::ffi::OsStr>>(
             ),
         ))
     }
+}
+
+/// Everything `reader` yields, as text. Bytes that are not UTF-8 become U+FFFD instead of discarding the lot:
+/// `mysqld --version` starts its line with its own path, which Windows programs write in the ANSI code page,
+/// so a profile folder like `C:\Users\José` made the whole output unreadable and the install "broken" (NFR-07).
+fn read_lossy(reader: &mut impl Read) -> String {
+    let mut bytes = Vec::new();
+    // What arrived before a read error is still worth having.
+    let _ = reader.read_to_end(&mut bytes);
+    String::from_utf8_lossy(&bytes).into_owned()
 }
 
 /// Like [`run_program`], but a non-zero exit is returned, not turned into an error. Failing to start the
@@ -323,18 +369,14 @@ pub(crate) fn run_program_raw<S: AsRef<std::ffi::OsStr>>(
         let sender = sender.clone();
         readers += 1;
         thread::spawn(move || {
-            let mut text = String::new();
-            let _ = out.read_to_string(&mut text);
-            let _ = sender.send(text);
+            let _ = sender.send(read_lossy(&mut out));
         });
     }
     if let Some(mut err) = child.stderr.take() {
         let sender = sender.clone();
         readers += 1;
         thread::spawn(move || {
-            let mut text = String::new();
-            let _ = err.read_to_string(&mut text);
-            let _ = sender.send(text);
+            let _ = sender.send(read_lossy(&mut err));
         });
     }
     drop(sender);
@@ -399,6 +441,103 @@ mod tests {
         }
         // A fourth number is not part of a version line.
         assert_eq!(leading_version("1.2.3.4").as_deref(), Some("1.2.3"));
+    }
+
+    #[test]
+    fn output_that_is_not_utf8_keeps_its_readable_part() {
+        // "C:\Users\Jos<0xE9>\mysqld.exe  Ver 9.7.4 ...": a Latin-1 byte in the path, the version after it.
+        let mut raw: &[u8] = b"C:\\Users\\Jos\xE9\\mysqld.exe  Ver 9.7.4 for Win64\n";
+        let text = read_lossy(&mut raw);
+        assert!(text.contains(" Ver 9.7.4"), "{text:?}");
+        assert_eq!(
+            super::super::adapters::Mysql
+                .parse_version(&text)
+                .as_deref(),
+            Some("9.7.4")
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn a_folder_that_is_held_for_a_moment_is_moved_once_it_is_let_go() {
+        use std::io::Error;
+
+        for code in [5, 32] {
+            let mut calls = 0;
+            let result = retry_while_held(
+                || {
+                    calls += 1;
+                    if calls < 4 {
+                        Err(Error::from_raw_os_error(code))
+                    } else {
+                        Ok("moved")
+                    }
+                },
+                10,
+                Duration::from_millis(1),
+            );
+            assert_eq!(result.unwrap(), "moved", "error {code}");
+            assert_eq!(calls, 4);
+        }
+
+        // Never forever: the error comes back after the last retry.
+        let mut calls = 0;
+        let err = retry_while_held::<()>(
+            || {
+                calls += 1;
+                Err(Error::from_raw_os_error(5))
+            },
+            3,
+            Duration::from_millis(1),
+        )
+        .unwrap_err();
+        assert_eq!(err.raw_os_error(), Some(5));
+        assert_eq!(calls, 4, "one try and three retries");
+    }
+
+    #[test]
+    fn other_errors_are_not_retried_when_moving_a_folder() {
+        use std::io::{Error, ErrorKind};
+
+        let mut calls = 0;
+        let err = retry_while_held::<()>(
+            || {
+                calls += 1;
+                Err(Error::new(ErrorKind::NotFound, "gone"))
+            },
+            10,
+            Duration::from_millis(1),
+        )
+        .unwrap_err();
+        assert_eq!(err.kind(), ErrorKind::NotFound);
+        assert_eq!(calls, 1);
+    }
+
+    #[test]
+    fn a_folder_is_really_moved_by_rename_dir() {
+        let tmp = tempfile::tempdir().unwrap();
+        let from = tmp.path().join("stag ing");
+        let to = tmp.path().join("fertig");
+        std::fs::create_dir(&from).unwrap();
+        std::fs::write(from.join("f.txt"), "x").unwrap();
+        rename_dir(&from, &to).unwrap();
+        assert!(!from.exists());
+        assert!(to.join("f.txt").is_file());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_program_that_prints_non_utf8_still_has_its_output_returned() {
+        let dir = std::env::temp_dir();
+        let out = run_program(
+            "x",
+            Path::new("/bin/sh"),
+            &["-c", "printf 'caf\\351 Ver 1.2.3\\n'"],
+            &dir,
+            Duration::from_secs(10),
+        )
+        .unwrap();
+        assert!(out.contains(" Ver 1.2.3"), "{out:?}");
     }
 
     #[cfg(unix)]

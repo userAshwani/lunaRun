@@ -71,6 +71,9 @@ pub enum ErrorCode {
     PortInUse,
     /// Every port of the range set aside for this kind of service is taken or already assigned.
     NoFreePort,
+    /// A database could not be set up for its first start (the program that creates its data folder failed, timed
+    /// out or was cancelled). The partly made data folder was removed, so it can be tried again.
+    DatabaseInitFailed,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

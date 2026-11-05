@@ -18,7 +18,6 @@
 //! - Every deletion goes through [`LunaHome::safe_remove`], so nothing outside `LUNA_HOME` can be touched and a
 //!   symlink inside a runtime folder is unlinked, never followed.
 
-use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -26,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ts_rs::TS;
 
-use super::adapter::RuntimeAdapter;
+use super::adapter::{RuntimeAdapter, rename_dir};
 use super::adapters::adapter_for;
 use super::install::{INSTALL_LABEL, refuse_if_other_operation};
 use super::installed::{InstalledRuntime, list_installed};
@@ -282,7 +281,7 @@ impl Uninstaller {
         if trash.exists() {
             home.safe_remove(&trash)?; // a leftover with the same name from an earlier run
         }
-        fs::rename(&target.dir, &trash).map_err(|err| rename_error(&err, &target.dir))?;
+        rename_dir(&target.dir, &trash).map_err(|err| rename_error(&err, &target.dir))?;
 
         // 4. Config, then the moved folder, then data if asked.
         let mut report = UninstallReport {

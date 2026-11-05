@@ -17,9 +17,13 @@
 //! - [`PortAllocator`], [`check_ports`], [`port_owners`]: stable ports from the ranges of SERVICES section 3, the
 //!   check before a start, and who holds a port that is taken (FR-SV-03).
 //!
-//! The concrete service definitions are the later M1.4 tasks.
+//! - [`database_definition`]: `mysql@<line>` and `mariadb@<line>` from an installed runtime (generated config, first-run
+//!   setup, clean shutdown, error log tab).
+//!
+//! The PHP and Caddy service definitions are the next M1.4 task.
 
 mod containment;
+mod databases;
 mod logs;
 mod os;
 mod pidfile;
@@ -32,6 +36,7 @@ mod state;
 mod supervisor;
 
 pub use containment::{Containment, NoContainment, OsContainment};
+pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
 pub use port_owner::{PortOwner, port_owners};

@@ -112,6 +112,42 @@ pub(super) async fn wait_ready(check: &ReadyCheck, limit: Duration, poll: Durati
     .is_ok()
 }
 
+/// How a program run to completion ended.
+pub(super) enum RunEnd {
+    /// It ended by itself, with this exit code (`None`: ended by a signal).
+    Exited(Option<i32>),
+    TimedOut,
+    Cancelled,
+}
+
+/// Run `helper` to completion with its stdout and stderr appended to `log`, for at most `limit`, and stop it (killing
+/// it) if `cancel` fires first. For work that takes a while and whose output matters when it fails: a database being
+/// initialised.
+pub(super) async fn run_logged(
+    helper: &HelperCommand,
+    log: &File,
+    limit: Duration,
+    cancel: &tokio_util::sync::CancellationToken,
+) -> std::io::Result<RunEnd> {
+    let mut command = base_command(&helper.program, &helper.args, &helper.env);
+    command
+        .stdout(Stdio::from(log.try_clone()?))
+        .stderr(Stdio::from(log.try_clone()?));
+    let mut child = command.spawn()?;
+    Ok(tokio::select! {
+        biased;
+        () = cancel.cancelled() => {
+            let _ = child.kill().await;
+            RunEnd::Cancelled
+        }
+        status = child.wait() => RunEnd::Exited(status?.code()),
+        () = sleep(limit) => {
+            let _ = child.kill().await;
+            RunEnd::TimedOut
+        }
+    })
+}
+
 /// Make our own child leave: ask the way `plan` says, wait up to the grace period, then kill it. Returns when
 /// the process is gone and has been reaped.
 pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) {

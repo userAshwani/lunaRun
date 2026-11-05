@@ -49,6 +49,8 @@ pub fn stub_child() {
         )),
         "serve" => serve(env, millis, code),
         "supervise" => supervise(env),
+        // A database's setup program: makes the data folder (or half of it, or nothing).
+        "init-ok" | "init-fail" | "init-empty" => init(&mode, env),
         other => panic!("unknown stub mode {other}"),
     }
 }
@@ -155,6 +157,36 @@ pub fn serve(
             std::process::exit(code);
         }
         std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+/// A database setup program that makes the data folder named in `LUNA_STUB_DATADIR`.
+fn init(mode: &str, env: impl Fn(&str) -> Option<String>) -> ! {
+    if let Some(counter) = env("LUNA_STUB_COUNTER") {
+        let mut text = fs::read_to_string(&counter).unwrap_or_default();
+        text.push_str(
+            "run
+",
+        );
+        fs::write(counter, text).unwrap();
+    }
+    let data = PathBuf::from(env("LUNA_STUB_DATADIR").unwrap());
+    println!();
+    match mode {
+        "init-ok" => {
+            fs::create_dir_all(data.join("mysql")).unwrap();
+            fs::write(data.join("mysql").join("user.MYD"), "the user table").unwrap();
+            println!("initialised {}", data.display());
+            std::process::exit(0);
+        }
+        "init-fail" => {
+            fs::create_dir_all(&data).unwrap();
+            fs::write(data.join("partial.file"), "half of a data folder").unwrap();
+            eprintln!("boom: cannot create the system tables");
+            std::process::exit(3);
+        }
+        // Succeeds, makes nothing.
+        _ => std::process::exit(0),
     }
 }
 

@@ -132,8 +132,13 @@ max_allowed_packet = 64M
 ```
 
 **First start** (FR-SV-10): if the data dir is empty → MySQL `mysqld --defaults-file=… --initialize-insecure`;
-MariaDB: `mariadb-install-db --datadir=…` (Windows: `mariadb-install-db.exe` / `mysql_install_db.exe`, depending on version).
+MariaDB: `mariadb-install-db --datadir=…` (Windows) or with `--defaults-file`, `--basedir`, `--auth-root-authentication-method=normal`, `--skip-test-db` (Unix).
 Root has an empty password, which the UI states clearly ("local development only, bound to 127.0.0.1").
+
+**As built** (`luna_core::services::databases`, D-027): the service is `mysql@<line>` / `mariadb@<line>` and the template
+above is `templates/my.ini` plus `mysqlx = OFF` for MySQL 8 and later and, on Unix, the socket. Setup is a separate step,
+`DatabaseDefinition::initialise`, run before `Supervisor::start` so it can show progress and be cancelled; it removes the
+data folder when it fails. Ready check and shutdown are `mysqladmin`/`mariadb-admin` `ping` and `shutdown` over TCP.
 
 ### Caddyfile (MVP)
 
