@@ -14,12 +14,17 @@
 //! - [`LogConfig`], [`LogLine`], [`LogEventSink`]: what a service prints, kept in rotating files and a ring of the last
 //!   lines, tailed live and sent in throttled batches (FR-SV-05, D-025).
 //!
-//! Ports and the concrete service definitions are the later M1.4 tasks.
+//! - [`PortAllocator`], [`check_ports`], [`port_owners`]: stable ports from the ranges of SERVICES section 3, the
+//!   check before a start, and who holds a port that is taken (FR-SV-03).
+//!
+//! The concrete service definitions are the later M1.4 tasks.
 
 mod containment;
 mod logs;
 mod os;
 mod pidfile;
+mod port_owner;
+mod ports;
 mod process;
 mod restart;
 mod spec;
@@ -29,6 +34,8 @@ mod supervisor;
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
+pub use port_owner::{PortOwner, port_owners};
+pub use ports::{PortAllocator, PortAssignment, PortPurpose, PortRanges, check_ports};
 pub use restart::{Decision, RestartPolicy, RestartTracker};
 pub use spec::{HelperCommand, LogFile, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
 pub use state::{Event, ServiceState, ServiceStatus};

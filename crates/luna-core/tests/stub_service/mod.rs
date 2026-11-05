@@ -394,17 +394,36 @@ pub fn private(test: &str) -> Shared {
     Shared::create(&Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("{test} lüna home")))
 }
 
-/// A port nothing listens on, never the same one twice in this program: parallel tests that each ask for one
-/// would otherwise sometimes be given the same just-released port, and one of the two stand-ins would fail to bind.
+/// The next port to hand out. Ports come from a counter in a quiet range, 20,000 to 29,999: below the range every
+/// OS gives to outgoing connections (so a connection another test makes can never take one), and unique by
+/// construction (so parallel tests are never given the same port, and no helper ever has to probe a port by binding it,
+/// which is a real listener for a moment and would make a test that was handed that port see it "in use").
+fn next_port() -> &'static std::sync::atomic::AtomicU32 {
+    static NEXT: std::sync::OnceLock<std::sync::atomic::AtomicU32> = std::sync::OnceLock::new();
+    // Each test program starts somewhere else in the range, in case two run at once.
+    NEXT.get_or_init(|| std::sync::atomic::AtomicU32::new(20_000 + std::process::id() % 400 * 20))
+}
+
+/// A port nothing listens on, never the same one twice in this program.
 pub fn free_port() -> u16 {
-    static ISSUED: Mutex<Vec<u16>> = Mutex::new(Vec::new());
+    free_block(1).start().to_owned()
+}
+
+/// `size` consecutive ports that nothing listens on, none of them handed out before.
+pub fn free_block(size: u16) -> std::ops::RangeInclusive<u16> {
+    use std::sync::atomic::Ordering;
+
     loop {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let port = listener.local_addr().unwrap().port();
-        let mut issued = ISSUED.lock().unwrap();
-        if !issued.contains(&port) {
-            issued.push(port);
-            return port;
+        let first = next_port().fetch_add(u32::from(size), Ordering::SeqCst);
+        let last = first + u32::from(size) - 1;
+        if last > 29_999 {
+            next_port().store(20_000, Ordering::SeqCst);
+            continue;
+        }
+        let (first, last) = (u16::try_from(first).unwrap(), u16::try_from(last).unwrap());
+        // Something else on this machine may have the port: then take the next ones.
+        if (first..=last).all(|port| TcpListener::bind(("127.0.0.1", port)).is_ok()) {
+            return first..=last;
         }
     }
 }

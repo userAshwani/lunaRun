@@ -93,6 +93,10 @@ pub struct ServiceSpec {
     pub restart: RestartPolicy,
     /// Log files the service writes itself, tailed next to its output.
     pub log_files: Vec<LogFile>,
+    /// The ports the service will listen on. Checked before every start that someone asked for: a port that is taken
+    /// is `PORT_IN_USE`, with the program that holds it, instead of a vague failure after the start timeout.
+    /// [`ServiceSpec::new`] puts the ready-check port here; an automatic restart does not check again.
+    pub ports: Vec<u16>,
 }
 
 impl ServiceSpec {
@@ -110,6 +114,7 @@ impl ServiceSpec {
             stop: StopPlan::default(),
             restart: RestartPolicy::default(),
             log_files: Vec::new(),
+            ports: vec![port],
         }
     }
 
@@ -133,6 +138,11 @@ impl ServiceSpec {
             }
         }
         check_env(&self.env)?;
+        if self.ports.contains(&0) {
+            return Err(LunaError::internal(
+                "port 0 is not a port a service can listen on",
+            ));
+        }
         if let ReadyCheck::Command(helper) = &self.ready {
             check_helper(home, helper, "ready check")?;
         }
@@ -148,7 +158,7 @@ fn invalid(path: &Path, why: &str) -> LunaError {
         .with_details(json!({ "path": path.display().to_string() }))
 }
 
-fn check_id(id: &str) -> Result<()> {
+pub(super) fn check_id(id: &str) -> Result<()> {
     let ok = !id.is_empty()
         && id.len() <= 100
         && id

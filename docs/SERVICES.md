@@ -86,10 +86,14 @@ As built in `luna-core::services` (D-025):
 | Caddy admin | 2119 | Not 2019 (the Caddy default), to avoid clashing with a user's own Caddy |
 | Sites Phase 2 | 80 / 443 | `.test` domains, host-based routing on one Caddy listener |
 
-Before every start: test-bind `127.0.0.1:<port>`. If it is in use, find the owner
-(Windows: `GetExtendedTcpTable` → PID → process image path; macOS: `lsof -nP -iTCP:<port> -sTCP:LISTEN`; Linux: `/proc/net/tcp` + `/proc/<pid>/exe`)
-and return `PORT_IN_USE { port, pid?, processName?, processPath? }`. The UI offers "Use port X instead"
-or explains, for example, "XAMPP MySQL is running from C:\xampp\mysql\bin\mysqld.exe".
+As built in `luna-core::services` (D-026): `PortAllocator::assign(id, purpose)` gives a service its ports and saves them,
+`reassign` gives it others ("Use port X instead"), `release` frees them. Before every start someone asked for,
+`Supervisor::start` checks `ServiceSpec::ports` (`check_ports`): a port is taken if a test bind of `127.0.0.1:<port>` fails **or** the OS
+lists a listening socket on it that would clash (on Windows and macOS the bind alone misses a program that listens on the
+wildcard address, as XAMPP's `mysqld` does). Who holds it comes from `GetExtendedTcpTable` (Windows), `/proc/net/tcp` and
+`/proc/<pid>/fd` (Linux), `lsof -nP -iTCP -sTCP:LISTEN -Fpcn` (macOS), then the program's path. The error is
+`PORT_IN_USE { port, pid?, processName?, processPath? }`. The UI offers "Use port X instead"
+or explains, for example, "XAMPP MySQL is running from C:\xampp\mysql\bin\mysqld.exe". A full range is `NO_FREE_PORT`.
 
 ## 4. Config generation
 

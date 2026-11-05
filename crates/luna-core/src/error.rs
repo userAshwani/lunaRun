@@ -67,6 +67,10 @@ pub enum ErrorCode {
     Busy,
     /// A service did not start: it could not be launched, exited before it was ready, or was not ready in time.
     ServiceStartFailed,
+    /// A port a service needs is already taken by another program (`details` name the process when the OS says).
+    PortInUse,
+    /// Every port of the range set aside for this kind of service is taken or already assigned.
+    NoFreePort,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

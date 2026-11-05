@@ -29,7 +29,7 @@ zip = { version = "9.1.3", default-features = false, features = ["deflate-flate2
 
 # Windows only: Job Objects (children die with lunaRun) and looking a process up by number (D-024).
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_NetworkManagement_IpHelper", "Win32_Networking_WinSock", "Win32_System_JobObjects", "Win32_System_Threading"] }
 
 [dev-dependencies]
 lzma-rust2 = { version = "0.24.0", default-features = false, features = ["std", "xz", "encoder"] }

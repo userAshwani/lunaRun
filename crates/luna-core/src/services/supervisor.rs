@@ -38,6 +38,7 @@ use super::logs::{
 };
 use super::os;
 use super::pidfile::{self, PidRecord};
+use super::ports::check_ports;
 use super::process;
 use super::restart::{Decision, RestartTracker};
 use super::spec::{ReadyCheck, ServiceSpec, StopPlan};
@@ -173,6 +174,9 @@ impl Supervisor {
     /// - One that is stopped, crashed or in error is started afresh (the restart count starts again at 0).
     pub fn start(&self, spec: ServiceSpec) -> Result<()> {
         spec.validate(&self.0.home)?;
+        // Busy before PORT_IN_USE: a service that runs holds its own port.
+        self.refuse_if_busy(&spec.id)?;
+        check_ports(&spec.ports)?;
         let (token, generation) = self.begin(&spec.id, |_| {})?;
         // A new run starts a fresh log: the old files move up by one, the viewer starts empty. An automatic restart
         // does not do this (a crash loop would push the output of the crash out of the files in seconds).
@@ -180,6 +184,17 @@ impl Supervisor {
         self.0.logs.clear(&spec.id);
         self.launch(spec, token, generation, None);
         Ok(())
+    }
+
+    /// `BUSY` if the service is starting, running or stopping. Cheap, so it can run before the port check.
+    fn refuse_if_busy(&self, id: &str) -> Result<()> {
+        match lock(&self.0.services)
+            .get(id)
+            .and_then(|entry| busy_error(entry, id))
+        {
+            Some(busy) => Err(busy),
+            None => Ok(()),
+        }
     }
 
     /// Mark the service `Starting` and give it a lifecycle token. `after` runs on the new status.
@@ -198,12 +213,8 @@ impl Supervisor {
                 generation: 0,
             }
         });
-        if entry.active.is_some() || entry.status.borrow().state.has_process() {
-            return Err(LunaError::new(
-                ErrorCode::Busy,
-                format!("{id} is already {}", describe(entry.status.borrow().state)),
-            )
-            .with_details(json!({ "service": id })));
+        if let Some(busy) = busy_error(entry, id) {
+            return Err(busy);
         }
         // A fresh run: forget how the last one ended (the state itself is set by the event).
         apply(&self.0, entry, Event::Start, |status| {
@@ -454,6 +465,19 @@ fn is_running_as_recorded(record: &PidRecord) -> bool {
     os::process_alive(record.pid)
         && os::process_exe(record.pid)
             .is_some_and(|exe| os::same_program(&exe, Path::new(&record.exe)))
+}
+
+fn busy_error(entry: &Entry, id: &str) -> Option<LunaError> {
+    if entry.active.is_some() || entry.status.borrow().state.has_process() {
+        return Some(
+            LunaError::new(
+                ErrorCode::Busy,
+                format!("{id} is already {}", describe(entry.status.borrow().state)),
+            )
+            .with_details(json!({ "service": id })),
+        );
+    }
+    None
 }
 
 fn nothing_left(id: &str) -> LunaError {
