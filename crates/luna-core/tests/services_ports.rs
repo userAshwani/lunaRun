@@ -74,8 +74,10 @@ fn a_port_this_process_listens_on_is_in_use_and_the_error_names_this_process() {
         same_program(path.as_ref(), &std::env::current_exe().unwrap()),
         "{path}"
     );
-    let name = std::env::current_exe()
-        .unwrap()
+    // The name is the file name of the path the OS reported, not necessarily of `current_exe`: the stand-in service
+    // of the other tests is a hard link of this very program, and macOS may name any of its links (D-024). That it
+    // is this program was checked above by file identity.
+    let name = std::path::Path::new(path)
         .file_name()
         .unwrap()
         .to_string_lossy()
@@ -129,13 +131,16 @@ async fn a_port_held_by_another_program_names_that_program() {
 
     let details = in_use(&error);
     assert_eq!(details["pid"], holder.pid);
-    assert!(same_program(
-        details["processPath"].as_str().unwrap().as_ref(),
-        &bench.stub
-    ));
+    let reported = details["processPath"].as_str().unwrap();
+    assert!(same_program(reported.as_ref(), &bench.stub));
+    // The name of whichever link of the stand-in the OS reported (macOS may name any of them, D-024).
     assert_eq!(
         details["processName"],
-        bench.stub.file_name().unwrap().to_string_lossy().as_ref()
+        std::path::Path::new(reported)
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
     );
     let owners = port_owners(port);
     assert_eq!(owners.len(), 1);
