@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use serde_json::json;
 
+use super::logs::OUTPUT;
 use super::restart::RestartPolicy;
 use crate::error::{ErrorCode, IoResultExt, LunaError, Result};
 use crate::paths::LunaHome;
@@ -64,6 +65,16 @@ impl Default for StopPlan {
     }
 }
 
+/// A log file the service writes itself (MySQL's error log, Caddy's access log), shown next to its output as a tab of
+/// its own. lunaRun only reads it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LogFile {
+    /// The tab's name, for example `MySQL error log`. Not `output`, which is the service's own stdout and stderr.
+    pub source: String,
+    /// An absolute path inside `LUNA_HOME`. The file does not have to exist yet.
+    pub path: PathBuf,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServiceSpec {
     /// `mysql@8.4`, `php-fpm@8.3.14`, `caddy`. Letters, digits and `. _ - @` only: it names files later.
@@ -80,6 +91,8 @@ pub struct ServiceSpec {
     pub start_timeout: Duration,
     pub stop: StopPlan,
     pub restart: RestartPolicy,
+    /// Log files the service writes itself, tailed next to its output.
+    pub log_files: Vec<LogFile>,
 }
 
 impl ServiceSpec {
@@ -96,6 +109,7 @@ impl ServiceSpec {
             start_timeout: Duration::from_secs(30),
             stop: StopPlan::default(),
             restart: RestartPolicy::default(),
+            log_files: Vec::new(),
         }
     }
 
@@ -125,7 +139,7 @@ impl ServiceSpec {
         if let StopMethod::Command(helper) = &self.stop.method {
             check_helper(home, helper, "stop command")?;
         }
-        Ok(())
+        check_log_files(home, &self.log_files)
     }
 }
 
@@ -148,6 +162,49 @@ fn check_id(id: &str) -> Result<()> {
             "{id:?} is not a valid service id (letters, digits and . _ - @, up to 100 characters)"
         )))
     }
+}
+
+fn check_log_files(home: &LunaHome, files: &[LogFile]) -> Result<()> {
+    let mut seen: Vec<&str> = vec![OUTPUT];
+    for file in files {
+        let name = file.source.as_str();
+        if name.is_empty()
+            || name.len() > 60
+            || name.chars().any(char::is_control)
+            || seen.contains(&name)
+        {
+            return Err(LunaError::internal(format!(
+                "{name:?} cannot be the name of a log tab (empty, too long, a control character, `{OUTPUT}`, or used twice)"
+            )));
+        }
+        seen.push(name);
+
+        let path = &file.path;
+        if !path.is_absolute()
+            || path
+                .components()
+                .any(|part| part == std::path::Component::ParentDir)
+        {
+            return Err(invalid(
+                path,
+                "a log file must be an absolute path without `..`",
+            ));
+        }
+        if path.exists() {
+            // Links are followed: a link inside the data folder that points outside is outside.
+            inside_home(home, path, "log file")?;
+        } else if !path.starts_with(home.root()) {
+            return Err(LunaError::new(
+                ErrorCode::PathOutsideRoot,
+                format!(
+                    "refusing to read {}: the log file is not inside the lunaRun data directory",
+                    path.display()
+                ),
+            )
+            .with_details(json!({ "path": path.display().to_string() })));
+        }
+    }
+    Ok(())
 }
 
 fn check_env(env: &[(String, String)]) -> Result<()> {

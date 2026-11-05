@@ -233,7 +233,7 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 
 **Events** (backend → UI, via `emit`):
 `job:progress {jobId, phase, bytesDone, bytesTotal, message}`, `job:done {jobId, ok, error?}`,
-`service:state {id, state, pid?, port?}`, `service:log {id, stream, line, ts}` (batched, throttled ≤ 10/s),
+`service:state {id, state, pid?, port?}`, `service:log {id, lines: [{source, line, ts}]}` (one batch per tick, ≤ 10/s per service),
 `registry:updated {RegistryStatus}` (the background refresh finished), `project:changed {id}` (Phase 2 file watcher).
 
 TypeScript types for these MUST be generated from Rust with `ts-rs` (D-012, output in `src/bindings/`) so the

@@ -15,7 +15,8 @@ use std::time::{Duration, Instant};
 
 use luna_core::LunaHome;
 use luna_core::services::{
-    HelperCommand, RestartPolicy, ServiceSpec, ServiceState, ServiceStatus, Supervisor,
+    HelperCommand, LogBatch, LogConfig, RestartPolicy, ServiceSpec, ServiceState, ServiceStatus,
+    Supervisor,
 };
 use tokio::runtime::Handle;
 
@@ -100,6 +101,8 @@ pub fn serve(
         fs::write(ready, "ready").unwrap();
     }
 
+    print_things(&env);
+
     // Crash (or leave by design) after a while, but only for the first N launches.
     let leave_after = millis("LUNA_STUB_EXIT_AFTER_MS");
     let leaves = env("LUNA_STUB_LEAVE_FIRST")
@@ -113,6 +116,7 @@ pub fn serve(
         Some(Instant::now())
     };
     let mut beat = 0_u64;
+    let mut chatter = 0_u128;
     let born = Instant::now();
     loop {
         // A stand-in left behind by a failed test must not live forever.
@@ -125,6 +129,12 @@ pub fn serve(
         {
             clock = Some(Instant::now());
         }
+        if let Some(every) = millis("LUNA_STUB_CHATTER_MS")
+            && born.elapsed().as_millis() / u128::from(every.max(1)) > chatter
+        {
+            chatter += 1;
+            println!("tick {chatter}");
+        }
         if let Some(heartbeat) = env("LUNA_STUB_HEARTBEAT") {
             beat += 1;
             let _ = fs::write(heartbeat, beat.to_string());
@@ -132,6 +142,7 @@ pub fn serve(
         if let Some(stop_file) = env("LUNA_STUB_STOPFILE")
             && Path::new(&stop_file).exists()
         {
+            println!("goodbye");
             if let Some(marker) = env("LUNA_STUB_MARKER") {
                 fs::write(marker, "left cleanly").unwrap();
             }
@@ -144,6 +155,58 @@ pub fn serve(
             std::process::exit(code);
         }
         std::thread::sleep(Duration::from_millis(20));
+    }
+}
+
+/// What the stand-in prints, as the environment says: numbered lines on stdout and stderr (interleaved in the order
+/// written), raw bytes, one very long line, a line without an ending, and a flood.
+fn print_things(env: &impl Fn(&str) -> Option<String>) {
+    use std::io::Write;
+
+    let count = |name: &str| env(name).and_then(|n| n.parse::<u32>().ok()).unwrap_or(0);
+    // The test harness has just printed "test stub_service::stub_child ... " without a line ending: end it, so that
+    // the first line printed here starts a line of its own.
+    println!();
+    let prefix = env("LUNA_STUB_PREFIX").unwrap_or_else(|| "out".to_owned());
+    for n in 0..count("LUNA_STUB_OUT_COUNT").max(count("LUNA_STUB_ERR_COUNT")) {
+        if n < count("LUNA_STUB_OUT_COUNT") {
+            println!("{prefix} {n}");
+        }
+        if n < count("LUNA_STUB_ERR_COUNT") {
+            eprintln!("err {n}");
+        }
+    }
+    if let Some(hex) = env("LUNA_STUB_RAW_HEX") {
+        let bytes: Vec<u8> = hex
+            .split_whitespace()
+            .map(|pair| u8::from_str_radix(pair, 16).unwrap())
+            .collect();
+        let mut out = std::io::stdout();
+        out.write_all(&bytes).unwrap();
+        out.flush().unwrap();
+    }
+    let long = count("LUNA_STUB_LONG");
+    if long > 0 {
+        println!("{}", "x".repeat(long as usize));
+        println!("after long");
+    }
+    if let Some(text) = env("LUNA_STUB_NO_NEWLINE") {
+        let mut out = std::io::stdout();
+        write!(out, "{text}").unwrap();
+        out.flush().unwrap();
+    }
+    let flood = count("LUNA_STUB_FLOOD");
+    if flood > 0 {
+        // One lock and one buffer: a flood, not a trickle.
+        let stdout = std::io::stdout();
+        let mut out = std::io::BufWriter::new(stdout.lock());
+        for n in 0..flood {
+            writeln!(out, "flood {n:06} some padding to make the line longer").unwrap();
+        }
+        out.flush().unwrap();
+        if let Some(done) = env("LUNA_STUB_FLOOD_DONE") {
+            fs::write(done, "done").unwrap();
+        }
     }
 }
 
@@ -274,6 +337,35 @@ impl Shared {
         }
     }
 
+    /// A supervisor with log settings of the test's choosing, a sink that records every batch with the time it
+    /// arrived, and the usual state sink.
+    pub fn supervisor_with_logs(&self, config: LogConfig) -> (Supervisor, Events, Batches) {
+        self.supervisor_with_log_sink(config, |_| {})
+    }
+
+    /// Like `supervisor_with_logs`, and `extra` runs for every batch too (a slow reader, for one).
+    pub fn supervisor_with_log_sink(
+        &self,
+        config: LogConfig,
+        extra: impl Fn(&LogBatch) + Send + Sync + 'static,
+    ) -> (Supervisor, Events, Batches) {
+        let events: Events = Arc::default();
+        let batches: Batches = Arc::default();
+        let (state, record) = (Arc::clone(&events), Arc::clone(&batches));
+        let supervisor = Supervisor::new(
+            Handle::current(),
+            self.home.clone(),
+            move |status: ServiceStatus| state.lock().unwrap().push(status),
+        )
+        .with_poll_interval(Duration::from_millis(30))
+        .with_log_config(config)
+        .with_log_sink(move |batch: LogBatch| {
+            extra(&batch);
+            record.lock().unwrap().push((Instant::now(), batch));
+        });
+        (supervisor, events, batches)
+    }
+
     pub fn supervisor(&self) -> (Supervisor, Events) {
         let events: Events = Arc::default();
         let sink = Arc::clone(&events);
@@ -365,6 +457,9 @@ pub fn helper(mode: &str, extra: &[(&str, &str)]) -> HelperCommand {
 }
 
 pub type Events = Arc<Mutex<Vec<ServiceStatus>>>;
+
+/// Log batches with the moment each arrived.
+pub type Batches = Arc<Mutex<Vec<(Instant, LogBatch)>>>;
 
 pub fn supervisor() -> (Supervisor, Events) {
     shared().supervisor()

@@ -809,3 +809,76 @@ async fn a_waiter_woken_by_a_state_finds_the_sink_already_told() {
     supervisor.stop("ordered").await.unwrap();
     assert!(seen.lock().unwrap().iter().any(|s| s.state == Stopped));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_service_can_be_started_again_the_moment_its_end_is_published() {
+    // A slow log reader: the last batch of a run takes 150 ms to deliver, so the end of a run would stay "in
+    // progress" for that long if it were published before the reader is done.
+    let slow = luna_core::services::LogConfig {
+        interval: Duration::from_millis(20),
+        ..luna_core::services::LogConfig::default()
+    };
+    let (supervisor, _events, _batches) = shared().supervisor_with_log_sink(slow, |_| {
+        std::thread::sleep(Duration::from_millis(150));
+    });
+    let port = free_port();
+    // The race only shows when the machine is busy (the window is microseconds on an idle one), which is exactly
+    // when it hit in the full suite: keep every core busy while the rounds run.
+    let burning = Arc::new(std::sync::atomic::AtomicBool::new(true));
+    let burners: Vec<_> = (0..16)
+        .map(|_| {
+            let flag = Arc::clone(&burning);
+            std::thread::spawn(move || {
+                while flag.load(std::sync::atomic::Ordering::Relaxed) {
+                    std::hint::black_box(0);
+                }
+            })
+        })
+        .collect();
+
+    // Right after a stop returns, over and over: the end of a run and the release of the service are one step.
+    for round in 0..4 {
+        supervisor
+            .start(serving("again", port, &[]))
+            .unwrap_or_else(|e| panic!("round {round}: {e}"));
+        settled(&supervisor, "again").await;
+        supervisor.stop("again").await.unwrap();
+    }
+    supervisor
+        .restart(serving("again", port, &[]))
+        .await
+        .unwrap();
+    settled(&supervisor, "again").await;
+    supervisor.stop("again").await.unwrap();
+
+    // Right after a start that failed.
+    for round in 0..4 {
+        let mut spec = serving("fails", free_port(), &[]);
+        spec.env = env_of(&[("LUNA_STUB", "exit"), ("LUNA_STUB_EXIT_CODE", "3")]);
+        supervisor
+            .start(spec)
+            .unwrap_or_else(|e| panic!("round {round}: {e}"));
+        assert_eq!(settled(&supervisor, "fails").await.state, Error);
+    }
+
+    // Right after the restarts ran out.
+    for round in 0..4 {
+        let mut spec = serving(
+            "gives-up-fast",
+            free_port(),
+            &[("LUNA_STUB_EXIT_AFTER_MS", "50")],
+        );
+        spec.restart.max_restarts = 0;
+        supervisor
+            .start(spec)
+            .unwrap_or_else(|e| panic!("round {round}: {e}"));
+        supervisor
+            .wait_until("gives-up-fast", WAIT, |s| s.gave_up)
+            .await
+            .unwrap();
+    }
+    burning.store(false, std::sync::atomic::Ordering::Relaxed);
+    for burner in burners {
+        burner.join().unwrap();
+    }
+}

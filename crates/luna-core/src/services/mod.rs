@@ -11,9 +11,13 @@
 //! - [`Containment`] / [`OsContainment`] and the PID files: no process outlives lunaRun unnoticed (FR-SV-07).
 //!   Services left running by a crash are found again ([`Supervisor::scan_leftovers`]) and adopted or stopped.
 //!
-//! Log capture, ports and the concrete service definitions are the later M1.4 tasks.
+//! - [`LogConfig`], [`LogLine`], [`LogEventSink`]: what a service prints, kept in rotating files and a ring of the last
+//!   lines, tailed live and sent in throttled batches (FR-SV-05, D-025).
+//!
+//! Ports and the concrete service definitions are the later M1.4 tasks.
 
 mod containment;
+mod logs;
 mod os;
 mod pidfile;
 mod process;
@@ -23,8 +27,9 @@ mod state;
 mod supervisor;
 
 pub use containment::{Containment, NoContainment, OsContainment};
+pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
 pub use restart::{Decision, RestartPolicy, RestartTracker};
-pub use spec::{HelperCommand, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
+pub use spec::{HelperCommand, LogFile, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
 pub use state::{Event, ServiceState, ServiceStatus};
 pub use supervisor::{Leftover, ServiceEventSink, Supervisor};

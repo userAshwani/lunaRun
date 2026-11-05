@@ -66,9 +66,13 @@ As built in `luna-core::services` (D-024):
 
 ### Logs (FR-SV-05)
 
-- stdout/stderr of each child → `LUNA_HOME/logs/<service-id>.log` (rotating 5 MB × 3) and a ring buffer of the last 2,000 lines in memory for the UI.
-- Also tail the service's own log files (MySQL error log, Caddy access/error logs) into the same viewer as separate tabs.
-- UI events are batched (≤ 10 per second per service).
+As built in `luna-core::services` (D-025):
+
+- stdout and stderr of each child are **one file**, `LUNA_HOME/logs/<service-id>.log`, which the child writes to directly (so it survives a crash of lunaRun and an adopted service keeps writing to it). lunaRun tails it: a ring of the last 2,000 lines in memory per source, and `Supervisor::log_lines(id, source, max)` for the viewer to fill itself. The source of the service's own output is `output`.
+- Rotation (5 MB x 3 files): a new run renames the old files up by one; a running service is copied aside and truncated at 5 MB. An automatic restart or an adoption does not rotate.
+- Also tail the service's own log files (MySQL error log, Caddy access/error logs) into the same viewer as separate tabs: `ServiceSpec::log_files`, each with a label, inside `LUNA_HOME`.
+- UI events are batched: one `service:log` event per tick per service, at most 10 per second, carrying every new line of every source.
+- lunaRun adds `[lunaRun] ...` lines to the log (starting, exited with code N, stopped).
 
 ## 3. Ports (FR-SV-03)
 

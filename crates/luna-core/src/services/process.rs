@@ -1,5 +1,6 @@
 //! Starting, probing and stopping one process. No state and no policy here: the supervisor decides.
 
+use std::fs::File;
 use std::process::{ExitStatus, Stdio};
 use std::time::Duration;
 
@@ -32,7 +33,7 @@ fn base_command(program: &std::path::Path, args: &[String], env: &[(String, Stri
         .args(args)
         .envs(env.iter().map(|(name, value)| (name, value)))
         .stdin(Stdio::null())
-        // Output goes nowhere until log capture (M1.4 task 3) replaces this.
+        // Helpers print nothing worth keeping. A service's own output is redirected to its log file in `spawn`.
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         // The last safety net: if the task that owns the child is dropped, the child dies with it.
@@ -42,9 +43,22 @@ fn base_command(program: &std::path::Path, args: &[String], env: &[(String, Stri
     command
 }
 
-/// Launch the service's process.
-pub(super) fn spawn(spec: &ServiceSpec, containment: &dyn Containment) -> Result<Child> {
+/// Launch the service's process. `output`, the service's log file opened for append, becomes its stdout **and**
+/// stderr (the same open file, so the two interleave in the order they were written): the child writes straight
+/// into the file and never waits for lunaRun to read anything (D-025).
+pub(super) fn spawn(
+    spec: &ServiceSpec,
+    containment: &dyn Containment,
+    output: Option<&File>,
+) -> Result<Child> {
     let mut command = base_command(&spec.program, &spec.args, &spec.env);
+    if let Some(file) = output
+        && let (Ok(stdout), Ok(stderr)) = (file.try_clone(), file.try_clone())
+    {
+        command
+            .stdout(Stdio::from(stdout))
+            .stderr(Stdio::from(stderr));
+    }
     if let Some(cwd) = &spec.cwd {
         command.current_dir(cwd);
     }

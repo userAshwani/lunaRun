@@ -33,6 +33,9 @@ use tokio_util::sync::CancellationToken;
 use ts_rs::TS;
 
 use super::containment::{Containment, OsContainment};
+use super::logs::{
+    self, LogBatch, LogConfig, LogEventSink, LogLine, LogStore, OUTPUT, Pump, Source,
+};
 use super::os;
 use super::pidfile::{self, PidRecord};
 use super::process;
@@ -73,6 +76,9 @@ struct Entry {
     status: watch::Sender<ServiceStatus>,
     /// Set while a lifecycle task is alive. Cancelling it asks the service to stop.
     active: Option<CancellationToken>,
+    /// Counts the runs of this service. A finishing task only touches the entry if it still belongs to its run: a new
+    /// run may have started in the meantime (as soon as the old one published its final state).
+    generation: u64,
 }
 
 struct Inner {
@@ -82,6 +88,9 @@ struct Inner {
     containment: Arc<dyn Containment>,
     /// How often a ready check is repeated, and how often an adopted process is checked for being alive.
     poll: Duration,
+    log_config: LogConfig,
+    logs: Arc<LogStore>,
+    log_sink: Arc<dyn LogEventSink>,
     services: Mutex<HashMap<String, Entry>>,
 }
 
@@ -104,6 +113,9 @@ impl Supervisor {
             sink: Arc::new(sink),
             containment: Arc::new(OsContainment::new()),
             poll: Duration::from_millis(100),
+            log_config: LogConfig::default(),
+            logs: Arc::new(LogStore::new(LogConfig::default().ring_lines)),
+            log_sink: Arc::new(|_: LogBatch| {}),
             services: Mutex::new(HashMap::new()),
         }))
     }
@@ -120,6 +132,21 @@ impl Supervisor {
         self.modified(|inner| inner.poll = poll)
     }
 
+    /// Where batches of what services print are sent (the `service:log` event).
+    #[must_use]
+    pub fn with_log_sink(self, sink: impl LogEventSink) -> Self {
+        self.modified(|inner| inner.log_sink = Arc::new(sink))
+    }
+
+    /// How much of the log is kept and how often it is sent (see [`LogConfig`] for the defaults).
+    #[must_use]
+    pub fn with_log_config(self, config: LogConfig) -> Self {
+        self.modified(|inner| {
+            inner.logs = Arc::new(LogStore::new(config.ring_lines));
+            inner.log_config = config;
+        })
+    }
+
     fn modified(self, change: impl FnOnce(&mut Inner)) -> Self {
         // Only meant for setup, before any service exists: services started earlier keep what they had.
         let old = &*self.0;
@@ -129,6 +156,9 @@ impl Supervisor {
             sink: Arc::clone(&old.sink),
             containment: Arc::clone(&old.containment),
             poll: old.poll,
+            log_config: old.log_config.clone(),
+            logs: Arc::clone(&old.logs),
+            log_sink: Arc::clone(&old.log_sink),
             services: Mutex::new(std::mem::take(&mut *lock(&old.services))),
         };
         change(&mut inner);
@@ -143,13 +173,21 @@ impl Supervisor {
     /// - One that is stopped, crashed or in error is started afresh (the restart count starts again at 0).
     pub fn start(&self, spec: ServiceSpec) -> Result<()> {
         spec.validate(&self.0.home)?;
-        let token = self.begin(&spec.id, |_| {})?;
-        self.launch(spec, token, None);
+        let (token, generation) = self.begin(&spec.id, |_| {})?;
+        // A new run starts a fresh log: the old files move up by one, the viewer starts empty. An automatic restart
+        // does not do this (a crash loop would push the output of the crash out of the files in seconds).
+        let _ = logs::rotate_for_new_run(&self.0.home, &spec.id, self.0.log_config.files);
+        self.0.logs.clear(&spec.id);
+        self.launch(spec, token, generation, None);
         Ok(())
     }
 
     /// Mark the service `Starting` and give it a lifecycle token. `after` runs on the new status.
-    fn begin(&self, id: &str, after: impl FnOnce(&mut ServiceStatus)) -> Result<CancellationToken> {
+    fn begin(
+        &self,
+        id: &str,
+        after: impl FnOnce(&mut ServiceStatus),
+    ) -> Result<(CancellationToken, u64)> {
         let token = CancellationToken::new();
         let mut services = lock(&self.0.services);
         let entry = services.entry(id.to_owned()).or_insert_with(|| {
@@ -157,6 +195,7 @@ impl Supervisor {
             Entry {
                 status,
                 active: None,
+                generation: 0,
             }
         });
         if entry.active.is_some() || entry.status.borrow().state.has_process() {
@@ -175,20 +214,29 @@ impl Supervisor {
             status.gave_up = false;
             after(status);
         });
+        entry.generation += 1;
         entry.active = Some(token.clone());
-        Ok(token)
+        Ok((token, entry.generation))
     }
 
     /// Spawn the lifecycle task. `adopted` is the number of a process that is already running.
-    fn launch(&self, spec: ServiceSpec, token: CancellationToken, adopted: Option<u32>) {
+    fn launch(
+        &self,
+        spec: ServiceSpec,
+        token: CancellationToken,
+        generation: u64,
+        adopted: Option<u32>,
+    ) {
         let inner = Arc::clone(&self.0);
+        let pump = start_pump(&inner, &spec);
         self.0.handle.spawn(async move {
             let _finish = Finish {
                 inner: Arc::clone(&inner),
                 id: spec.id.clone(),
                 token: token.clone(),
+                generation,
             };
-            run(&inner, &spec, &token, adopted).await;
+            run(&inner, &spec, &token, adopted, pump).await;
         });
     }
 
@@ -279,6 +327,22 @@ impl Supervisor {
                 limit.as_millis()
             ))),
         }
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Logs
+    // -----------------------------------------------------------------------------------------
+
+    /// The last `max` lines of one source of a service's log, oldest first. `source` is [`OUTPUT`] for what the
+    /// service itself prints, or the label of one of its `log_files`. The lines of a service that has stopped are
+    /// still there; a new start begins with an empty list.
+    pub fn log_lines(&self, id: &str, source: &str, max: usize) -> Vec<LogLine> {
+        self.0.logs.lines(id, source, max)
+    }
+
+    /// The log sources a service has: `output` first, then its own log files by name.
+    pub fn log_sources(&self, id: &str) -> Vec<String> {
+        self.0.logs.sources(id)
     }
 
     // -----------------------------------------------------------------------------------------
@@ -377,10 +441,10 @@ impl Supervisor {
             .with_details(json!({ "service": spec.id, "pid": record.pid })));
         }
         let pid = record.pid;
-        let token = self.begin(&spec.id, |status| status.pid = Some(pid))?;
+        let (token, generation) = self.begin(&spec.id, |status| status.pid = Some(pid))?;
         // It already runs: Starting is over before it began.
         update(&self.0, &spec.id, Event::Ready, |_| {});
-        self.launch(spec, token, Some(pid));
+        self.launch(spec, token, generation, Some(pid));
         Ok(())
     }
 }
@@ -447,17 +511,43 @@ fn update(inner: &Inner, id: &str, event: Event, edit: impl FnOnce(&mut ServiceS
         .is_some_and(|entry| apply(inner, entry, event, edit))
 }
 
+/// Publish the **final** state of a run (stopped, a start that failed, the restarts used up) and release the service
+/// in the same step, under the same lock. After this a `start` is accepted at once, so whoever waited for the state
+/// can start the service again without a window in which it is still "active". Everything that must be finished
+/// before that (the log reader, the PID file) is done before this is called.
+fn update_final(
+    inner: &Inner,
+    id: &str,
+    event: Event,
+    edit: impl FnOnce(&mut ServiceStatus),
+) -> bool {
+    let mut services = lock(&inner.services);
+    let Some(entry) = services.get_mut(id) else {
+        return false;
+    };
+    let changed = apply(inner, entry, event, edit);
+    if changed {
+        entry.active = None;
+    }
+    changed
+}
+
 /// Marks the lifecycle task as over, even if it panicked, so the service can be started again.
 struct Finish {
     inner: Arc<Inner>,
     id: String,
     token: CancellationToken,
+    generation: u64,
 }
 
 impl Drop for Finish {
     fn drop(&mut self) {
         let mut services = lock(&self.inner.services);
-        if let Some(entry) = services.get_mut(&self.id) {
+        // Only if the entry is still this run's: a new run may have started since the final state was published.
+        if let Some(entry) = services
+            .get_mut(&self.id)
+            .filter(|entry| entry.generation == self.generation)
+        {
             entry.active = None;
             // A stop that arrived while the task was giving up (crashed, or a failed start) was never seen by
             // the task. Honour it here, or `stop` would wait for a `Stopped` that never comes.
@@ -556,6 +646,21 @@ fn reaped(inner: &Inner, id: &str, pid: Option<u32>) {
     pidfile::remove(&inner.home, id);
 }
 
+/// The process has ended. Say so in its log, read the log one last time so that its last words are there, then clean
+/// up. All of it before the state changes, so whoever sees the new state also sees the last lines.
+async fn process_ended(inner: &Inner, pump: &Pump, id: &str, pid: Option<u32>, what: &str) {
+    logs::note(&inner.home, id, what);
+    pump.flush().await;
+    reaped(inner, id, pid);
+}
+
+fn exit_note(code: Option<i32>) -> String {
+    code.map_or_else(
+        || "ended".to_owned(),
+        |code| format!("exited with code {code}"),
+    )
+}
+
 /// Record the process so that a later launch can find it if lunaRun dies first. Best effort: without the file the
 /// service still works, it only loses the safety net.
 fn record_started(inner: &Inner, spec: &ServiceSpec, pid: Option<u32>) {
@@ -574,11 +679,49 @@ fn record_started(inner: &Inner, spec: &ServiceSpec, pid: Option<u32>) {
     let _ = pidfile::write(&inner.home, &spec.id, &record);
 }
 
+/// One run of a service: the lifecycle, then one last read of its logs.
 async fn run(
     inner: &Arc<Inner>,
     spec: &ServiceSpec,
     stop: &CancellationToken,
+    adopted: Option<u32>,
+    pump: Pump,
+) {
+    lifecycle(inner, spec, stop, adopted, &pump).await;
+    pump.shutdown().await;
+}
+
+/// Start reading the logs of a service that is about to run: pick up its files, fill the rings with the lines they
+/// already have, follow what comes next. Done before `start` or `adopt` returns, so the viewer never asks for lines
+/// that are not there yet.
+fn start_pump(inner: &Inner, spec: &ServiceSpec) -> Pump {
+    let mut sources = vec![Source {
+        label: OUTPUT.to_owned(),
+        path: logs::log_path(&inner.home, &spec.id),
+        rotate: true,
+    }];
+    sources.extend(spec.log_files.iter().map(|file| Source {
+        label: file.source.clone(),
+        path: file.path.clone(),
+        rotate: false,
+    }));
+    Pump::start(
+        &inner.handle,
+        inner.home.clone(),
+        spec.id.clone(),
+        sources,
+        inner.log_config.clone(),
+        Arc::clone(&inner.logs),
+        Arc::clone(&inner.log_sink),
+    )
+}
+
+async fn lifecycle(
+    inner: &Arc<Inner>,
+    spec: &ServiceSpec,
+    stop: &CancellationToken,
     mut adopted: Option<u32>,
+    pump: &Pump,
 ) {
     let id = spec.id.as_str();
     let mut tracker = RestartTracker::new(spec.restart.clone());
@@ -591,10 +734,20 @@ async fn run(
             // Already running and ready: straight to watching it.
             Live::Adopted(pid)
         } else {
-            let child = match process::spawn(spec, inner.containment.as_ref()) {
+            // Appended to on every launch, so the output of a crash and of the restart after it are in one file.
+            let output = logs::open_output(&inner.home, id).ok();
+            // Before the launch, so that it is in the file before anything the process prints.
+            logs::note(&inner.home, id, "starting");
+            let child = match process::spawn(spec, inner.containment.as_ref(), output.as_ref()) {
                 Ok(child) => child,
                 Err(error) => {
-                    let next = failed_start(inner, id, automatic, &mut tracker, None, error);
+                    logs::note(
+                        &inner.home,
+                        id,
+                        &format!("could not be started: {}", error.message),
+                    );
+                    let next =
+                        failed_start(inner, pump, id, automatic, &mut tracker, None, error).await;
                     if carry_on(inner, id, stop, &tracker, next).await {
                         automatic = true;
                         continue;
@@ -618,12 +771,12 @@ async fn run(
 
             let failure = match launch {
                 Launch::StopRequested => {
-                    stop_flow(inner, spec, &mut live).await;
+                    stop_flow(inner, spec, &mut live, pump).await;
                     return;
                 }
                 Launch::Ready => None,
                 Launch::Exited(code) => {
-                    reaped(inner, id, pid);
+                    process_ended(inner, pump, id, pid, &exit_note(code)).await;
                     let what = code.map_or_else(
                         || format!("{id} was ended before it was ready"),
                         |code| format!("{id} exited with code {code} before it was ready"),
@@ -632,7 +785,7 @@ async fn run(
                 }
                 Launch::TimedOut => {
                     live.kill().await;
-                    reaped(inner, id, pid);
+                    process_ended(inner, pump, id, pid, "not ready in time, stopped").await;
                     let what = format!(
                         "{id} was not ready within {} s and was stopped",
                         spec.start_timeout.as_secs()
@@ -641,7 +794,8 @@ async fn run(
                 }
             };
             if let Some((code, error)) = failure {
-                let next = failed_start(inner, id, automatic, &mut tracker, code, error);
+                let next =
+                    failed_start(inner, pump, id, automatic, &mut tracker, code, error).await;
                 if carry_on(inner, id, stop, &tracker, next).await {
                     automatic = true;
                     continue;
@@ -660,11 +814,11 @@ async fn run(
         };
         match ended {
             Ended::StopRequested => {
-                stop_flow(inner, spec, &mut live).await;
+                stop_flow(inner, spec, &mut live, pump).await;
                 return;
             }
             Ended::Exited(code) => {
-                reaped(inner, id, pid);
+                process_ended(inner, pump, id, pid, &exit_note(code)).await;
                 if spec.restart.recycle_on_exit
                     && update(inner, id, Event::Recycle, |status| {
                         status.pid = None;
@@ -675,7 +829,7 @@ async fn run(
                     automatic = true;
                     continue;
                 }
-                let next = crashed(inner, id, &mut tracker, code, None);
+                let next = crashed(inner, pump, id, &mut tracker, code, None).await;
                 if carry_on(inner, id, stop, &tracker, next).await {
                     automatic = true;
                     continue;
@@ -702,8 +856,9 @@ fn set_pid(inner: &Inner, id: &str, pid: Option<u32>) {
 
 /// A launch that did not get the service ready. The asked-for launch ends in `Error` (restarting would not fix
 /// a bad configuration); an automatic one counts as another crash.
-fn failed_start(
+async fn failed_start(
     inner: &Inner,
+    pump: &Pump,
     id: &str,
     automatic: bool,
     tracker: &mut RestartTracker,
@@ -711,9 +866,11 @@ fn failed_start(
     error: LunaError,
 ) -> Next {
     if automatic {
-        return crashed(inner, id, tracker, exit_code, Some(error));
+        return crashed(inner, pump, id, tracker, exit_code, Some(error)).await;
     }
-    update(inner, id, Event::StartFailed, |status| {
+    // The end of this run: stop reading its log first, then publish.
+    pump.shutdown().await;
+    update_final(inner, id, Event::StartFailed, |status| {
         status.pid = None;
         status.exit_code = exit_code;
         status.error = Some(error);
@@ -722,20 +879,28 @@ fn failed_start(
 }
 
 /// The process died by itself: `Crashed`, and the policy says whether to try again.
-fn crashed(
+async fn crashed(
     inner: &Inner,
+    pump: &Pump,
     id: &str,
     tracker: &mut RestartTracker,
     exit_code: Option<i32>,
     error: Option<LunaError>,
 ) -> Next {
     let decision = tracker.on_crash(Instant::now());
-    update(inner, id, Event::Crash, |status| {
+    let edit = |status: &mut ServiceStatus| {
         status.pid = None;
         status.exit_code = exit_code;
         status.error = error;
         status.gave_up = decision == Decision::GiveUp;
-    });
+    };
+    if decision == Decision::GiveUp {
+        // The end of this run: stop reading its log first, then publish.
+        pump.shutdown().await;
+        update_final(inner, id, Event::Crash, edit);
+    } else {
+        update(inner, id, Event::Crash, edit);
+    }
     match decision {
         Decision::Restart { after } => Next::Restart(after),
         Decision::GiveUp => Next::End,
@@ -769,10 +934,12 @@ async fn carry_on(
 }
 
 /// Ask the process to leave, force it after the grace period, and record that it is gone.
-async fn stop_flow(inner: &Inner, spec: &ServiceSpec, live: &mut Live) {
+async fn stop_flow(inner: &Inner, spec: &ServiceSpec, live: &mut Live, pump: &Pump) {
     update(inner, &spec.id, Event::Stop, |_| {});
     let pid = live.pid();
     live.stop(&spec.stop).await;
-    reaped(inner, &spec.id, pid);
-    update(inner, &spec.id, Event::Stopped, |status| status.pid = None);
+    process_ended(inner, pump, &spec.id, pid, "stopped").await;
+    // Stop reading the log, then publish the end of the run and release the service in one step.
+    pump.shutdown().await;
+    update_final(inner, &spec.id, Event::Stopped, |status| status.pid = None);
 }
