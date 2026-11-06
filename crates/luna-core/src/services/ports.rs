@@ -95,17 +95,26 @@ impl Persisted for ServicesConfig {
 /// when the OS says. Call it right before a service starts.
 pub fn check_ports(ports: &[u16]) -> Result<()> {
     for &port in ports {
-        let bind_failed = TcpListener::bind((Ipv4Addr::LOCALHOST, port)).is_err();
+        // The listener of a successful test bind must be gone before the system is asked who listens: it would be
+        // listed, and every port would be reported as held by this very process.
+        let bind_error = TcpListener::bind((Ipv4Addr::LOCALHOST, port)).err();
         let listeners = port_owner::conflicting_listeners(port);
-        if bind_failed || !listeners.is_empty() {
+        if bind_error.is_some() || !listeners.is_empty() {
             let owner = port_owner::owners_of(listeners).into_iter().next();
-            return Err(port_in_use(port, owner.as_ref()));
+            let reason = match bind_error {
+                Some(error) => error.to_string(),
+                None => "the system lists a program listening on it".to_owned(),
+            };
+            return Err(port_in_use(port, owner.as_ref(), Some(reason)));
         }
     }
     Ok(())
 }
 
-fn port_in_use(port: u16, owner: Option<&PortOwner>) -> LunaError {
+/// `reason` says why the port cannot be used when no program can be named (another user's, on Linux and macOS): the
+/// error of the test bind, or what the system lists. "Address already in use" and "Permission denied" (a port range
+/// Windows keeps for itself) are different problems, and without the reason both read the same.
+fn port_in_use(port: u16, owner: Option<&PortOwner>, reason: Option<String>) -> LunaError {
     let mut details = Map::new();
     details.insert("port".into(), json!(port));
     let message = match owner {
@@ -125,7 +134,13 @@ fn port_in_use(port: u16, owner: Option<&PortOwner>) -> LunaError {
                 _ => format!("port {port} is already in use by process {}", owner.pid),
             }
         }
-        None => format!("port {port} is already in use"),
+        None => match reason {
+            Some(reason) => {
+                details.insert("reason".into(), json!(reason));
+                format!("port {port} is already in use ({reason})")
+            }
+            None => format!("port {port} is already in use"),
+        },
     };
     LunaError::new(ErrorCode::PortInUse, message).with_details(Value::Object(details))
 }
@@ -289,16 +304,60 @@ impl PortAllocator {
         }
 
         if first == last {
-            // The only port there is, and it is not free: say who has it, so the user can deal with it.
-            let owner = port_owner::owners_of(port_owner::conflicting_listeners(first))
-                .into_iter()
-                .next();
-            return Err(port_in_use(first, owner.as_ref()));
+            // The only port there is, and it is not free: say who has it, so the user can deal with it. If the
+            // system finds nothing on it, another service of ours was given it.
+            return Err(check_ports(&[first]).err().unwrap_or_else(|| {
+                port_in_use(first, None, Some("another service has it".to_owned()))
+            }));
         }
         Err(LunaError::new(
             ErrorCode::NoFreePort,
             format!("no free port in {first}-{last} for {id}"),
         )
         .with_details(json!({ "service": id, "first": first, "last": last, "count": count })))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `check_ports` binds the port to test it. That listener must be gone before the system is asked who listens, or
+    /// every free port is reported as held by this very process (it once was, and the tests hung looking for a port).
+    #[test]
+    fn a_free_port_is_not_reported_as_held_by_this_process() {
+        let port = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port();
+
+        check_ports(&[port]).unwrap();
+
+        // And a port this process really holds is found, and is named.
+        let held = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        let held_port = held.local_addr().unwrap().port();
+        let error = check_ports(&[held_port]).unwrap_err();
+        assert_eq!(error.code, ErrorCode::PortInUse);
+        assert_eq!(error.details.unwrap()["pid"], std::process::id());
+    }
+
+    #[test]
+    fn a_port_with_no_known_owner_says_why_it_cannot_be_used() {
+        let refused = std::io::Error::from(std::io::ErrorKind::PermissionDenied).to_string();
+        let error = port_in_use(8100, None, Some(refused.clone()));
+        assert_eq!(error.code, ErrorCode::PortInUse);
+        assert!(
+            error.message.starts_with("port 8100 is already in use ("),
+            "{}",
+            error.message
+        );
+        let details = error.details.unwrap();
+        assert_eq!(details["port"], 8100);
+        assert_eq!(details["reason"], refused);
+
+        // Nothing is known: the plain message, as before.
+        let error = port_in_use(8100, None, None);
+        assert_eq!(error.message, "port 8100 is already in use");
     }
 }

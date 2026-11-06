@@ -7,6 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- When a port cannot be used and no program can be named as its owner (a program of another user, or a port range Windows keeps for itself), lunaRun now says why, using the system's own message, instead of only "already in use".
 - New logo: a crescent moon merged with an `R` and an arrow. It replaces the old icon in the app window, the installer, the sidebar, the browser favicon and the README (which switches between a light and a dark version), and a social preview image is included.
 
 ### Fixed

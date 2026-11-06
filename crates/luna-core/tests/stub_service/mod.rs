@@ -457,8 +457,13 @@ pub fn free_block(size: u16) -> std::ops::RangeInclusive<u16> {
             continue;
         }
         let (first, last) = (u16::try_from(first).unwrap(), u16::try_from(last).unwrap());
-        // Something else on this machine may have the port: then take the next ones.
-        if (first..=last).all(|port| TcpListener::bind(("127.0.0.1", port)).is_ok()) {
+        // Something else on this machine may have the port: then take the next ones. Judged by the rule the
+        // supervisor itself applies before every start (`check_ports`: the bind fails, or the OS lists a clashing
+        // listener, such as another user's program on the IPv6 wildcard address), not by a bind alone: a port that
+        // passes a bind but not that rule would make `Supervisor::start` refuse it with `PORT_IN_USE` and no owner
+        // (seen twice on Linux CI).
+        // (`check_ports` binds the port itself: a bind of our own beforehand would still be listening while it looks.)
+        if (first..=last).all(|port| luna_core::services::check_ports(&[port]).is_ok()) {
             return first..=last;
         }
     }
