@@ -20,6 +20,12 @@ These are the project owner's explicit instructions. Follow them in every sessio
 1. **"start work" alone is a complete instruction. Resume exactly where the project left off.** The owner will
    often send only those two words, in a brand-new chat, possibly to a different model. Do this, without asking
    what to work on:
+   0. **A computer the project has not been set up on?** (a folder copied or unzipped from another PC, no
+      `node_modules/` or `target/`, a tool missing, or the owner says it is a new machine.) Run
+      `node scripts/check-machine.mjs` **first** and follow [TRACKER.md](TRACKER.md) section 9: install what is
+      missing yourself, get the repository and its dependencies in order, prove it with the gate, and only then go on.
+      Do not ask permission to set up the tools. Ask the owner only for what section 9 lists as theirs (approving an
+      installer, signing in to GitHub in the browser). A machine that passes the check needs none of this.
    1. Read [TRACKER.md](TRACKER.md) (section 1 "Where we are": *Next step*, and section 3 "Pending work"), then this file.
    2. Run `git pull`, `git status` and `git log --oneline -5`. If the tree is dirty or an earlier turn was
       interrupted mid-step, finish or cleanly resolve that first and say so.
@@ -113,6 +119,7 @@ pnpm install
 pnpm tauri dev                 # run the app
 pnpm test                      # frontend tests (vitest)
 pnpm lint                      # eslint + prettier --check
+pnpm check:machine             # what is missing on THIS computer to build, test and push (read-only; TRACKER section 9)
 cargo test --workspace         # Rust tests
 cargo test -p luna-core        # core only (fast)
 cargo clippy --workspace -- -D warnings

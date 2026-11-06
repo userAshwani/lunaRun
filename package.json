@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:machine": "node scripts/check-machine.mjs",
     "bump": "node scripts/bump-version.mjs",
     "registry": "node scripts/registry/generate.mjs",
     "ca-bundle": "node scripts/ca-bundle/update.mjs"
