@@ -29,4 +29,9 @@ error: LunaError | null,
 /**
  * The automatic restarts ran out: the service stays `Crashed` and the user should be told (FR-SV-06).
  */
-gaveUp: boolean, };
+gaveUp: boolean, 
+/**
+ * The last stop did not finish within its grace period and the process was **killed**. A database then does
+ * crash recovery on its next start, so the user is told. Cleared when the service is started again.
+ */
+killed: boolean, };

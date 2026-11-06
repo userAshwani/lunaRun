@@ -15,8 +15,8 @@ use std::time::Duration;
 use luna_core::diagnostics::{Arch, Os};
 use luna_core::runtimes::{InstallReceipt, InstalledRuntime, php_config_paths};
 use luna_core::services::{
-    CaddyDefinition, PhpDefinition, PortAllocator, PortRanges, ReadyCheck, Site, StopMethod,
-    caddy_definition, php_definition,
+    CaddyDefinition, PhpDefinition, PortAllocator, PortRanges, ReadyCheck, ShutdownGroup, Site,
+    StopMethod, caddy_definition, database_definition, group_of, php_definition,
 };
 use luna_core::{ErrorCode, LunaHome};
 use stub_service::*;
@@ -30,6 +30,7 @@ fn own_ranges() -> PortRanges {
     PortRanges {
         php_fastcgi: free_block(16),
         caddy_admin: free_block(1),
+        database: free_block(4),
         ..PortRanges::default()
     }
 }
@@ -787,4 +788,46 @@ async fn a_caddy_that_is_missing_is_a_failure_not_a_panic() {
         "{}",
         error.message
     );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Quit order: the ids these definitions make are in the right group (D-029)
+// ---------------------------------------------------------------------------------------------
+
+#[test]
+fn every_service_id_the_definitions_make_is_in_the_right_shutdown_group() {
+    for os in PLATFORMS {
+        let bench = private(&format!("web-groups-{os:?}"));
+        let ports = allocator(&bench.home);
+        let root = bench.scratch("proj");
+
+        let pool = php(&bench.home, &ports, "8.3.36", os, 3);
+        let web = caddy(&bench, &ports, &[site("a", 8101, &root, &pool.ports)], os);
+        let mysql = InstalledRuntime {
+            runtime: "mysql".to_owned(),
+            version: "8.4.13".to_owned(),
+            dir: bench.home.runtime_dir("mysql", "8.4.13").unwrap(),
+            receipt: receipt("mysql", "8.4.13", os),
+        };
+        let mariadb = InstalledRuntime {
+            runtime: "mariadb".to_owned(),
+            version: "12.3.3".to_owned(),
+            dir: bench.home.runtime_dir("mariadb", "12.3.3").unwrap(),
+            receipt: receipt("mariadb", "12.3.3", os),
+        };
+
+        assert_eq!(group_of(&web.spec.id), ShutdownGroup::Web, "{os:?}");
+        for spec in &pool.specs {
+            assert_eq!(group_of(&spec.id), ShutdownGroup::Php, "{os:?} {}", spec.id);
+        }
+        for runtime in [&mysql, &mariadb] {
+            let database = database_definition(&bench.home, &ports, runtime, os).unwrap();
+            assert_eq!(
+                group_of(&database.spec.id),
+                ShutdownGroup::Databases,
+                "{os:?} {}",
+                database.spec.id
+            );
+        }
+    }
 }

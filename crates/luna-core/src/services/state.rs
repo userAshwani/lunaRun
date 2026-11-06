@@ -102,6 +102,9 @@ pub struct ServiceStatus {
     pub error: Option<LunaError>,
     /// The automatic restarts ran out: the service stays `Crashed` and the user should be told (FR-SV-06).
     pub gave_up: bool,
+    /// The last stop did not finish within its grace period and the process was **killed**. A database then does
+    /// crash recovery on its next start, so the user is told. Cleared when the service is started again.
+    pub killed: bool,
 }
 
 impl ServiceStatus {
@@ -114,6 +117,7 @@ impl ServiceStatus {
             exit_code: None,
             error: None,
             gave_up: false,
+            killed: false,
         }
     }
 

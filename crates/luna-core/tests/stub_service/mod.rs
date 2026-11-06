@@ -145,6 +145,10 @@ pub fn serve(
             && Path::new(&stop_file).exists()
         {
             println!("goodbye");
+            // A service that takes its time to finish what it is doing before it leaves.
+            if let Some(delay) = millis("LUNA_STUB_LEAVE_DELAY_MS") {
+                std::thread::sleep(Duration::from_millis(delay));
+            }
             if let Some(marker) = env("LUNA_STUB_MARKER") {
                 fs::write(marker, "left cleanly").unwrap();
             }

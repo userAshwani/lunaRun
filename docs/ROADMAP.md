@@ -82,8 +82,10 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Services: `php-fcgi@` (Win), `php-fpm@` (mac/Linux), `mysql@`, `mariadb@` (incl. first-run init), `caddy`
   - [x] 5a: the databases: `mysql@<line>` and `mariadb@<line>` as `ServiceSpec`s built from an installed runtime (generated `my.ini`/`my.cnf` with a user override file, first-run initialisation, `mysqladmin` ready check and clean shutdown, error log as a tab, port from the allocator)
   - [x] 5b: PHP and Caddy: `php-fcgi@<version>` (Windows pool) and `php-fpm@<version>` (macOS, Linux) with `php-fpm.conf`, `caddy` with the generated Caddyfile (admin port, sites, validate and reload)
-- [ ] Graceful shutdown ordering on quit
+- [x] Graceful shutdown ordering on quit (`luna-core::services::shutdown`, D-029; the Tauri exit hook and the progress window come with the Services page)
 - [ ] **UI: Services page** — list, state badges, start/stop/restart, live log viewer, port conflict dialog
+  - [ ] 7a: wiring and the read side: `Supervisor` and `PortAllocator` in the app state, `service:state` and `service:log` events, leftovers scanned once at startup, IPC `services_list` and `services_leftovers`, the quit hook with `shutdown:progress`, the real running-services check for uninstall, and the read-only page (table, state badges, four states)
+  - [ ] 7b: the actions: start, stop and restart, the database setup with progress, the port conflict dialog ("Use port X instead"), the Adopt or Stop prompt for leftovers, the live log viewer with tabs, the quit progress window
 
 ### M1.5 Constraint engine
 - [ ] Composer constraint parser + matcher (PROJECT-DETECTION §6), exhaustive table tests

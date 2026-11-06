@@ -90,6 +90,7 @@ export const en = {
     PROJECTS_BOUND: "Projects use this runtime",
     BUSY: "Another operation is running",
     SERVICE_START_FAILED: "A service did not start",
+    SERVICE_STOP_FAILED: "A service could not be stopped",
     PORT_IN_USE: "A port is already in use",
     NO_FREE_PORT: "No free port",
     DATABASE_INIT_FAILED: "The database could not be set up",

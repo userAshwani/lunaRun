@@ -149,12 +149,13 @@ pub(super) async fn run_logged(
 }
 
 /// Make our own child leave: ask the way `plan` says, wait up to the grace period, then kill it. Returns when
-/// the process is gone and has been reaped.
-pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) {
+/// the process is gone and has been reaped. The result is `true` when it did not leave within the grace period and
+/// had to be killed; a plan that is `Kill` from the start is the plan, not a failure, and gives `false`.
+pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) -> bool {
     match &plan.method {
         StopMethod::Kill => {
             let _ = child.kill().await;
-            return;
+            return false;
         }
         StopMethod::Terminate => ask_child(child, Leave::Terminate),
         StopMethod::Quit => ask_child(child, Leave::Quit),
@@ -167,7 +168,9 @@ pub(super) async fn stop_child(child: &mut Child, plan: &StopPlan) {
     if timeout(plan.grace, child.wait()).await.is_err() {
         // `kill` waits for the process to be gone.
         let _ = child.kill().await;
+        return true;
     }
+    false
 }
 
 fn ask_child(child: &Child, how: Leave) {
@@ -182,8 +185,9 @@ pub(super) async fn kill_now(child: &mut Child) {
 }
 
 /// Make a process that is **not our child** leave (one adopted after a crash of lunaRun, or found left over):
-/// the same plan, but with the process number only, so "gone" is judged by asking the OS.
-pub(super) async fn stop_pid(pid: u32, plan: &StopPlan) {
+/// the same plan, but with the process number only, so "gone" is judged by asking the OS. `true` when it had to be
+/// killed after the grace period (as for [`stop_child`]).
+pub(super) async fn stop_pid(pid: u32, plan: &StopPlan) -> bool {
     match &plan.method {
         StopMethod::Kill => {}
         StopMethod::Terminate => os::ask_to_leave(pid, Leave::Terminate),
@@ -200,5 +204,7 @@ pub(super) async fn stop_pid(pid: u32, plan: &StopPlan) {
     if !os::wait_gone(pid, grace).await {
         os::terminate_process(pid);
         os::wait_gone(pid, KILL_WAIT).await;
+        return !matches!(plan.method, StopMethod::Kill);
     }
+    false
 }

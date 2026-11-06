@@ -58,6 +58,12 @@ Stopped ────────► Starting ───────────�
 
 On app **Quit**: stop sites → PHP pools → DBs, in parallel within each group, and show a progress window.
 
+**As built** (`luna_core::services::shutdown`, D-029): `Supervisor::shutdown_all(group_limit, on_progress)` stops `caddy`,
+then `php-fcgi@` and `php-fpm@`, then `mysql@` and `mariadb@` (the group comes from the id, `group_of`), all of a group at
+once and the next group only when the previous one is gone or has used its 60 s. Crashed services are stopped too. It
+returns a `ShutdownReport` of what left by itself (`clean`), what had to be killed after its grace period (`killed`,
+also `ServiceStatus.killed`: a database then recovers on its next start) and what could not be stopped (`failed`).
+
 ### No orphans (FR-SV-07)
 
 As built in `luna-core::services` (D-024):

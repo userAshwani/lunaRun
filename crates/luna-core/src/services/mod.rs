@@ -33,6 +33,7 @@ mod port_owner;
 mod ports;
 mod process;
 mod restart;
+mod shutdown;
 mod spec;
 mod state;
 mod supervisor;
@@ -46,6 +47,9 @@ pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition};
 pub use port_owner::{PortOwner, port_owners};
 pub use ports::{PortAllocator, PortAssignment, PortPurpose, PortRanges, check_ports};
 pub use restart::{Decision, RestartPolicy, RestartTracker};
+pub use shutdown::{
+    DEFAULT_GROUP_LIMIT, ShutdownFailure, ShutdownGroup, ShutdownProgress, ShutdownReport, group_of,
+};
 pub use spec::{HelperCommand, LogFile, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
 pub use state::{Event, ServiceState, ServiceStatus};
 pub use supervisor::{Leftover, ServiceEventSink, Supervisor};

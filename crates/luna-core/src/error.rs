@@ -80,6 +80,8 @@ pub enum ErrorCode {
     /// A running service could not be told to load its new config (`caddy reload`). The service keeps the old
     /// config; `details.tail` has what the program said.
     ReloadFailed,
+    /// A service could not be stopped when lunaRun quit (it was still running when its group ran out of time).
+    ServiceStopFailed,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

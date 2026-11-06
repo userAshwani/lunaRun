@@ -223,6 +223,7 @@ impl Supervisor {
             status.exit_code = None;
             status.error = None;
             status.gave_up = false;
+            status.killed = false;
             after(status);
         });
         entry.generation += 1;
@@ -611,7 +612,8 @@ impl Live {
         }
     }
 
-    async fn stop(&mut self, plan: &StopPlan) {
+    /// `true` when the process had to be killed after its grace period.
+    async fn stop(&mut self, plan: &StopPlan) -> bool {
         match self {
             Self::Own(child) => process::stop_child(child, plan).await,
             Self::Adopted(pid) => process::stop_pid(*pid, plan).await,
@@ -961,9 +963,12 @@ async fn carry_on(
 async fn stop_flow(inner: &Inner, spec: &ServiceSpec, live: &mut Live, pump: &Pump) {
     update(inner, &spec.id, Event::Stop, |_| {});
     let pid = live.pid();
-    live.stop(&spec.stop).await;
+    let killed = live.stop(&spec.stop).await;
     process_ended(inner, pump, &spec.id, pid, "stopped").await;
     // Stop reading the log, then publish the end of the run and release the service in one step.
     pump.shutdown().await;
-    update_final(inner, &spec.id, Event::Stopped, |status| status.pid = None);
+    update_final(inner, &spec.id, Event::Stopped, |status| {
+        status.pid = None;
+        status.killed = killed;
+    });
 }
