@@ -25,6 +25,7 @@
 mod caddy;
 mod containment;
 mod databases;
+mod gate;
 mod logs;
 mod os;
 mod php;

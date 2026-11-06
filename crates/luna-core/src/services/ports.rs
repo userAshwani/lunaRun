@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 use ts_rs::TS;
 
+use super::gate;
 use super::port_owner::{self, PortOwner};
 use super::spec::check_id;
 use crate::error::{ErrorCode, LunaError, Result};
@@ -97,7 +98,7 @@ pub fn check_ports(ports: &[u16]) -> Result<()> {
     for &port in ports {
         // The listener of a successful test bind must be gone before the system is asked who listens: it would be
         // listed, and every port would be reported as held by this very process.
-        let bind_error = TcpListener::bind((Ipv4Addr::LOCALHOST, port)).err();
+        let bind_error = probe_bind(port).err();
         let listeners = port_owner::conflicting_listeners(port);
         if bind_error.is_some() || !listeners.is_empty() {
             let owner = port_owner::owners_of(listeners).into_iter().next();
@@ -109,6 +110,13 @@ pub fn check_ports(ports: &[u16]) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Try to listen on `127.0.0.1:<port>`, and let go again. The probe is open only while the `gate` is held, so that no
+/// process being created at the same moment can inherit it and keep the port listening (see `gate`).
+fn probe_bind(port: u16) -> std::io::Result<()> {
+    let _gate = gate::hold();
+    TcpListener::bind((Ipv4Addr::LOCALHOST, port)).map(drop)
 }
 
 /// `reason` says why the port cannot be used when no program can be named (another user's, on Linux and macOS): the
@@ -288,7 +296,7 @@ impl PortAllocator {
             !assigned.contains(&port)
                 && !avoided.contains(&port)
                 && !listening.contains(&port)
-                && TcpListener::bind((Ipv4Addr::LOCALHOST, port)).is_ok()
+                && probe_bind(port).is_ok()
         };
 
         let mut start = u32::from(first);

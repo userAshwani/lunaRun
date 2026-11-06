@@ -10,6 +10,7 @@ use tokio::process::{Child, Command};
 use tokio::time::{sleep, timeout};
 
 use super::containment::Containment;
+use super::gate;
 use super::os::{self, Leave};
 use super::spec::{HelperCommand, ReadyCheck, ServiceSpec, StopMethod, StopPlan};
 use crate::error::{ErrorCode, LunaError, Result};
@@ -63,7 +64,12 @@ pub(super) fn spawn(
         command.current_dir(cwd);
     }
     containment.before_spawn(&mut command);
-    let mut child = command.spawn().map_err(|err| {
+    // Not while a probe socket is open: the child would inherit it (see `gate`).
+    let spawned = {
+        let _gate = gate::hold();
+        command.spawn()
+    };
+    let mut child = spawned.map_err(|err| {
         LunaError::new(
             ErrorCode::ServiceStartFailed,
             format!("{} could not be started: {err}", spec.id),
@@ -80,9 +86,12 @@ pub(super) fn spawn(
 
 /// Run a helper to completion (the caller bounds the time).
 async fn run_helper(helper: &HelperCommand) -> std::io::Result<ExitStatus> {
-    base_command(&helper.program, &helper.args, &helper.env)
-        .status()
-        .await
+    let mut command = base_command(&helper.program, &helper.args, &helper.env);
+    let mut child = {
+        let _gate = gate::hold();
+        command.spawn()?
+    };
+    child.wait().await
 }
 
 /// One ready-check attempt.
@@ -133,7 +142,10 @@ pub(super) async fn run_logged(
     command
         .stdout(Stdio::from(log.try_clone()?))
         .stderr(Stdio::from(log.try_clone()?));
-    let mut child = command.spawn()?;
+    let mut child = {
+        let _gate = gate::hold();
+        command.spawn()?
+    };
     Ok(tokio::select! {
         biased;
         () = cancel.cancelled() => {

@@ -607,3 +607,66 @@ fn port_zero_is_not_a_port_a_service_can_listen_on() {
         ErrorCode::Internal
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// Probes and process creation at the same time
+// ---------------------------------------------------------------------------------------------
+
+/// `check_ports` opens a probe socket for a moment. On Linux and macOS a process created by another thread in that
+/// moment inherits it until it execs, which keeps the port **listening** and made later checks (and starts) refuse a free
+/// port with `PORT_IN_USE` and no owner (seen on Linux CI). The supervisor takes one lock around both, so no check may
+/// ever fail here. On Windows nothing is inherited and this passes trivially.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn creating_processes_while_ports_are_checked_never_makes_a_probe_look_like_a_listener() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
+
+    let bench = private("ports-probe-race");
+    let (supervisor, _events) = bench.supervisor();
+    let stop = Arc::new(AtomicBool::new(false));
+    // Threads that do nothing but check a free port of their own, as fast as they can.
+    let checkers: Vec<_> = (0..3)
+        .map(|_| {
+            let (port, stop) = (free_port(), Arc::clone(&stop));
+            std::thread::spawn(move || {
+                let mut refused = Vec::new();
+                let mut checks = 0_u32;
+                while !stop.load(Ordering::Relaxed) {
+                    checks += 1;
+                    if let Err(error) = check_ports(&[port]) {
+                        refused.push(error.message);
+                    }
+                }
+                (checks, refused)
+            })
+        })
+        .collect();
+
+    // Meanwhile processes are created over and over, several at once.
+    for round in 0..10 {
+        let ids: Vec<String> = (0..4).map(|n| format!("race-{round}-{n}")).collect();
+        for id in &ids {
+            supervisor
+                .start(bench.serving(id, free_port(), &[]))
+                .unwrap();
+        }
+        for id in &ids {
+            settled(&supervisor, id).await;
+        }
+        for id in &ids {
+            supervisor.stop(id).await.unwrap();
+        }
+    }
+
+    stop.store(true, Ordering::Relaxed);
+    for checker in checkers {
+        let (checks, refused) = checker.join().unwrap();
+        assert!(checks > 50, "the checker barely ran: {checks} checks");
+        assert!(
+            refused.is_empty(),
+            "a free port was refused {} times in {checks} checks: {:?}",
+            refused.len(),
+            refused.first()
+        );
+    }
+}

@@ -11,6 +11,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - New logo: a crescent moon merged with an `R` and an arrow. It replaces the old icon in the app window, the installer, the sidebar, the browser favicon and the README (which switches between a light and a dark version), and a social preview image is included.
 
 ### Fixed
+- Starting several services at the same moment on Linux and macOS could wrongly refuse a free port as "already in use" when another service was being launched at that instant. Checking a port and launching a program now take turns.
 - Installing a runtime no longer fails on Windows when the folder name has an accented letter (for example a user profile named José): the check that the new program runs threw away its whole answer when it contained a character the system wrote in its older text encoding.
 - Installing or uninstalling a runtime on Windows no longer fails with "Access is denied" when the virus scanner is still looking at the program that was just unpacked: lunaRun now waits up to ten seconds for the folder to be let go before it moves it.
 
