@@ -48,7 +48,7 @@ pub enum Engine {
 }
 
 impl Engine {
-    fn from_runtime(runtime: &str) -> Option<Self> {
+    pub(super) fn from_runtime(runtime: &str) -> Option<Self> {
         match runtime {
             "mysql" => Some(Self::Mysql),
             "mariadb" => Some(Self::Mariadb),
@@ -275,7 +275,7 @@ pub fn database_definition(
     let id = format!("{}@{line}", engine.name());
     let port = ports.assign(&id, PortPurpose::Database)?.port;
 
-    let data_dir = home.data_dir().join(format!("{}-{line}", engine.name()));
+    let data_dir = data_dir_of(home, engine, &line);
     let config_dir = home.config_dir().join(engine.name()).join(&line);
     let config_file = config_dir.join(if os == Os::Windows {
         "my.ini"
@@ -410,8 +410,13 @@ pub fn database_definition(
     })
 }
 
+/// `data/mysql-8.4`: the data folder belongs to the line, and the patch versions of a line share it.
+pub(super) fn data_dir_of(home: &LunaHome, engine: Engine, line: &str) -> PathBuf {
+    home.data_dir().join(format!("{}-{line}", engine.name()))
+}
+
 /// Missing, or there but with nothing in it: the database has never been set up.
-fn data_dir_is_empty(dir: &Path) -> bool {
+pub(super) fn data_dir_is_empty(dir: &Path) -> bool {
     fs::read_dir(dir).map_or(true, |mut entries| entries.next().is_none())
 }
 

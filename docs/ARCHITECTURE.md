@@ -216,7 +216,8 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `runtime_uninstall(runtime, version, deleteData, confirmBoundProjects)` | `StartedJob` (same key, so it never overlaps an install) |
 | | `runtime_usage(runtime, version)` | `UsageReport` (running services, bound projects, database folders; read-only) |
 | Jobs | `job_cancel(jobId)` / `jobs_list()` | |
-| Services | `services_list()` | `ServiceStatus[]` |
+| Services | `services_list()` | `ServiceRow[]` (one per runnable service, read-only: state, ports given so far, `needsSetup`, the `ServiceStatus` of each process; D-031) |
+| | `services_leftovers()` | `Leftover[]` (services still running from an earlier session, found once at startup) |
 | | `service_start(id)` / `service_stop(id)` / `service_restart(id)` | `()` |
 | | `service_logs(id, tailLines)` | `LogLine[]` |
 | Projects | `projects_list()` / `project_get(id)` | `Project` |
@@ -233,7 +234,7 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 
 **Events** (backend → UI, via `emit`):
 `job:progress {jobId, phase, bytesDone, bytesTotal, message}`, `job:done {jobId, ok, error?}`,
-`service:state {id, state, pid?, port?}`, `service:log {id, lines: [{source, line, ts}]}` (one batch per tick, ≤ 10/s per service),
+`service:state {ServiceStatus}` (`id, state, pid, restarts, exitCode, error, gaveUp, killed`), `service:log {id, lines: [{source, line, ts}]}` (one batch per tick, ≤ 10/s per service), `shutdown:progress {ShutdownProgress}` (while lunaRun stops its services before it quits, D-029),
 `registry:updated {RegistryStatus}` (the background refresh finished), `project:changed {id}` (Phase 2 file watcher).
 
 TypeScript types for these MUST be generated from Rust with `ts-rs` (D-012, output in `src/bindings/`) so the

@@ -10,9 +10,14 @@ use std::sync::{Arc, Mutex};
 
 use luna_core::jobs::{JobDone, JobEvent, JobEventSink, JobProgress};
 use luna_core::registry::{RegistrySourceKind, RegistryStatus};
+use luna_core::services::{
+    LogBatch, LogLine, ServiceState, ServiceStatus, ShutdownGroup, ShutdownProgress,
+};
 use luna_core::{ErrorCode, LunaError};
 use lunarun_lib::events::{
-    JOB_DONE_EVENT, JOB_PROGRESS_EVENT, REGISTRY_UPDATED_EVENT, TauriJobSink, emit_registry_updated,
+    JOB_DONE_EVENT, JOB_PROGRESS_EVENT, REGISTRY_UPDATED_EVENT, SERVICE_LOG_EVENT,
+    SERVICE_STATE_EVENT, SHUTDOWN_PROGRESS_EVENT, TauriJobSink, emit_registry_updated,
+    emit_service_log, emit_service_state, emit_shutdown_progress,
 };
 use tauri::Listener;
 
@@ -103,6 +108,90 @@ fn a_refreshed_version_list_is_announced_with_its_status() {
         [serde_json::json!({
             "source": "cache", "ageSeconds": 3600, "refreshing": false,
             "problem": { "code": "NETWORK", "message": "offline" }
+        })]
+    );
+}
+
+#[test]
+fn a_service_changing_state_reaches_the_webview_with_the_shape_the_page_reads() {
+    let app = tauri::test::mock_app();
+    let seen = capture(&app, SERVICE_STATE_EVENT);
+
+    emit_service_state(
+        app.handle(),
+        &ServiceStatus {
+            state: ServiceState::Crashed,
+            pid: None,
+            restarts: 3,
+            exit_code: Some(1),
+            error: Some(LunaError::new(ErrorCode::ServiceStartFailed, "exited")),
+            gave_up: true,
+            killed: false,
+            ..ServiceStatus::stopped("mysql@8.4")
+        },
+    );
+
+    assert_eq!(SERVICE_STATE_EVENT, "service:state");
+    assert_eq!(
+        seen.lock().unwrap().as_slice(),
+        [serde_json::json!({
+            "id": "mysql@8.4", "state": "crashed", "pid": null, "restarts": 3, "exitCode": 1,
+            "error": { "code": "SERVICE_START_FAILED", "message": "exited" },
+            "gaveUp": true, "killed": false
+        })]
+    );
+}
+
+#[test]
+fn what_a_service_prints_reaches_the_webview_in_batches() {
+    let app = tauri::test::mock_app();
+    let seen = capture(&app, SERVICE_LOG_EVENT);
+
+    emit_service_log(
+        app.handle(),
+        &LogBatch {
+            id: "caddy".into(),
+            lines: vec![LogLine {
+                source: "output".into(),
+                line: "serving".into(),
+                ts: 1_700_000_000_000,
+            }],
+        },
+    );
+
+    assert_eq!(SERVICE_LOG_EVENT, "service:log");
+    assert_eq!(
+        seen.lock().unwrap().as_slice(),
+        [serde_json::json!({
+            "id": "caddy",
+            "lines": [{ "source": "output", "line": "serving", "ts": 1_700_000_000_000_u64 }]
+        })]
+    );
+}
+
+#[test]
+fn the_progress_of_a_quit_reaches_the_webview() {
+    let app = tauri::test::mock_app();
+    let seen = capture(&app, SHUTDOWN_PROGRESS_EVENT);
+
+    emit_shutdown_progress(
+        app.handle(),
+        &ShutdownProgress {
+            group: ShutdownGroup::Databases,
+            total: 2,
+            done: 1,
+            remaining: vec!["mysql@8.4".into()],
+            finished: Some("mariadb@12.3".into()),
+            elapsed_ms: 1500,
+        },
+    );
+
+    assert_eq!(SHUTDOWN_PROGRESS_EVENT, "shutdown:progress");
+    assert_eq!(
+        seen.lock().unwrap().as_slice(),
+        [serde_json::json!({
+            "group": "databases", "total": 2, "done": 1, "remaining": ["mysql@8.4"],
+            "finished": "mariadb@12.3", "elapsedMs": 1500
         })]
     );
 }

@@ -35,6 +35,23 @@ const FPM_STOP_GRACE: Duration = Duration::from_secs(10);
 
 const TEMPLATE: &str = include_str!("templates/php-fpm.conf");
 
+/// `php-fcgi@8.3.36` on Windows, `php-fpm@8.3.36` elsewhere: names a pool, and is the key of its ports.
+pub(super) fn pool_id(os: Os, version: &str) -> String {
+    format!(
+        "{}@{version}",
+        if os == Os::Windows {
+            "php-fcgi"
+        } else {
+            "php-fpm"
+        }
+    )
+}
+
+/// The service id of the `number`th `php-cgi` of a Windows pool (counted from 1): `php-fcgi@8.3.36-w1`.
+pub(super) fn worker_id(pool_id: &str, number: usize) -> String {
+    format!("{pool_id}-w{number}")
+}
+
 /// An installed PHP ready to run: what to start, and where PHP listens.
 #[derive(Debug, Clone)]
 pub struct PhpDefinition {
@@ -97,7 +114,7 @@ pub fn php_definition(
         .map(|(name, value)| (name.to_owned(), value.to_string_lossy().into_owned()))
         .collect();
 
-    let pool_id = format!("{}@{version}", if windows { "php-fcgi" } else { "php-fpm" });
+    let pool_id = pool_id(os, &version);
     let count = if windows { workers } else { 1 };
     let assigned = ports.assign(&pool_id, PortPurpose::PhpFastCgi { pool: count })?;
     let pool_ports = assigned.ports();
@@ -109,7 +126,7 @@ pub fn php_definition(
             .enumerate()
             .map(|(index, &port)| {
                 let mut spec = ServiceSpec::new(
-                    &format!("{pool_id}-w{}", index + 1),
+                    &worker_id(&pool_id, index + 1),
                     runtime.dir.join("php-cgi.exe"),
                     port,
                 );

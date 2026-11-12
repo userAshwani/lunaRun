@@ -3,12 +3,13 @@
 pub mod commands;
 pub mod events;
 mod registry;
+pub mod services;
 
 use luna_core::LunaHome;
 use luna_core::download::{DownloadOptions, Downloader};
 use luna_core::jobs::{JobManager, JobOptions};
 use luna_core::registry::RegistryHolder;
-use luna_core::runtimes::{Installer, Uninstaller, cleanup_incomplete};
+use luna_core::runtimes::{Installer, cleanup_incomplete};
 use tauri::Manager;
 
 #[allow(
@@ -16,7 +17,7 @@ use tauri::Manager;
     reason = "no UI exists to report to if the shell fails to start"
 )]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .setup(|app| {
             let home = LunaHome::resolve()?;
             home.ensure_layout()?;
@@ -32,13 +33,13 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 let _ = registry::refresh_and_announce(&handle, &registry, &refresh_home).await;
             });
-            // Installing and uninstalling share the job manager below. Nothing reports a version as in use
-            // until the supervisor (M1.4) and the project store (M1.7) can say so.
             app.manage(Installer::new(
                 home.clone(),
                 Downloader::new(DownloadOptions::default())?,
             ));
-            app.manage(Uninstaller::new(home.clone()));
+            // The supervisor, the port allocator, services left from an earlier session (looked for once, here), the
+            // quit state, and the uninstaller, which asks the supervisor what runs from a version before it removes it.
+            services::manage(app.handle(), &home);
             app.manage(home);
 
             // Jobs run on Tauri's own Tokio runtime and report to the webview through events.
@@ -56,8 +57,20 @@ pub fn run() {
             commands::registry_refresh,
             commands::runtime_install,
             commands::runtime_uninstall,
-            commands::runtime_usage
+            commands::runtime_usage,
+            commands::services_list,
+            commands::services_leftovers
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    // Closing the last window asks to exit. Before it does, every service is stopped in order (web, PHP, databases):
+    // the first request starts that and makes Tauri wait, and the exit it asks for when done goes through (D-029).
+    app.run(|handle, event| {
+        if let tauri::RunEvent::ExitRequested { api, code, .. } = event
+            && !services::on_exit_requested(handle, code)
+        {
+            api.prevent_exit();
+        }
+    });
 }

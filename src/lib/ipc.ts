@@ -4,9 +4,11 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { AppInfo } from "@/bindings/AppInfo";
 import type { InstalledView } from "@/bindings/InstalledView";
 import type { JobInfo } from "@/bindings/JobInfo";
+import type { Leftover } from "@/bindings/Leftover";
 import type { LunaError } from "@/bindings/LunaError";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
+import type { ServiceRow } from "@/bindings/ServiceRow";
 import type { StartedJob } from "@/bindings/StartedJob";
 import type { UsageReport } from "@/bindings/UsageReport";
 
@@ -76,4 +78,11 @@ export const ipc = {
   /** What uses a version and where its databases are, for the uninstall dialog. Read-only. */
   runtimeUsage: (runtime: string, version: string) =>
     call<UsageReport>("runtime_usage", { runtime, version }),
+  /**
+   * What lunaRun can run from what is installed, with each service's state, ports and what its first start will do.
+   * Read-only: it writes nothing and takes no port. Live changes arrive as `service:state` events.
+   */
+  servicesList: () => call<ServiceRow[]>("services_list"),
+  /** Services found still running from an earlier session when the app started (looked for once, at startup). */
+  servicesLeftovers: () => call<Leftover[]>("services_leftovers"),
 } as const;

@@ -13,6 +13,8 @@
     "allow-registry-refresh",
     "allow-runtime-install",
     "allow-runtime-uninstall",
-    "allow-runtime-usage"
+    "allow-runtime-usage",
+    "allow-services-list",
+    "allow-services-leftovers"
   ]
 }

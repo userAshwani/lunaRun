@@ -10,10 +10,12 @@ use luna_core::registry::{CalDate, RegistryHolder, RegistryStatus, RuntimesAvail
 use luna_core::runtimes::{
     InstalledView, Installer, UninstallOptions, Uninstaller, UsageReport, list_installed,
 };
+use luna_core::services::{Leftover, PortAllocator, ServiceRow, Supervisor, list_services};
 use luna_core::{LunaError, LunaHome};
 use tauri::{AppHandle, State};
 
 use crate::registry;
+use crate::services::Leftovers;
 
 #[tauri::command]
 pub fn app_info(home: State<'_, LunaHome>) -> Result<AppInfo, LunaError> {
@@ -100,4 +102,22 @@ pub fn runtime_usage(
     uninstaller: State<'_, Uninstaller>,
 ) -> Result<UsageReport, LunaError> {
     uninstaller.usage_report(&runtime, &version)
+}
+
+/// The services lunaRun can run from what is installed, with their state, ports and what the first start will do. Reads
+/// only: it writes no config and takes no port (D-031). Live changes arrive as `service:state` events.
+#[tauri::command]
+pub fn services_list(
+    home: State<'_, LunaHome>,
+    ports: State<'_, PortAllocator>,
+    supervisor: State<'_, Supervisor>,
+) -> Result<Vec<ServiceRow>, LunaError> {
+    let installed = list_installed(&home)?;
+    list_services(&ports, &supervisor, &home, &installed, Os::current())
+}
+
+/// Services found still running from an earlier session when the app started (found once, at startup).
+#[tauri::command]
+pub fn services_leftovers(leftovers: State<'_, Leftovers>) -> Result<Vec<Leftover>, LunaError> {
+    Ok(leftovers.list())
 }

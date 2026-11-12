@@ -22,6 +22,12 @@ A project bound to line `8.3` uses the highest installed 8.3.x when it starts.
 DB services are identified by **engine + line** (`mysql@8.4`): the data dir belongs to the line, and
 patch upgrades within a line reuse it (MySQL runs its own in-place upgrade on start).
 
+**As built** (`luna_core::services::catalog`, D-031): `list_services` lists what lunaRun can run from what is installed, **read-only**
+(no config is written and no port is taken: a service shows its ports once it was started). A database line runs from the newest
+installed patch; a PHP version is its own pool, and on Windows its row sums the `-w<n>` workers; Caddy runs from the newest
+installed Caddy. `running_from` and `usage_checker` say which running service was started from a version, which is what makes
+the uninstaller refuse (`RUNTIME_IN_USE`).
+
 ## 2. Supervisor
 
 One `Supervisor` (tokio task) owns all children. The UI and tray send it commands, and it emits state events.

@@ -31,6 +31,12 @@
   --success: oklch(0.55 0.15 155);
   --warning: oklch(0.62 0.15 70);
   --info: oklch(0.55 0.15 235);
+  /* Text on the tinted background of a badge: the mid-tones above are right for fills and icons but only about
+     3.9:1 as 12px text on a light tint. These are darker, 5:1 and up (WCAG AA). */
+  --success-soft-foreground: oklch(0.47 0.13 155);
+  --warning-soft-foreground: oklch(0.47 0.1 70);
+  --info-soft-foreground: oklch(0.47 0.14 235);
+  --destructive-soft-foreground: oklch(0.49 0.19 27);
   --border: oklch(0.915 0.008 255);
   --input: oklch(0.9 0.01 255);
   --ring: oklch(0.51 0.22 275);
@@ -59,6 +65,11 @@
   --success: oklch(0.72 0.15 155);
   --warning: oklch(0.78 0.14 75);
   --info: oklch(0.72 0.12 235);
+  /* On the dark theme the colours above already read at 5:1 and more on their tints. */
+  --success-soft-foreground: oklch(0.72 0.15 155);
+  --warning-soft-foreground: oklch(0.78 0.14 75);
+  --info-soft-foreground: oklch(0.72 0.12 235);
+  --destructive-soft-foreground: oklch(0.7 0.19 22);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.66 0.18 275);
@@ -91,6 +102,10 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info-soft-foreground: var(--info-soft-foreground);
+  --color-destructive-soft-foreground: var(--destructive-soft-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

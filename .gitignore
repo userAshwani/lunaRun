@@ -39,3 +39,4 @@ Thumbs.db
 
 # Original logo export (about 5 MB, with a generator watermark). The cropped source is assets/source/.
 assets/newlogo.png
+scripts/ui-check/out/

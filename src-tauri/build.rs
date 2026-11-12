@@ -10,6 +10,8 @@ const COMMANDS: &[&str] = &[
     "runtime_install",
     "runtime_uninstall",
     "runtime_usage",
+    "services_list",
+    "services_leftovers",
 ];
 
 fn main() {

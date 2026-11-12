@@ -5,10 +5,12 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { JobDone } from "@/bindings/JobDone";
 import type { JobProgress } from "@/bindings/JobProgress";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
+import type { ServiceStatus } from "@/bindings/ServiceStatus";
 
 export const JOB_PROGRESS_EVENT = "job:progress";
 export const JOB_DONE_EVENT = "job:done";
 export const REGISTRY_UPDATED_EVENT = "registry:updated";
+export const SERVICE_STATE_EVENT = "service:state";
 
 const nothingToUnsubscribe: UnlistenFn = () => {};
 
@@ -35,6 +37,16 @@ export async function onRegistryUpdated(
 ): Promise<UnlistenFn> {
   if (!isTauri()) return nothingToUnsubscribe;
   return listen<RegistryStatus>(REGISTRY_UPDATED_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** A service changed state (starting, running, stopping, stopped, crashed, failed to start). */
+export async function onServiceState(
+  handler: (status: ServiceStatus) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return nothingToUnsubscribe;
+  return listen<ServiceStatus>(SERVICE_STATE_EVENT, (event) => {
     handler(event.payload);
   });
 }

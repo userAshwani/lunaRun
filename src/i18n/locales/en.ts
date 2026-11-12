@@ -24,7 +24,10 @@ export const en = {
     dashboard: { description: "An overview of your local development environment." },
     projects: { description: "Add a project folder and let lunaRun pick the right versions." },
     runtimes: { description: "Install and manage PHP, Node.js, MySQL and more, side by side." },
-    services: { description: "Start, stop and inspect web servers, PHP pools and databases." },
+    services: {
+      description:
+        "The web server, PHP pools and databases lunaRun can run, and what state they are in.",
+    },
     settings: { description: "Defaults, ports, theme and data location." },
     diagnostics: { description: "System information and a report you can copy for bug reports." },
     notImplemented: {
@@ -282,6 +285,53 @@ export const en = {
       rosettaHint: "An Intel build running on an Apple silicon Mac. It works but is slower.",
       rc: "Release candidate",
       beta: "Beta",
+    },
+  },
+  services: {
+    loading: "Loading services",
+    loadError: "Could not load the services",
+    tableLabel: "Services",
+    readOnlyNote:
+      "This list shows what lunaRun can run and what state it is in. Starting and stopping services comes in the next update.",
+    databaseNote:
+      "Databases use the user root with no password and accept connections from this computer only.",
+    columns: { service: "Service", ports: "Ports", status: "Status" },
+    empty: {
+      title: "No services yet",
+      description:
+        "Services come from the runtimes you install: a web server, PHP and a database. Install one and it appears here.",
+      action: "Install a runtime",
+    },
+    detail: {
+      version: "Version {{version}}",
+      fpm: "PHP-FPM",
+      workers_one: "{{count}} worker",
+      workers_other: "{{count}} workers",
+      runningOf: "{{running}} of {{total}} running",
+    },
+    ports: {
+      none: "Not assigned yet",
+      noneHint: "A service gets its ports the first time it is started.",
+    },
+    state: {
+      running: "Running",
+      starting: "Starting",
+      stopping: "Stopping",
+      stopped: "Stopped",
+      crashed: "Crashed",
+      error: "Failed to start",
+    },
+    note: {
+      needsSetup: "Its first start sets up its data folder, which takes about a minute.",
+      killed:
+        "It did not stop in time and was ended. A database recovers by itself when it starts again.",
+      gaveUp: "It crashed again and again, so lunaRun stopped restarting it.",
+    },
+    leftovers: {
+      title: "Services from an earlier session are still running",
+      description:
+        "These were started by an earlier session of lunaRun and nothing stopped them. Adopting or stopping them from here comes in the next update; until then you can end them in your system's task manager.",
+      item: "{{id}} (process {{pid}})",
     },
   },
   jobs: {

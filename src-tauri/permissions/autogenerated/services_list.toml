@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-services-list"
+description = "Enables the services_list command without any pre-configured scope."
+commands.allow = ["services_list"]
+
+[[permission]]
+identifier = "deny-services-list"
+description = "Denies the services_list command without any pre-configured scope."
+commands.deny = ["services_list"]

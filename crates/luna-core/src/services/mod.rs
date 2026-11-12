@@ -23,6 +23,7 @@
 //! The PHP and Caddy service definitions are the next M1.4 task.
 
 mod caddy;
+mod catalog;
 mod containment;
 mod databases;
 mod gate;
@@ -40,6 +41,9 @@ mod state;
 mod supervisor;
 
 pub use caddy::{CaddyDefinition, Site, caddy_definition};
+pub use catalog::{
+    ServiceKind, ServiceRow, aggregate_state, list_services, running_from, usage_checker,
+};
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};

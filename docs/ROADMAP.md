@@ -84,8 +84,9 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
   - [x] 5b: PHP and Caddy: `php-fcgi@<version>` (Windows pool) and `php-fpm@<version>` (macOS, Linux) with `php-fpm.conf`, `caddy` with the generated Caddyfile (admin port, sites, validate and reload)
 - [x] Graceful shutdown ordering on quit (`luna-core::services::shutdown`, D-029; the Tauri exit hook and the progress window come with the Services page)
 - [ ] **UI: Services page** — list, state badges, start/stop/restart, live log viewer, port conflict dialog
-  - [ ] 7a: wiring and the read side: `Supervisor` and `PortAllocator` in the app state, `service:state` and `service:log` events, leftovers scanned once at startup, IPC `services_list` and `services_leftovers`, the quit hook with `shutdown:progress`, the real running-services check for uninstall, and the read-only page (table, state badges, four states)
-  - [ ] 7b: the actions: start, stop and restart, the database setup with progress, the port conflict dialog ("Use port X instead"), the Adopt or Stop prompt for leftovers, the live log viewer with tabs, the quit progress window
+  - [x] 7a: wiring and the read side: `Supervisor` and `PortAllocator` in the app state, `service:state` and `service:log` events, leftovers scanned once at startup, IPC `services_list` and `services_leftovers`, the quit hook with `shutdown:progress`, the real running-services check for uninstall, and the read-only page (table, state badges, four states)
+  - [ ] 7b: start, stop and restart: the IPC commands (`service_start`, `service_stop`, `service_restart`), the builder that turns a row into its definition and starts it (a database's first start as a cancellable job with progress, a PHP pool's workers together, Caddy with no sites yet), refusing to start while the app quits, the port conflict dialog ("Use port X instead", `PortAllocator::reassign`), and the buttons on the page
+  - [ ] 7c: the rest of the page: the live log viewer with a tab per source, the Adopt or Stop prompt for services left from an earlier session, and the quit progress window (`shutdown:progress`)
 
 ### M1.5 Constraint engine
 - [ ] Composer constraint parser + matcher (PROJECT-DETECTION §6), exhaustive table tests
