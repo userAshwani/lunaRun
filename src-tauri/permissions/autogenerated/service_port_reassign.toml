@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-service-port-reassign"
+description = "Enables the service_port_reassign command without any pre-configured scope."
+commands.allow = ["service_port_reassign"]
+
+[[permission]]
+identifier = "deny-service-port-reassign"
+description = "Denies the service_port_reassign command without any pre-configured scope."
+commands.deny = ["service_port_reassign"]

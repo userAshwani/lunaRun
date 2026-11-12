@@ -35,16 +35,40 @@ const FPM_STOP_GRACE: Duration = Duration::from_secs(10);
 
 const TEMPLATE: &str = include_str!("templates/php-fpm.conf");
 
+/// `php-fcgi` on Windows, `php-fpm` elsewhere: the start of a pool's id.
+pub(super) fn pool_kind(os: Os) -> &'static str {
+    if os == Os::Windows {
+        "php-fcgi"
+    } else {
+        "php-fpm"
+    }
+}
+
 /// `php-fcgi@8.3.36` on Windows, `php-fpm@8.3.36` elsewhere: names a pool, and is the key of its ports.
 pub(super) fn pool_id(os: Os, version: &str) -> String {
-    format!(
-        "{}@{version}",
-        if os == Os::Windows {
-            "php-fcgi"
-        } else {
-            "php-fpm"
-        }
-    )
+    format!("{}@{version}", pool_kind(os))
+}
+
+/// How many processes the pool `pool_id` has (or will have at its first start): the size it was last given on Windows,
+/// where a pool is several `php-cgi` workers, [`DEFAULT_WORKERS`] before that, and 1 elsewhere. One rule for the page,
+/// for starting and for stopping, so they can never disagree about which services belong to a pool.
+pub(super) fn pool_size(ports: &PortAllocator, os: Os, pool_id: &str) -> Result<u16> {
+    if os != Os::Windows {
+        return Ok(1);
+    }
+    Ok(ports
+        .assignment(pool_id)?
+        .map_or(DEFAULT_WORKERS, |assigned| assigned.count))
+}
+
+/// The service ids behind a pool: the workers `-w1` and up on Windows, the pool itself elsewhere.
+pub(super) fn pool_members(ports: &PortAllocator, os: Os, pool_id: &str) -> Result<Vec<String>> {
+    if os != Os::Windows {
+        return Ok(vec![pool_id.to_owned()]);
+    }
+    Ok((1..=usize::from(pool_size(ports, os, pool_id)?))
+        .map(|n| worker_id(pool_id, n))
+        .collect())
 }
 
 /// The service id of the `number`th `php-cgi` of a Windows pool (counted from 1): `php-fcgi@8.3.36-w1`.

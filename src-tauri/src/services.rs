@@ -9,7 +9,8 @@ use luna_core::LunaHome;
 use luna_core::diagnostics::Os;
 use luna_core::runtimes::Uninstaller;
 use luna_core::services::{
-    DEFAULT_GROUP_LIMIT, Leftover, PortAllocator, ShutdownReport, Supervisor, usage_checker,
+    DEFAULT_GROUP_LIMIT, Leftover, PortAllocator, ServiceController, ShutdownReport, Supervisor,
+    usage_checker,
 };
 use tauri::{AppHandle, Manager, Runtime};
 
@@ -85,6 +86,17 @@ pub fn manage<R: Runtime>(app: &AppHandle<R>, home: &LunaHome) -> (Supervisor, P
         home.clone(),
         Os::current(),
     )));
+    // Starting, stopping and restarting by the id of a row. Nothing may be started once the quit has begun.
+    let quit_app = app.clone();
+    app.manage(
+        ServiceController::new(
+            home.clone(),
+            ports.clone(),
+            supervisor.clone(),
+            Os::current(),
+        )
+        .with_quit_check(move || quit_app.state::<QuitState>().is_quitting()),
+    );
     app.manage(ports.clone());
     app.manage(supervisor.clone());
     (supervisor, ports)

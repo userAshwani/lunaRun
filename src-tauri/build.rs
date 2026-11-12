@@ -12,6 +12,10 @@ const COMMANDS: &[&str] = &[
     "runtime_usage",
     "services_list",
     "services_leftovers",
+    "service_start",
+    "service_stop",
+    "service_restart",
+    "service_port_reassign",
 ];
 
 fn main() {

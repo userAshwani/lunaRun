@@ -20,11 +20,12 @@
 //! - [`database_definition`]: `mysql@<line>` and `mariadb@<line>` from an installed runtime (generated config, first-run
 //!   setup, clean shutdown, error log tab).
 //!
-//! The PHP and Caddy service definitions are the next M1.4 task.
+//! - [`ServiceController`]: start, stop and restart a row of the Services page, as a cancellable job (FR-SV-01 to FR-SV-03).
 
 mod caddy;
 mod catalog;
 mod containment;
+mod control;
 mod databases;
 mod gate;
 mod logs;
@@ -45,6 +46,9 @@ pub use catalog::{
     ServiceKind, ServiceRow, aggregate_state, list_services, running_from, usage_checker,
 };
 pub use containment::{Containment, NoContainment, OsContainment};
+pub use control::{
+    SETUP_LIMIT, ServiceAction, ServiceController, StartPlan, job_key, phase as job_phase,
+};
 pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use gate::hold as spawn_gate;
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};

@@ -2,12 +2,13 @@
 
 Dev tools for the quality bar in CLAUDE.md ("verify in both themes, at 900x600 and 1400 wide; contrast WCAG AA; keyboard;
 the real window for anything that touches IPC"). They are not part of the app or of CI. Written for the Services page
-(M1.4 task 7a); for another page add its scenarios to a file like `services-scenarios.mjs` and its texts to `contrast.mjs`.
+(M1.4 tasks 7a and 7b); for another page add its scenarios to a file like `services-scenarios.mjs` and its texts to `contrast.mjs`.
 
 | Script | What it proves |
 |---|---|
 | `services-shots.mjs` | Screenshots of every state (data, leftovers notice, empty, error, loading), both themes, 1400 and 900 wide, in a browser with a fake Tauri backend. **Look at the images.** |
 | `contrast.mjs` | WCAG contrast (4.5:1) of every kind of text on the page, both themes, from the colours the browser really computed. Exits 1 on a failure. |
+| `real-start-stop.ps1` | The **real** app window with a **real Caddy** (installed from the Runtimes page into a throw-away data folder, about 18 MB): Start, the Running state by event, Restart, Stop, a taken admin port (the problem panel names who holds it), and **quitting with a service running** (the app exits, Caddy is gone, its port and PID file are free). Prints `ALL CHECKS PASSED` or the failures. Windows only. |
 | `seed-home.mjs` + `real-window.ps1` | The **real** app window with a seeded throw-away `LUNA_HOME`: the command is permitted, the data is right, both themes at the real minimum size, and closing the window ends the process. Windows only. |
 
 ## Browser checks (screenshots and contrast)
@@ -32,7 +33,7 @@ Things that cost time once:
 
 1. `pnpm tauri build --no-bundle` (about 10 minutes on a slow PC, incremental).
 2. `node scripts/ui-check/seed-home.mjs <parent folder>` makes `<parent>/lüna home`.
-3. `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ui-check/real-window.ps1 -Exe <repo>\target\release\lunarun.exe -HomeParent <parent> -OutDir <folder>`
+3. `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ui-check/real-window.ps1 -Exe <repo>/target/release/lunarun.exe -HomeParent <parent> -OutDir <folder>`
    (the script finds the seeded folder under the parent itself: a `ü` in a command-line argument gets mangled between shells).
 
 It prints what the window shows (read through UI Automation: the nav link is a `Hyperlink`, the theme switch is a
@@ -41,6 +42,18 @@ It prints what the window shows (read through UI Automation: the nav link is a `
 **Window sizes are physical pixels.** The app's minimum is 900x600 logical pixels. With 125% display scaling that is 1125x750,
 the script's default (`-MinWidth`, `-MinHeight`). A 900x600 physical window is smaller than the app allows and shows
 clipping a user can never see.
+
+### Start, stop and restart with a real service (task 7b)
+
+`pnpm tauri build --no-bundle`, then
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ui-check/real-start-stop.ps1 -Exe <repo>/target/release/lunarun.exe -HomeParent <an empty folder> -OutDir <folder>`.
+It needs internet (the Caddy download), port 2119 free and no `caddy.exe` running. It finds the buttons by the names the page gives them
+(`Start Caddy`, `Restart Caddy`, `Stop Caddy`). Pitfall that cost a run: in PowerShell a variable called `$start` at script level is the same
+variable the helper functions set through `$script:start`, so a button saved there was overwritten by a result; use distinct names.
+
+The browser tools have two more scenarios for this task: `setup` (a database's first start in progress, a stop in progress) and `problems`
+(a taken port with XAMPP as the holder, a failed database setup, a rejected Caddyfile). At the minimum window width (900) the row buttons are
+icon-only (their names and tooltips stay): with text the Stop button was cut off at the edge of the table.
 
 ## Contrast: what was found and how it was fixed
 

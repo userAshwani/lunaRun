@@ -218,7 +218,8 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | Jobs | `job_cancel(jobId)` / `jobs_list()` | |
 | Services | `services_list()` | `ServiceRow[]` (one per runnable service, read-only: state, ports given so far, `needsSetup`, the `ServiceStatus` of each process; D-031) |
 | | `services_leftovers()` | `Leftover[]` (services still running from an earlier session, found once at startup) |
-| | `service_start(id)` / `service_stop(id)` / `service_restart(id)` | `()` |
+| | `service_start(id)` / `service_stop(id)` / `service_restart(id)` | `StartedJob` (job key `service:<id>`, label `Start <id>` / `Stop <id>` / `Restart <id>`; a start succeeds when the service **runs**; a database's first start reports the phase `setup`; start and restart are refused with `BUSY` while the app quits; D-032) |
+| | `service_port_reassign(id)` | `StartedJob` (give a stopped service other ports than the taken ones, then start it; Caddy's single admin port answers `PORT_IN_USE` with who holds it) |
 | | `service_logs(id, tailLines)` | `LogLine[]` |
 | Projects | `projects_list()` / `project_get(id)` | `Project` |
 | | `project_add(path)` | `Project` + `DetectionReport` |

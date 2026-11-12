@@ -9,8 +9,11 @@
 use std::fs;
 
 use luna_core::diagnostics::{Arch, Os};
+use luna_core::jobs::{JobManager, JobOptions, JobState};
 use luna_core::runtimes::{InstallReceipt, Uninstaller};
-use luna_core::services::{Leftover, PortAllocator, ReadyCheck, ServiceSpec, Supervisor};
+use luna_core::services::{
+    Leftover, PortAllocator, ReadyCheck, ServiceController, ServiceSpec, Supervisor,
+};
 use luna_core::{ErrorCode, LunaHome};
 use lunarun_lib::commands;
 use lunarun_lib::services::{self, Leftovers, QuitState};
@@ -32,6 +35,12 @@ fn bench() -> Bench {
     let app = tauri::test::mock_app();
     app.manage(home.clone());
     services::manage(app.handle(), &home);
+    // The job manager `lib.rs` adds last: starting, stopping and restarting are jobs.
+    app.manage(JobManager::new(
+        tauri::async_runtime::handle().inner().clone(),
+        |_| {},
+        JobOptions::default(),
+    ));
     Bench {
         _tmp: tmp,
         app,
@@ -65,6 +74,7 @@ fn the_app_state_has_everything_the_services_need() {
     let _ = bench.app.state::<PortAllocator>();
     let _ = bench.app.state::<Uninstaller>();
     let _ = bench.app.state::<Leftovers>();
+    let _ = bench.app.state::<ServiceController>();
     let quit = bench.app.state::<QuitState>();
     assert!(!quit.is_quitting() && !quit.is_finished());
 }
@@ -293,4 +303,100 @@ fn quitting_with_no_service_running_is_immediate_and_marks_the_quit_finished() {
     assert!(bench.app.state::<QuitState>().is_finished());
     // An exit request after that goes straight through.
     assert!(services::on_exit_requested(bench.app.handle(), Some(0)));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Start, stop, restart
+// ---------------------------------------------------------------------------------------------
+
+impl Bench {
+    fn finish(&self, job_id: &str) -> luna_core::jobs::JobInfo {
+        tauri::async_runtime::block_on(self.app.state::<JobManager>().wait(job_id)).unwrap()
+    }
+}
+
+#[test]
+fn an_unknown_service_is_not_found_by_all_four_commands() {
+    let bench = bench();
+    let controller = || bench.app.state::<ServiceController>();
+    let jobs = || bench.app.state::<JobManager>();
+
+    for result in [
+        commands::service_start("nginx".into(), controller(), jobs()),
+        commands::service_stop("nginx".into(), controller(), jobs()),
+        commands::service_restart("nginx".into(), controller(), jobs()),
+        commands::service_port_reassign("nginx".into(), controller(), jobs()),
+    ] {
+        assert_eq!(result.unwrap_err().code, ErrorCode::NotFound);
+    }
+}
+
+#[test]
+fn starting_a_service_that_is_not_installed_is_a_job_that_fails_with_not_found() {
+    let bench = bench();
+
+    let started =
+        commands::service_start("mysql@8.4".into(), bench.app.state(), bench.app.state()).unwrap();
+    let info = bench.finish(&started.id);
+
+    assert_eq!(info.key, "service:mysql@8.4");
+    assert_eq!(info.label, "Start mysql@8.4");
+    assert_eq!(info.state, JobState::Failed);
+    assert_eq!(info.error.unwrap().code, ErrorCode::NotFound);
+}
+
+#[test]
+fn stopping_a_service_that_is_not_running_succeeds() {
+    let bench = bench();
+    bench.install_fake("caddy", "2.11.7");
+
+    let started =
+        commands::service_stop("caddy".into(), bench.app.state(), bench.app.state()).unwrap();
+
+    assert_eq!(bench.finish(&started.id).state, JobState::Succeeded);
+}
+
+#[test]
+fn a_real_definition_is_built_by_the_command_and_a_missing_program_fails_the_job() {
+    // The runtimes here are folders with a placeholder file, not programs: the start gets as far as writing the config
+    // and refusing the missing program, and says so as the job's error instead of panicking.
+    let bench = bench();
+    bench.install_fake("caddy", "2.11.7");
+
+    let started =
+        commands::service_start("caddy".into(), bench.app.state(), bench.app.state()).unwrap();
+    let info = bench.finish(&started.id);
+
+    assert_eq!(info.state, JobState::Failed);
+    assert!(
+        bench
+            .home
+            .config_dir()
+            .join("caddy")
+            .join("Caddyfile")
+            .is_file(),
+        "the generated Caddyfile was written"
+    );
+    assert!(info.error.is_some());
+}
+
+#[test]
+fn nothing_is_started_once_the_quit_has_begun() {
+    let bench = bench();
+    bench.install_fake("caddy", "2.11.7");
+    assert!(bench.app.state::<QuitState>().begin());
+
+    for result in [
+        commands::service_start("caddy".into(), bench.app.state(), bench.app.state()),
+        commands::service_restart("caddy".into(), bench.app.state(), bench.app.state()),
+        commands::service_port_reassign("caddy".into(), bench.app.state(), bench.app.state()),
+    ] {
+        assert_eq!(result.unwrap_err().code, ErrorCode::Busy);
+    }
+    // Stopping is still allowed: it is what the quit does.
+    assert!(commands::service_stop("caddy".into(), bench.app.state(), bench.app.state()).is_ok());
+    assert!(
+        bench.app.state::<Supervisor>().list().is_empty(),
+        "no process was started"
+    );
 }

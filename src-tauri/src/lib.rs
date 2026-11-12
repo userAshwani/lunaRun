@@ -59,7 +59,11 @@ pub fn run() {
             commands::runtime_uninstall,
             commands::runtime_usage,
             commands::services_list,
-            commands::services_leftovers
+            commands::services_leftovers,
+            commands::service_start,
+            commands::service_stop,
+            commands::service_restart,
+            commands::service_port_reassign
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

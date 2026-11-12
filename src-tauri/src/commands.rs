@@ -10,7 +10,10 @@ use luna_core::registry::{CalDate, RegistryHolder, RegistryStatus, RuntimesAvail
 use luna_core::runtimes::{
     InstalledView, Installer, UninstallOptions, Uninstaller, UsageReport, list_installed,
 };
-use luna_core::services::{Leftover, PortAllocator, ServiceRow, Supervisor, list_services};
+use luna_core::services::{
+    Leftover, PortAllocator, ServiceAction, ServiceController, ServiceRow, Supervisor,
+    list_services,
+};
 use luna_core::{LunaError, LunaHome};
 use tauri::{AppHandle, State};
 
@@ -120,4 +123,46 @@ pub fn services_list(
 #[tauri::command]
 pub fn services_leftovers(leftovers: State<'_, Leftovers>) -> Result<Vec<Leftover>, LunaError> {
     Ok(leftovers.list())
+}
+
+/// Start a service (a row of the Services page) as a background job named `service:<id>`: `job:progress` (phase
+/// `setup` for a database's first start, then `starting`) and `job:done`. The job succeeds when the service **runs**.
+/// Refused with `BUSY` while the app quits. Asking again while it starts returns that job.
+#[tauri::command]
+pub fn service_start(
+    id: String,
+    controller: State<'_, ServiceController>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    controller.run(&jobs, &id, ServiceAction::Start)
+}
+
+/// Stop a service (every worker of a PHP pool) as a background job. Stopping what is not running is a success.
+#[tauri::command]
+pub fn service_stop(
+    id: String,
+    controller: State<'_, ServiceController>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    controller.run(&jobs, &id, ServiceAction::Stop)
+}
+
+/// Stop a service, then start it again, as one background job. Refused with `BUSY` while the app quits.
+#[tauri::command]
+pub fn service_restart(
+    id: String,
+    controller: State<'_, ServiceController>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    controller.run(&jobs, &id, ServiceAction::Restart)
+}
+
+/// "Use port N instead": give a stopped service other ports than the ones that turned out to be taken, and start it.
+#[tauri::command]
+pub fn service_port_reassign(
+    id: String,
+    controller: State<'_, ServiceController>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    controller.reassign_and_start(&jobs, &id)
 }

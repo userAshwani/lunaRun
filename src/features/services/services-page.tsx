@@ -8,7 +8,11 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCancelJob, useJobs } from "@/features/jobs/use-jobs";
+import { serviceName } from "./service-format";
+import { ServiceProblemView } from "./service-problem";
 import { ServicesNote, ServicesTable } from "./services-table";
+import { useServiceActions, useServiceJobEffects } from "./use-service-actions";
 import { useLeftovers, useServices } from "./use-services";
 
 function ServicesSkeleton() {
@@ -26,7 +30,7 @@ function ServicesSkeleton() {
   );
 }
 
-/** Services an earlier session left running. Read-only for now: adopting or stopping them comes with the actions. */
+/** Services an earlier session left running. Read-only for now: adopting or stopping them is the next task. */
 function LeftoversNotice({ leftovers }: { leftovers: readonly Leftover[] }) {
   const { t } = useTranslation();
   return (
@@ -56,7 +60,15 @@ export function ServicesPage() {
   const { t } = useTranslation();
   const services = useServices();
   const leftovers = useLeftovers();
+  const jobs = useJobs();
+  const cancel = useCancelJob();
+  const actions = useServiceActions(jobs.data);
   const rows = services.data;
+  const nameOf = (id: string) => {
+    const found = rows?.find((row) => row.id === id);
+    return found ? serviceName(found) : id;
+  };
+  useServiceJobEffects(nameOf);
 
   return (
     <>
@@ -77,6 +89,26 @@ export function ServicesPage() {
           {leftovers.data && leftovers.data.length > 0 && (
             <LeftoversNotice leftovers={leftovers.data} />
           )}
+          {actions.problems.length > 0 && (
+            <div className="space-y-3">
+              {actions.problems.map((problem) => (
+                <ServiceProblemView
+                  key={problem.id}
+                  error={problem.error}
+                  service={problem.service}
+                  name={nameOf(problem.service)}
+                  action={problem.action}
+                  busy={actions.pending.has(problem.service)}
+                  onUseAnotherPort={() => {
+                    void actions.useAnotherPort(problem.service);
+                  }}
+                  onDismiss={() => {
+                    actions.dismiss(problem);
+                  }}
+                />
+              ))}
+            </div>
+          )}
           {rows.length === 0 ? (
             <EmptyState
               icon={Server}
@@ -95,11 +127,26 @@ export function ServicesPage() {
             <>
               <Card>
                 <CardContent>
-                  <ServicesTable rows={rows} />
+                  <ServicesTable
+                    rows={rows}
+                    jobs={actions.latest}
+                    pending={actions.pending}
+                    onStart={(id) => {
+                      void actions.start(id);
+                    }}
+                    onStop={(id) => {
+                      void actions.stop(id);
+                    }}
+                    onRestart={(id) => {
+                      void actions.restart(id);
+                    }}
+                    onCancel={(jobId) => {
+                      cancel.mutate(jobId);
+                    }}
+                  />
                 </CardContent>
               </Card>
               <div className="space-y-2">
-                <ServicesNote>{t("services.readOnlyNote")}</ServicesNote>
                 {rows.some((row) => row.kind === "database") && (
                   <ServicesNote>{t("services.databaseNote")}</ServicesNote>
                 )}

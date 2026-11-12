@@ -2,9 +2,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import type { JobInfo } from "@/bindings/JobInfo";
 import type { Leftover } from "@/bindings/Leftover";
 import type { ServiceRow } from "@/bindings/ServiceRow";
 import type { ServiceStatus } from "@/bindings/ServiceStatus";
+import { ToastProvider } from "@/components/toast";
 import { ServicesPage } from "@/features/services/services-page";
 import { createQueryClient } from "@/lib/query-client";
 import { respondTo } from "@/test/backend";
@@ -84,15 +86,47 @@ export function renderPage() {
   return render(
     <QueryClientProvider client={createQueryClient()}>
       <MemoryRouter>
-        <ServicesPage />
+        <ToastProvider>
+          <ServicesPage />
+        </ToastProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
-export function backendWith(handlers: { list?: () => unknown; leftovers?: () => unknown } = {}) {
+/** A start, stop or restart job as the backend lists it. The label starts with the action, as the backend's does. */
+export function serviceJob(
+  id: string,
+  action: "Start" | "Stop" | "Restart",
+  extra: Partial<JobInfo> = {},
+): JobInfo {
+  return {
+    id: `job-${action.toLowerCase()}-${id}`,
+    key: `service:${id}`,
+    label: `${action} ${id}`,
+    state: "running",
+    phase: "starting",
+    bytesDone: 0,
+    bytesTotal: null,
+    message: null,
+    error: null,
+    ...extra,
+  };
+}
+
+export function backendWith(
+  handlers: {
+    list?: () => unknown;
+    leftovers?: () => unknown;
+    jobs?: () => unknown;
+    /** Answers for the commands a test is about (`service_start`, `job_cancel`, ...). */
+    more?: Record<string, (args?: unknown) => unknown>;
+  } = {},
+) {
   respondTo({
     services_list: handlers.list ?? (() => [caddyRow, phpPool, mysqlRow]),
     services_leftovers: handlers.leftovers ?? (() => []),
+    jobs_list: handlers.jobs ?? (() => []),
+    ...handlers.more,
   });
 }

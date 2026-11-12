@@ -197,16 +197,6 @@ describe("ServicesPage", () => {
     expect(screen.queryByText(/no password/)).not.toBeInTheDocument();
   });
 
-  it("says honestly that starting and stopping is not here yet", async () => {
-    backendWith();
-    renderPage();
-
-    expect(
-      await screen.findByText(/Starting and stopping services comes in the next update/),
-    ).toBeVisible();
-    expect(screen.queryByRole("button", { name: /start|stop|restart/i })).not.toBeInTheDocument();
-  });
-
   it("shows an empty state with the one action that fixes it when nothing is installed", async () => {
     backendWith({ list: () => [] });
     renderPage();

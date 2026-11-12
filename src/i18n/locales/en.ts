@@ -26,7 +26,7 @@ export const en = {
     runtimes: { description: "Install and manage PHP, Node.js, MySQL and more, side by side." },
     services: {
       description:
-        "The web server, PHP pools and databases lunaRun can run, and what state they are in.",
+        "Start, stop and restart the web server, PHP and databases lunaRun runs for you.",
     },
     settings: { description: "Defaults, ports, theme and data location." },
     diagnostics: { description: "System information and a report you can copy for bug reports." },
@@ -291,11 +291,59 @@ export const en = {
     loading: "Loading services",
     loadError: "Could not load the services",
     tableLabel: "Services",
-    readOnlyNote:
-      "This list shows what lunaRun can run and what state it is in. Starting and stopping services comes in the next update.",
     databaseNote:
       "Databases use the user root with no password and accept connections from this computer only.",
-    columns: { service: "Service", ports: "Ports", status: "Status" },
+    columns: { service: "Service", ports: "Ports", status: "Status", actions: "Actions" },
+    actions: {
+      start: "Start",
+      stop: "Stop",
+      restart: "Restart",
+      cancel: "Cancel",
+      stopping: "Stopping",
+      startLabel: "Start {{name}}",
+      stopLabel: "Stop {{name}}",
+      restartLabel: "Restart {{name}}",
+      cancelLabel: "Cancel starting {{name}}",
+      stoppingLabel: "{{name}} is stopping",
+    },
+    progress: {
+      setup: "Setting up its data folder. This only happens on the first start.",
+      setupLabel: "Setting up {{name}}",
+    },
+    toast: {
+      start: "{{name}} started",
+      stop: "{{name}} stopped",
+      restart: "{{name}} restarted",
+      cancelled: "Starting {{name}} was cancelled",
+    },
+    problem: {
+      startFailed: "{{name}} did not start",
+      stopFailed: "{{name}} could not be stopped",
+      restartFailed: "{{name}} could not be restarted",
+      dismiss: "Dismiss",
+      holder: "{{name}} ({{path}})",
+      holderPid: "process {{pid}}",
+      portUsedBy: "Port {{port}} is used by {{holder}}.",
+      portUsedReason: "Port {{port}} is already in use ({{reason}}).",
+      portUsed: "Port {{port}} is already in use.",
+      productHint:
+        "That looks like {{product}}. Stop it there, or let lunaRun use another port for this service.",
+      anotherPortHint: "Stop that program, or let lunaRun use another port for this service.",
+      caddyPort:
+        "Caddy's admin port cannot move to another port. Stop the program that uses it, then start Caddy again.",
+      useAnotherPort: "Use another port",
+      initFailed:
+        "Setting up its data folder failed, so nothing was started. This is the end of what the setup program printed:",
+      fullOutput: "The full output is in {{path}}.",
+      outputLabel: "Output",
+      configInvalid:
+        "{{name}} rejected the configuration lunaRun generated, so nothing was started. It said:",
+      runtimeBroken:
+        "A file lunaRun made for this version is missing. Install this version again from Runtimes.",
+      notInstalled:
+        "The version this service runs from is not installed. Install it from Runtimes.",
+      openRuntimes: "Open Runtimes",
+    },
     empty: {
       title: "No services yet",
       description:
@@ -355,6 +403,8 @@ export const en = {
     // The phase names the backend reports (`ctx.phase(...)` in luna-core).
     phase: {
       starting: "Starting",
+      setup: "Setting up",
+      stopping: "Stopping",
       preparing: "Preparing",
       downloading: "Downloading",
       verifying: "Verifying",

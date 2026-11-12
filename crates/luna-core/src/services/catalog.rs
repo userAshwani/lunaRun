@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::databases::{Engine, data_dir_is_empty, data_dir_of};
-use super::php::{DEFAULT_WORKERS, pool_id, worker_id};
+use super::php::{pool_id, pool_kind, pool_members};
 use super::ports::PortAllocator;
 use super::state::{ServiceState, ServiceStatus};
 use super::supervisor::Supervisor;
@@ -117,6 +117,32 @@ fn line_of(version: &str) -> Option<String> {
     RuntimeVersion::parse(version).map(|v| v.major_minor())
 }
 
+/// The installed runtime a row `id` runs from, by the same rules [`list_services`] uses to build its rows (the newest
+/// installed Caddy, the **exact** PHP version, the newest patch of a database line), and what kind of service it is.
+/// `None` for an id that names nothing installed, or that does not belong to this system (`php-fcgi@` on Linux).
+pub(super) fn source_of<'a>(
+    installed: &'a [InstalledRuntime],
+    id: &str,
+    os: Os,
+) -> Option<(ServiceKind, &'a InstalledRuntime)> {
+    if id == "caddy" {
+        return newest(of(installed, "caddy")).map(|r| (ServiceKind::Web, r));
+    }
+    let (kind, version) = id.split_once('@')?;
+    match kind {
+        _ if kind == pool_kind(os) => of(installed, "php")
+            .find(|r| r.version == version)
+            .map(|r| (ServiceKind::Php, r)),
+        "mysql" | "mariadb" => newest(
+            installed
+                .iter()
+                .filter(|r| r.runtime == kind && line_of(&r.version).as_deref() == Some(version)),
+        )
+        .map(|r| (ServiceKind::Database, r)),
+        _ => None,
+    }
+}
+
 /// Every service lunaRun can run from `installed`, in the order the page shows them: the web server, PHP (newest
 /// first), then the databases. Reads the port assignments and asks the supervisor for states; writes nothing.
 ///
@@ -186,21 +212,7 @@ pub fn list_services(
     });
     for runtime in php {
         let pool = pool_id(os, &runtime.version);
-        let workers = if os == Os::Windows {
-            // The size the pool was last given, or the default it will get at its first start.
-            ports
-                .assignment(&pool)?
-                .map_or(DEFAULT_WORKERS, |assigned| assigned.count)
-        } else {
-            1
-        };
-        let members = if os == Os::Windows {
-            (1..=usize::from(workers))
-                .map(|n| worker_id(&pool, n))
-                .collect()
-        } else {
-            vec![pool.clone()]
-        };
+        let members = pool_members(ports, os, &pool)?;
         rows.push(row(pool, ServiceKind::Php, runtime, None, members, false)?);
     }
 

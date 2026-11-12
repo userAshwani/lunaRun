@@ -85,4 +85,15 @@ export const ipc = {
   servicesList: () => call<ServiceRow[]>("services_list"),
   /** Services found still running from an earlier session when the app started (looked for once, at startup). */
   servicesLeftovers: () => call<Leftover[]>("services_leftovers"),
+  /**
+   * Start a service (a row id such as `mysql@8.4`, `php-fcgi@8.3.36` or `caddy`) as a background job named
+   * `service:<id>`. The job succeeds when the service runs; a database's first start reports the phase `setup`.
+   */
+  serviceStart: (id: string) => call<StartedJob>("service_start", { id }),
+  /** Stop a service (every worker of a PHP pool) as a background job. Stopping what is not running succeeds. */
+  serviceStop: (id: string) => call<StartedJob>("service_stop", { id }),
+  /** Stop, then start, as one job. */
+  serviceRestart: (id: string) => call<StartedJob>("service_restart", { id }),
+  /** "Use another port": give a stopped service other ports than the taken ones, and start it. */
+  servicePortReassign: (id: string) => call<StartedJob>("service_port_reassign", { id }),
 } as const;

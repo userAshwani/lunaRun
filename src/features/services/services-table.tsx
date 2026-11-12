@@ -1,6 +1,8 @@
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { JobInfo } from "@/bindings/JobInfo";
 import type { ServiceRow } from "@/bindings/ServiceRow";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -10,6 +12,7 @@ import {
   TableRow,
   TableScroll,
 } from "@/components/ui/table";
+import { ServiceActions } from "./service-actions";
 import { formatPorts, serviceName } from "./service-format";
 import { ServiceStateBadge } from "./service-state-badge";
 
@@ -48,7 +51,27 @@ function useNotes() {
   };
 }
 
-export function ServicesTable({ rows }: { rows: readonly ServiceRow[] }) {
+interface ServicesTableProps {
+  rows: readonly ServiceRow[];
+  /** The newest start, stop or restart of each service, by service id. */
+  jobs: ReadonlyMap<string, JobInfo>;
+  /** Services whose command was sent and has not been answered yet. */
+  pending: ReadonlySet<string>;
+  onStart: (id: string) => void;
+  onStop: (id: string) => void;
+  onRestart: (id: string) => void;
+  onCancel: (jobId: string) => void;
+}
+
+export function ServicesTable({
+  rows,
+  jobs,
+  pending,
+  onStart,
+  onStop,
+  onRestart,
+  onCancel,
+}: ServicesTableProps) {
   const { t } = useTranslation();
   const detail = useDetail();
   const notes = useNotes();
@@ -62,6 +85,9 @@ export function ServicesTable({ rows }: { rows: readonly ServiceRow[] }) {
             <TableHead>{t("services.columns.service")}</TableHead>
             <TableHead>{t("services.columns.ports")}</TableHead>
             <TableHead>{t("services.columns.status")}</TableHead>
+            <TableHead className="text-right">
+              <span className="sr-only">{t("services.columns.actions")}</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,11 +111,43 @@ export function ServicesTable({ rows }: { rows: readonly ServiceRow[] }) {
               </TableCell>
               <TableCell className="align-top">
                 <ServiceStateBadge state={row.state} />
+                {jobs.get(row.id)?.state === "running" && jobs.get(row.id)?.phase === "setup" && (
+                  <div className="mt-2 max-w-xs space-y-1">
+                    <p className="text-[13px] text-muted-foreground">
+                      {t("services.progress.setup")}
+                    </p>
+                    <Progress
+                      className="h-1.5"
+                      value={null}
+                      label={t("services.progress.setupLabel", { name: serviceName(row) })}
+                    />
+                  </div>
+                )}
                 {notes(row).map((note) => (
                   <p key={note} className="mt-1 max-w-md text-[13px] text-muted-foreground">
                     {note}
                   </p>
                 ))}
+              </TableCell>
+              <TableCell className="align-top">
+                <div className="flex justify-end gap-2">
+                  <ServiceActions
+                    row={row}
+                    name={serviceName(row)}
+                    job={jobs.get(row.id)}
+                    busy={pending.has(row.id)}
+                    onStart={() => {
+                      onStart(row.id);
+                    }}
+                    onStop={() => {
+                      onStop(row.id);
+                    }}
+                    onRestart={() => {
+                      onRestart(row.id);
+                    }}
+                    onCancel={onCancel}
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

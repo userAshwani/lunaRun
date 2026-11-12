@@ -5,6 +5,8 @@ import { percent } from "./jobs-state";
 
 const KNOWN_PHASES = [
   "starting",
+  "setup",
+  "stopping",
   "preparing",
   "downloading",
   "verifying",

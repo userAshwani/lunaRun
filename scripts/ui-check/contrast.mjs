@@ -11,7 +11,7 @@ import { SCENARIOS, bridge } from "./services-scenarios.mjs";
 /** Per scenario: [label, text on the page whose colours are measured]. */
 const TARGETS = {
   data: [
-    ["page description", "The web server, PHP pools and databases"],
+    ["page description", "Start, stop and restart the web server"],
     ["table header", "Service"],
     ["service name", "MySQL 9.7"],
     ["detail line", "Version 2.11.7"],
@@ -27,8 +27,20 @@ const TARGETS = {
     ["note: error message", "mysqld.exe exited"],
     ["note: gave up", "It crashed again and again"],
     ["note: killed", "It did not stop in time"],
-    ["footnote: read-only", "This list shows what lunaRun can run"],
     ["footnote: database", "Databases use the user root"],
+  ],
+  setup: [
+    ["setup note", "Setting up its data folder"],
+    ["button: Cancel", "Cancel"],
+    ["button: Stopping", "Stopping"],
+  ],
+  problems: [
+    ["problem headline", "MySQL 8.4 did not start"],
+    ["problem advice", "Port 3307 is used by"],
+    ["problem hint", "That looks like XAMPP"],
+    ["problem message", "port 3307 is already in use by"],
+    ["problem output", "[ERROR] mariadb-install-db"],
+    ["button: Use another port", "Use another port"],
   ],
   leftovers: [
     ["leftovers title", "Services from an earlier session are still running"],

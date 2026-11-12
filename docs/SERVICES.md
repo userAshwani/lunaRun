@@ -88,6 +88,19 @@ As built in `luna-core::services` (D-025):
 - UI events are batched: one `service:log` event per tick per service, at most 10 per second, carrying every new line of every source.
 - lunaRun adds `[lunaRun] ...` lines to the log (starting, exited with code N, stopped).
 
+### Start, stop and restart from the page (D-032)
+
+`ServiceController` (`luna-core::services::control`) maps a **row id** to what to do; every action runs as a background job `service:<id>`.
+
+| Row | Start | Stop |
+|---|---|---|
+| `mysql@8.4`, `mariadb@12.3` | newest installed patch of the line; if the data folder is missing or empty, set it up first (phase `setup`, cancellable), then start | the engine's own clean shutdown |
+| `php-fcgi@<v>` (Windows) | every `php-cgi` worker, all or none | every worker |
+| `php-fpm@<v>` (macOS, Linux) | the one `php-fpm` | `SIGQUIT`, then killed after the grace period |
+| `caddy` | `caddy validate` of the generated Caddyfile (no sites yet), then start | `caddy stop` through the admin API |
+
+A start is done when the service **runs**. Refusals the page maps to text: `PORT_IN_USE` (who holds the port; "Use another port" gives the service other ports and starts it), `SERVICE_START_FAILED`, `DATABASE_INIT_FAILED` (the end of the setup output), `CONFIG_INVALID`, `RUNTIME_BROKEN`, `NOT_FOUND` (not installed), `BUSY` (already running, another action running, or the app is quitting).
+
 ## 3. Ports (FR-SV-03)
 
 `PortAllocator` keeps assignments in `config/services.json` so they stay stable across restarts.

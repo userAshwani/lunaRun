@@ -117,6 +117,41 @@ export const DATA = [
   }),
 ];
 
+/** A start, stop or restart job as the backend lists it (the label starts with the action, as the real one does). */
+const job = (id, action, extra = {}) => ({
+  id: `job-${action.toLowerCase()}-${id}`,
+  key: `service:${id}`,
+  label: `${action} ${id}`,
+  state: "running",
+  phase: "starting",
+  bytesDone: 0,
+  bytesTotal: null,
+  message: null,
+  error: null,
+  ...extra,
+});
+
+const failed = (id, action, error) => job(id, action, { state: "failed", error });
+
+/** A database's first start, in progress, beside a running Caddy and a stopping service. */
+const SETUP = [
+  { ...DATA[0] },
+  {
+    ...DATA[3],
+    state: "starting",
+    members: [status("mariadb@12.3", { state: "starting", pid: 6666 })],
+  },
+  { ...DATA[5] },
+  { ...DATA[7] },
+];
+
+/** Stopped services whose last attempt failed: a taken port (XAMPP), a failed setup, a rejected Caddyfile. */
+const PROBLEMS = [
+  { ...DATA[0], state: "stopped", running: 0, members: [status("caddy")] },
+  { ...DATA[3], needsSetup: true },
+  { ...DATA[5], state: "stopped", running: 0, members: [status("mysql@8.4")] },
+];
+
 export const LEFTOVERS = [
   {
     id: "mysql@8.4",
@@ -138,6 +173,46 @@ export const LEFTOVERS = [
 export const SCENARIOS = {
   data: { list: DATA, leftovers: [], ready: "MySQL 8.4" },
   leftovers: { list: DATA.slice(0, 3), leftovers: LEFTOVERS, ready: "earlier session" },
+  setup: {
+    list: SETUP,
+    leftovers: [],
+    jobs: [
+      job("mariadb@12.3", "Start", { phase: "setup" }),
+      job("mariadb@11.8", "Stop", { phase: "stopping" }),
+    ],
+    ready: "Setting up its data folder",
+  },
+  problems: {
+    list: PROBLEMS,
+    leftovers: [],
+    jobs: [
+      failed("mysql@8.4", "Start", {
+        code: "PORT_IN_USE",
+        message: "port 3307 is already in use by mysqld.exe (C:/xampp/mysql/bin/mysqld.exe)",
+        details: {
+          port: 3307,
+          pid: 4312,
+          processName: "mysqld.exe",
+          processPath: "C:/xampp/mysql/bin/mysqld.exe",
+        },
+      }),
+      failed("mariadb@12.3", "Start", {
+        code: "DATABASE_INIT_FAILED",
+        message: "MariaDB 12.3: the setup program failed with exit code 3",
+        details: {
+          service: "mariadb@12.3",
+          log: "C:/Users/Lenovo/lunaRun/logs/mariadb-12.3.init.log",
+          tail: ["[ERROR] mariadb-install-db: cannot create directory", "Aborting"],
+        },
+      }),
+      failed("caddy", "Start", {
+        code: "CONFIG_INVALID",
+        message: "Caddy rejected the generated Caddyfile",
+        details: { tail: ["adapting config using caddyfile: unrecognized directive: bind_all"] },
+      }),
+    ],
+    ready: "did not start",
+  },
   empty: { list: [], leftovers: [], ready: "No services yet" },
   error: {
     listError: {
@@ -171,7 +246,7 @@ export const bridge = (scenario) => `(() => {
         return s.listError ? Promise.reject(s.listError) : Promise.resolve(s.list);
       }
       if (cmd === "services_leftovers") return Promise.resolve(s.leftovers);
-      if (cmd === "jobs_list") return Promise.resolve([]);
+      if (cmd === "jobs_list") return Promise.resolve(s.jobs ?? []);
       return Promise.reject({ code: "INTERNAL", message: "not part of this screenshot: " + cmd });
     },
   };
