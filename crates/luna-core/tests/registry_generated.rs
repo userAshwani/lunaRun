@@ -163,8 +163,11 @@ fn caddy_and_composer_are_offered_on_every_platform() {
 fn composer_is_a_single_file_and_caddy_is_an_archive() {
     use luna_core::registry::ArtifactFormat;
     let registry = registry();
+    // The newest release, not a pinned number: upstream moves on and the list keeps only a few versions, so a fixed
+    // `2.11.1` made the daily refresh fail the day Composer 2.11.2 pushed it out (and, with it, the pull request).
+    let newest = &registry.runtime("composer").unwrap().releases[0];
     let composer = registry
-        .artifact_for("composer", "2.11.1", Os::Linux, Arch::X86_64)
+        .artifact_for("composer", newest.version.as_str(), Os::Linux, Arch::X86_64)
         .unwrap();
     assert_eq!(composer.artifact.format, ArtifactFormat::File);
     assert!(composer.artifact.url.ends_with("/composer.phar"));
