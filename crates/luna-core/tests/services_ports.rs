@@ -523,6 +523,7 @@ async fn a_service_is_not_started_on_a_port_that_is_taken_and_the_error_says_who
 
     // The holder lets go, and the same start works.
     drop(holder);
+    wait_until_free(port).await;
     supervisor.start(bench.serving("db", port, &[])).unwrap();
     settled(&supervisor, "db").await;
     supervisor.stop("db").await.unwrap();

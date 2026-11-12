@@ -16,6 +16,11 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 static GATE: Mutex<()> = Mutex::new(());
 
 /// Take the lock. A panic elsewhere must not stop services from starting, so a poisoned lock is simply used.
-pub(super) fn hold() -> MutexGuard<'static, ()> {
+///
+/// Public, re-exported as `spawn_gate`, for one reason: **a test program that creates processes of its own** (a stand-in
+/// started with `std::process::Command`, not through the supervisor) must hold it around `spawn()` too, or its children
+/// can inherit a probe socket of a test running at the same time. The app itself never needs it: every process it starts
+/// goes through the supervisor.
+pub fn hold() -> MutexGuard<'static, ()> {
     GATE.lock().unwrap_or_else(PoisonError::into_inner)
 }

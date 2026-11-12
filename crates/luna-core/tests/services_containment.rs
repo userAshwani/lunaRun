@@ -148,6 +148,8 @@ async fn when_lunarun_dies_hard_the_service_is_killed_on_windows_and_found_again
     let bench = private("hard-kill");
     let port = free_port();
     let report = bench.scratch("t").join("report");
+    // Not while a port is being probed in another test: the child would inherit the probe (D-030).
+    let gate = luna_core::services::spawn_gate();
     let mut lunarun = std::process::Command::new(&bench.stub)
         .args(stub_args())
         .env("LUNA_STUB", "supervise")
@@ -160,6 +162,7 @@ async fn when_lunarun_dies_hard_the_service_is_killed_on_windows_and_found_again
         .stderr(std::process::Stdio::null())
         .spawn()
         .unwrap();
+    drop(gate);
     let service = number_in(&report).await;
     assert!(process_alive(service));
     assert!(

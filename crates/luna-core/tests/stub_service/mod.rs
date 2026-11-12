@@ -469,6 +469,19 @@ pub fn free_block(size: u16) -> std::ops::RangeInclusive<u16> {
     }
 }
 
+/// Wait until `port` can be listened on again. When this program drops a listener of its own, the port is free at once,
+/// unless another thread of the program forked at that moment: its child holds a copy of the socket until it execs, a few
+/// milliseconds later (seen on macOS CI). A start on that port right after the drop has to wait for it.
+pub async fn wait_until_free(port: u16) {
+    for _ in 0..200 {
+        if luna_core::services::check_ports(&[port]).is_ok() {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("port {port} was still taken five seconds after its listener was dropped");
+}
+
 pub fn port_open(port: u16) -> bool {
     TcpStream::connect_timeout(&([127, 0, 0, 1], port).into(), Duration::from_millis(300)).is_ok()
 }
@@ -585,7 +598,11 @@ pub fn detached(bench: &Shared, port: u16, extra: &[(&str, &str)]) -> Detached {
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    let mut child = command.spawn().unwrap();
+    // Not while a port is being probed in another test: the child would inherit the probe (D-030).
+    let mut child = {
+        let _gate = luna_core::services::spawn_gate();
+        command.spawn().unwrap()
+    };
     let pid = child.id();
     let (kill, wanted) = channel();
     std::thread::spawn(move || {

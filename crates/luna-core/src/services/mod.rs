@@ -46,6 +46,7 @@ pub use catalog::{
 };
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use databases::{DatabaseDefinition, Engine, database_definition};
+pub use gate::hold as spawn_gate;
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
 pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition};
