@@ -16,6 +16,9 @@ const COMMANDS: &[&str] = &[
     "service_stop",
     "service_restart",
     "service_port_reassign",
+    "service_logs",
+    "service_adopt",
+    "service_stop_leftover",
 ];
 
 fn main() {

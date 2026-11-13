@@ -47,7 +47,8 @@ pub use catalog::{
 };
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use control::{
-    SETUP_LIMIT, ServiceAction, ServiceController, StartPlan, job_key, phase as job_phase,
+    MAX_LOG_TAIL, SETUP_LIMIT, ServiceAction, ServiceController, ServiceLogs, SourceLines,
+    StartPlan, job_key, phase as job_phase,
 };
 pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use gate::hold as spawn_gate;

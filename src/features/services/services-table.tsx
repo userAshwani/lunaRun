@@ -61,6 +61,9 @@ interface ServicesTableProps {
   onStop: (id: string) => void;
   onRestart: (id: string) => void;
   onCancel: (jobId: string) => void;
+  /** The row whose log panel is open, if any. */
+  logsFor: string | null;
+  onLogs: (id: string) => void;
 }
 
 export function ServicesTable({
@@ -71,6 +74,8 @@ export function ServicesTable({
   onStop,
   onRestart,
   onCancel,
+  logsFor,
+  onLogs,
 }: ServicesTableProps) {
   const { t } = useTranslation();
   const detail = useDetail();
@@ -146,6 +151,10 @@ export function ServicesTable({
                       onRestart(row.id);
                     }}
                     onCancel={onCancel}
+                    logsOpen={logsFor === row.id}
+                    onLogs={() => {
+                      onLogs(row.id);
+                    }}
                   />
                 </div>
               </TableCell>

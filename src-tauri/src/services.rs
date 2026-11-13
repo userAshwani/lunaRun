@@ -34,6 +34,14 @@ impl Leftovers {
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
     }
+
+    /// The service was adopted or stopped: it is not left over any more.
+    pub fn remove(&self, id: &str) {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .retain(|leftover| leftover.id != id);
+    }
 }
 
 /// Where a quit is. The first request starts the orderly stop; while it runs further requests change nothing; when it is
@@ -116,6 +124,47 @@ pub async fn run_quit<R: Runtime>(app: &AppHandle<R>) -> ShutdownReport {
     report
 }
 
+/// What to do with a window the user is closing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CloseDecision {
+    /// Nothing is running: close it, and the exit hook finishes at once.
+    Close,
+    /// Something is running (or the stop has begun): keep the window open, so it can show the progress. When
+    /// `start_quit` is true this call is the first and the caller must start the stop ([`spawn_quit`]).
+    Hold { start_quit: bool },
+}
+
+/// The user closed the window. When a service has a process the window **stays**, because the orderly stop that
+/// follows can take up to a minute per group and the user must see that something is happening and why the app is
+/// still there; the webview shows it from the `shutdown:progress` events. With nothing running the window just closes
+/// (a quit that has nothing to stop must not flash a progress window).
+pub fn on_close_requested<R: Runtime>(app: &AppHandle<R>) -> CloseDecision {
+    let quit = app.state::<QuitState>();
+    if quit.is_quitting() {
+        return CloseDecision::Hold { start_quit: false };
+    }
+    let busy = app
+        .state::<Supervisor>()
+        .list()
+        .iter()
+        .any(|status| status.state.has_process());
+    if !busy {
+        return CloseDecision::Close;
+    }
+    CloseDecision::Hold {
+        start_quit: quit.begin(),
+    }
+}
+
+/// Stop the services in order, telling the webview, then exit.
+pub fn spawn_quit<R: Runtime>(app: &AppHandle<R>, code: i32) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        run_quit(&app).await;
+        app.exit(code);
+    });
+}
+
 /// Tauri asks to exit (the last window was closed, or `exit` was called). `true`: let it go. `false`: not yet. The
 /// first request starts the orderly stop, which exits for real when it is done; the exit it asks for comes back here
 /// and goes through.
@@ -125,11 +174,7 @@ pub fn on_exit_requested<R: Runtime>(app: &AppHandle<R>, code: Option<i32>) -> b
         return true;
     }
     if quit.begin() {
-        let app = app.clone();
-        tauri::async_runtime::spawn(async move {
-            run_quit(&app).await;
-            app.exit(code.unwrap_or(0));
-        });
+        spawn_quit(app, code.unwrap_or(0));
     }
     false
 }

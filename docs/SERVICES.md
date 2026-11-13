@@ -101,6 +101,12 @@ As built in `luna-core::services` (D-025):
 
 A start is done when the service **runs**. Refusals the page maps to text: `PORT_IN_USE` (who holds the port; "Use another port" gives the service other ports and starts it), `SERVICE_START_FAILED`, `DATABASE_INIT_FAILED` (the end of the setup output), `CONFIG_INVALID`, `RUNTIME_BROKEN`, `NOT_FOUND` (not installed), `BUSY` (already running, another action running, or the app is quitting).
 
+### Logs, leftovers and the quit on the page (D-033)
+
+- **Logs:** `service_logs(id, tailLines)` gives the sources and last lines of every service of a row; `service:log` events add new lines. A row's panel has a tab per source, follows the end until the user scrolls up, and starts over when the service is started again.
+- **Leftovers (macOS and Linux only in practice):** found once at startup; **Adopt** builds the definition and tracks the process (it must be the recorded program and answer its ready check), **Stop** asks it to leave and ends it after ten seconds. Stop asks for confirmation.
+- **Quit:** closing the window while a service runs keeps it open and shows the stop progress by group (web, PHP, databases); with nothing running the window closes at once.
+
 ## 3. Ports (FR-SV-03)
 
 `PortAllocator` keeps assignments in `config/services.json` so they stay stable across restarts.

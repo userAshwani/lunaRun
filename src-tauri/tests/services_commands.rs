@@ -400,3 +400,254 @@ fn nothing_is_started_once_the_quit_has_begun() {
         "no process was started"
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// Logs, leftovers, the closed window
+// ---------------------------------------------------------------------------------------------
+
+#[test]
+fn the_logs_of_a_row_are_listed_by_service_in_camel_case_and_an_unknown_id_is_not_found() {
+    let bench = bench();
+
+    let logs = commands::service_logs("caddy".into(), 100, bench.app.state()).unwrap();
+    assert_eq!(
+        serde_json::to_value(logs).unwrap(),
+        serde_json::json!([{ "service": "caddy", "sources": [] }]),
+        "nothing was started, so there is nothing to show"
+    );
+    let error = commands::service_logs("nginx".into(), 100, bench.app.state()).unwrap_err();
+    assert_eq!(error.code, ErrorCode::NotFound);
+}
+
+#[test]
+fn what_a_service_printed_is_returned_by_the_logs_command() {
+    let bench = bench();
+    bench.install_fake("mysql", "8.4.13");
+    let supervisor = bench.app.state::<Supervisor>().inner().clone();
+    // A real process that prints something: the program of `long_running_program` writes to stdout.
+    let (program, args) = long_running_program(&bench.home);
+    let mut spec = ServiceSpec::new("mysql@8.4", program, 1);
+    spec.args = args;
+    spec.ready = ReadyCheck::Immediately;
+    spec.ports = Vec::new();
+    supervisor.start(spec).unwrap();
+    tauri::async_runtime::block_on(
+        supervisor.wait_until_settled("mysql@8.4", std::time::Duration::from_secs(30)),
+    )
+    .unwrap();
+
+    let mut text = String::new();
+    for _ in 0..200 {
+        let logs = commands::service_logs("mysql@8.4".into(), 50, bench.app.state()).unwrap();
+        text = serde_json::to_string(&logs).unwrap();
+        if text.contains("[lunaRun] starting") {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    tauri::async_runtime::block_on(supervisor.stop("mysql@8.4")).unwrap();
+
+    assert!(text.contains("\"service\":\"mysql@8.4\""), "{text}");
+    assert!(text.contains("\"source\":\"output\""), "{text}");
+    assert!(text.contains("[lunaRun] starting"), "{text}");
+}
+
+/// An app that starts with a real process left over from an earlier session (a PID file and a program of the
+/// right path), which is what `services::manage` finds once at startup.
+fn bench_with_a_leftover() -> (Bench, std::process::Child) {
+    let tmp = TempDir::new().unwrap();
+    let home = LunaHome::at(tmp.path().join("lüna home")).unwrap();
+    home.ensure_layout().unwrap();
+    let (program, args) = long_running_program(&home);
+    let child = std::process::Command::new(&program)
+        .args(&args)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .unwrap();
+    fs::create_dir_all(home.run_dir()).unwrap();
+    fs::write(
+        home.run_dir().join("mysql@8.4.pid"),
+        serde_json::json!({
+            "schema": 1, "pid": child.id(), "exe": program.display().to_string(),
+            "startedAt": 1_767_225_600_u64, "port": null
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let app = tauri::test::mock_app();
+    app.manage(home.clone());
+    services::manage(app.handle(), &home);
+    app.manage(JobManager::new(
+        tauri::async_runtime::handle().inner().clone(),
+        |_| {},
+        JobOptions::default(),
+    ));
+    (
+        Bench {
+            _tmp: tmp,
+            app,
+            home,
+        },
+        child,
+    )
+}
+
+#[test]
+fn stopping_a_leftover_ends_the_process_and_takes_it_off_the_list() {
+    let (bench, mut child) = bench_with_a_leftover();
+    let listed = commands::services_leftovers(bench.app.state()).unwrap();
+    assert_eq!(listed.len(), 1, "found at startup");
+    assert_eq!(listed[0].id, "mysql@8.4");
+
+    tauri::async_runtime::block_on(commands::service_stop_leftover(
+        "mysql@8.4".into(),
+        bench.app.state(),
+        bench.app.state(),
+    ))
+    .unwrap();
+
+    assert!(
+        commands::services_leftovers(bench.app.state())
+            .unwrap()
+            .is_empty()
+    );
+    // The process is gone (the child is ours, so it can be asked whether it ended).
+    let mut ended = false;
+    for _ in 0..200 {
+        if child.try_wait().unwrap().is_some() {
+            ended = true;
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    assert!(ended, "the left-over process was ended");
+    assert!(!bench.home.run_dir().join("mysql@8.4.pid").exists());
+    // A second time there is nothing left, and the list stays empty.
+    let error = tauri::async_runtime::block_on(commands::service_stop_leftover(
+        "mysql@8.4".into(),
+        bench.app.state(),
+        bench.app.state(),
+    ))
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::NotFound);
+}
+
+#[test]
+fn a_refused_adopt_leaves_the_process_running_and_listed() {
+    // The runtime here is a folder with a placeholder file, not the program that runs: adopting is refused, with a
+    // typed error, and nothing about the left-over process changes.
+    let (bench, mut child) = bench_with_a_leftover();
+    bench.install_fake("mysql", "8.4.13");
+
+    let error = tauri::async_runtime::block_on(commands::service_adopt(
+        "mysql@8.4".into(),
+        bench.app.state(),
+        bench.app.state(),
+    ))
+    .unwrap_err();
+
+    assert_ne!(error.code, ErrorCode::Internal, "{}", error.message);
+    assert_eq!(
+        commands::services_leftovers(bench.app.state())
+            .unwrap()
+            .len(),
+        1
+    );
+    assert!(child.try_wait().unwrap().is_none(), "still running");
+    child.kill().unwrap();
+    child.wait().unwrap();
+}
+
+#[test]
+fn adopting_something_that_is_not_a_service_is_not_found() {
+    let bench = bench();
+    let error = tauri::async_runtime::block_on(commands::service_adopt(
+        "nginx".into(),
+        bench.app.state(),
+        bench.app.state(),
+    ))
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::NotFound);
+}
+
+#[test]
+fn a_leftover_is_forgotten_when_it_is_removed_from_the_list() {
+    let leftovers = Leftovers::new(vec![
+        Leftover {
+            id: "mysql@8.4".into(),
+            pid: 1,
+            exe: "/a".into(),
+            started_at: 1,
+            port: None,
+        },
+        Leftover {
+            id: "caddy".into(),
+            pid: 2,
+            exe: "/b".into(),
+            started_at: 1,
+            port: None,
+        },
+    ]);
+
+    leftovers.remove("mysql@8.4");
+    leftovers.remove("nothing");
+
+    let left: Vec<String> = leftovers.list().into_iter().map(|l| l.id).collect();
+    assert_eq!(left, ["caddy"]);
+}
+
+#[test]
+fn closing_the_window_with_nothing_running_just_closes_it() {
+    let bench = bench();
+
+    assert_eq!(
+        services::on_close_requested(bench.app.handle()),
+        services::CloseDecision::Close
+    );
+    assert!(
+        !bench.app.state::<QuitState>().is_quitting(),
+        "no quit began"
+    );
+}
+
+#[test]
+fn closing_the_window_while_a_service_runs_keeps_it_open_and_starts_the_stop_once() {
+    let bench = bench();
+    bench.install_fake("mysql", "8.4.13");
+    let supervisor = bench.app.state::<Supervisor>().inner().clone();
+    let (program, args) = long_running_program(&bench.home);
+    let mut spec = ServiceSpec::new("mysql@8.4", program, 1);
+    spec.args = args;
+    spec.ready = ReadyCheck::Immediately;
+    spec.ports = Vec::new();
+    supervisor.start(spec).unwrap();
+    tauri::async_runtime::block_on(
+        supervisor.wait_until_settled("mysql@8.4", std::time::Duration::from_secs(30)),
+    )
+    .unwrap();
+
+    let first = services::on_close_requested(bench.app.handle());
+    let second = services::on_close_requested(bench.app.handle());
+
+    assert_eq!(first, services::CloseDecision::Hold { start_quit: true });
+    assert_eq!(
+        second,
+        services::CloseDecision::Hold { start_quit: false },
+        "a second click on the close button does not start a second stop"
+    );
+    assert!(bench.app.state::<QuitState>().is_quitting());
+    tauri::async_runtime::block_on(supervisor.stop("mysql@8.4")).unwrap();
+}
+
+#[test]
+fn a_window_closed_while_the_stop_is_under_way_stays_open() {
+    let bench = bench();
+    assert!(bench.app.state::<QuitState>().begin());
+
+    assert_eq!(
+        services::on_close_requested(bench.app.handle()),
+        services::CloseDecision::Hold { start_quit: false }
+    );
+}

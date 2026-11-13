@@ -5,7 +5,7 @@
 //   node scripts/ui-check/contrast.mjs
 //
 // Needs the dev server and PLAYWRIGHT_CORE (README.md). To check another page, add its scenarios and targets.
-import { launch, openPage } from "./browser.mjs";
+import { launch, openPage, runSteps } from "./browser.mjs";
 import { SCENARIOS, bridge } from "./services-scenarios.mjs";
 
 /** Per scenario: [label, text on the page whose colours are measured]. */
@@ -42,9 +42,27 @@ const TARGETS = {
     ["problem output", "[ERROR] mariadb-install-db"],
     ["button: Use another port", "Use another port"],
   ],
+  logs: [
+    ["row name (the page is ready)", "MySQL 8.4"],
+    ["panel title", "Logs of MySQL 8.4"],
+    ["panel description", "What it prints, live"],
+    ["log line", "mysqld: ready for connections"],
+    ["log line: lunaRun note", "[lunaRun] ready"],
+    ["line count", "lines"],
+    ["button: Copy log", "Copy log"],
+  ],
+  quit: [
+    ["row name (the page is ready)", "MySQL 8.4"],
+    ["overlay title", "Stopping your services"],
+    ["overlay description", "lunaRun closes when they have stopped"],
+    ["group name", "Web server"],
+    ["group progress", "1 of 1 stopped"],
+    ["waiting for", "Waiting for mysql@8.4"],
+  ],
   leftovers: [
     ["leftovers title", "Services from an earlier session are still running"],
-    ["leftovers item", "mysql@8.4 (process 4242)"],
+    ["leftovers item", "MySQL 8.4 (process 4242)"],
+    ["leftovers button: Adopt", "Adopt"],
     ["leftovers description", "These were started by an earlier session"],
   ],
   empty: [
@@ -119,6 +137,7 @@ for (const theme of ["light", "dark"]) {
       height: 900,
       route: "/services",
     });
+    await runSteps(page, scenario);
     const results = await page.evaluate(
       ({ source, targets: wanted }) => {
         const measure = new Function(`return (${source})()`)();

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-service-adopt"
+description = "Enables the service_adopt command without any pre-configured scope."
+commands.allow = ["service_adopt"]
+
+[[permission]]
+identifier = "deny-service-adopt"
+description = "Denies the service_adopt command without any pre-configured scope."
+commands.deny = ["service_adopt"]

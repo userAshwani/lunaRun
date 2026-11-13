@@ -4,13 +4,17 @@ import { isTauri } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { JobDone } from "@/bindings/JobDone";
 import type { JobProgress } from "@/bindings/JobProgress";
+import type { LogBatch } from "@/bindings/LogBatch";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { ServiceStatus } from "@/bindings/ServiceStatus";
+import type { ShutdownProgress } from "@/bindings/ShutdownProgress";
 
 export const JOB_PROGRESS_EVENT = "job:progress";
 export const JOB_DONE_EVENT = "job:done";
 export const REGISTRY_UPDATED_EVENT = "registry:updated";
 export const SERVICE_STATE_EVENT = "service:state";
+export const SERVICE_LOG_EVENT = "service:log";
+export const SHUTDOWN_PROGRESS_EVENT = "shutdown:progress";
 
 const nothingToUnsubscribe: UnlistenFn = () => {};
 
@@ -47,6 +51,24 @@ export async function onServiceState(
 ): Promise<UnlistenFn> {
   if (!isTauri()) return nothingToUnsubscribe;
   return listen<ServiceStatus>(SERVICE_STATE_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** New lines of a service's output and log files, in batches (at most ten a second per service). */
+export async function onServiceLog(handler: (batch: LogBatch) => void): Promise<UnlistenFn> {
+  if (!isTauri()) return nothingToUnsubscribe;
+  return listen<LogBatch>(SERVICE_LOG_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+/** How far the orderly stop of the services has come while the app quits. */
+export async function onShutdownProgress(
+  handler: (progress: ShutdownProgress) => void,
+): Promise<UnlistenFn> {
+  if (!isTauri()) return nothingToUnsubscribe;
+  return listen<ShutdownProgress>(SHUTDOWN_PROGRESS_EVENT, (event) => {
     handler(event.payload);
   });
 }

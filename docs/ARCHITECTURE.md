@@ -220,7 +220,8 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `services_leftovers()` | `Leftover[]` (services still running from an earlier session, found once at startup) |
 | | `service_start(id)` / `service_stop(id)` / `service_restart(id)` | `StartedJob` (job key `service:<id>`, label `Start <id>` / `Stop <id>` / `Restart <id>`; a start succeeds when the service **runs**; a database's first start reports the phase `setup`; start and restart are refused with `BUSY` while the app quits; D-032) |
 | | `service_port_reassign(id)` | `StartedJob` (give a stopped service other ports than the taken ones, then start it; Caddy's single admin port answers `PORT_IN_USE` with who holds it) |
-| | `service_logs(id, tailLines)` | `LogLine[]` |
+| | `service_logs(id, tailLines)` | `ServiceLogs[]` (per service of the row: its log sources, `output` first, each with the last `tailLines` lines, at most 2,000; new lines arrive as `service:log` events; D-033) |
+| | `service_adopt(id)` / `service_stop_leftover(id)` | `()` (take over or end a service an earlier session left running; the id is the one in `services_leftovers`; D-033) |
 | Projects | `projects_list()` / `project_get(id)` | `Project` |
 | | `project_add(path)` | `Project` + `DetectionReport` |
 | | `project_detect(id)` | `DetectionReport` |

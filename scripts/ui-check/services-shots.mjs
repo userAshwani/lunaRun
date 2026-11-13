@@ -7,7 +7,7 @@
 // Needs the dev server (`pnpm exec vite --host 127.0.0.1 --port 1420 --strictPort`) and PLAYWRIGHT_CORE (README.md).
 import fs from "node:fs";
 import path from "node:path";
-import { OUT_DIR, launch, openPage } from "./browser.mjs";
+import { OUT_DIR, launch, openPage, runSteps } from "./browser.mjs";
 import { SCENARIOS, bridge } from "./services-scenarios.mjs";
 
 const only = process.argv.slice(2);
@@ -28,6 +28,8 @@ for (const [name, scenario] of Object.entries(SCENARIOS)) {
         height,
         route: "/services",
       });
+      await runSteps(page, scenario);
+      await page.waitForTimeout(300);
       const file = path.join(OUT_DIR, `services-${name}-${theme}-${String(width)}.png`);
       await page.screenshot({ path: file, fullPage: true });
       console.log("saved", file);

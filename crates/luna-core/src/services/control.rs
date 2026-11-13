@@ -20,11 +20,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use futures_util::future::join_all;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio_util::sync::CancellationToken;
+use ts_rs::TS;
 
 use super::catalog::{ServiceKind, source_of};
 use super::databases::DatabaseDefinition;
+use super::logs::LogLine;
 use super::php::{PhpDefinition, pool_id, pool_kind, pool_members, pool_size};
 use super::ports::{PortAllocator, PortPurpose, check_ports};
 use super::state::{ServiceState, ServiceStatus};
@@ -45,6 +48,41 @@ const VALIDATE_LIMIT: Duration = Duration::from_secs(30);
 /// Slack on top of a spec's own start timeout before giving up on waiting for it to settle: the supervisor times the
 /// start out itself, and this only keeps a bug there from hanging a job for ever.
 const SETTLE_MARGIN: Duration = Duration::from_secs(15);
+
+/// The most lines of one log source `ServiceController::logs` returns: what the supervisor keeps (`LogConfig::ring_lines`).
+pub const MAX_LOG_TAIL: usize = 2_000;
+
+/// What one log source of a service has printed, oldest line first.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct SourceLines {
+    /// `output`, or the label of a log file the service writes itself (`MySQL error log`).
+    pub source: String,
+    pub lines: Vec<LogLine>,
+}
+
+/// The log of one service (a row has several for a Windows PHP pool).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ServiceLogs {
+    /// The supervisor's id: the row's own, or `php-fcgi@8.3.36-w2`. It is the `id` of the `service:log` events.
+    pub service: String,
+    pub sources: Vec<SourceLines>,
+}
+
+/// `php-fcgi@8.3.36-w2` is a worker of the pool `php-fcgi@8.3.36`; every other id is its own row.
+fn row_of_service(service: &str) -> &str {
+    match service.rsplit_once("-w") {
+        Some((pool, number))
+            if !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()) =>
+        {
+            pool
+        }
+        _ => service,
+    }
+}
 
 /// The job phases, which the page turns into words.
 pub mod phase {
@@ -446,6 +484,64 @@ impl ServiceController {
         Ok(PortPurpose::PhpFastCgi {
             pool: pool_size(&self.ports, self.os, id)?,
         })
+    }
+
+    /// What a row's services have printed: for each service of the row its sources (`output` first), each with its
+    /// last `tail` lines (at most [`MAX_LOG_TAIL`]), oldest first. The lines of a service that has stopped are still
+    /// there until it is started again; a service that was never started has no sources yet.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` for an id that is not a service of this system.
+    pub fn logs(&self, id: &str, tail: usize) -> Result<Vec<ServiceLogs>> {
+        let tail = tail.min(MAX_LOG_TAIL);
+        Ok(self
+            .members(id)?
+            .into_iter()
+            .map(|service| {
+                let sources = self
+                    .supervisor
+                    .log_sources(&service)
+                    .into_iter()
+                    .map(|source| SourceLines {
+                        lines: self.supervisor.log_lines(&service, &source, tail),
+                        source,
+                    })
+                    .collect();
+                ServiceLogs { service, sources }
+            })
+            .collect())
+    }
+
+    /// "Adopt": take over a service an earlier run of lunaRun left running (`Supervisor::scan_leftovers` found it).
+    /// The definition is built as for a start, so the adopted service is checked, stopped and restarted exactly as
+    /// one this app started. `service` is the supervisor's id (what `Leftover::id` holds).
+    ///
+    /// # Errors
+    /// `BUSY` while the app quits, `NOT_FOUND` when no such service is left running or the version it runs from is no
+    /// longer installed (then it can only be stopped), `INVALID_PATH` when what runs is not the program the
+    /// definition names, `SERVICE_START_FAILED` when it does not answer its ready check (it is left running).
+    pub async fn adopt(&self, service: &str) -> Result<()> {
+        self.refuse_if_quitting(service)?;
+        let plan = self.plan(row_of_service(service))?;
+        let specs = match plan {
+            StartPlan::Database(def) => vec![def.spec],
+            StartPlan::Php(def) => def.specs,
+            StartPlan::Web(def) => vec![def.spec],
+        };
+        let spec = specs
+            .into_iter()
+            .find(|spec| spec.id == service)
+            .ok_or_else(|| not_found(format!("there is no service {service}"), service))?;
+        self.supervisor.adopt(spec).await
+    }
+
+    /// "Stop" for a leftover: ask it to leave, end it after ten seconds, end what it left behind, forget it.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` when no such service is left running.
+    pub async fn stop_leftover(&self, service: &str) -> Result<()> {
+        self.members(row_of_service(service))?;
+        self.supervisor.stop_leftover(service).await
     }
 
     /// Do `action` on row `id` as a background job named `service:<id>` (`job:progress` and `job:done` events), and

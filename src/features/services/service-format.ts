@@ -33,3 +33,26 @@ export function formatPorts(ports: readonly number[]): string {
     .map(([first, last]) => (last > first ? `${String(first)}–${String(last)}` : String(first)))
     .join(", ");
 }
+
+/** Is `service` (a supervisor id) one of the services of the row `rowId`? A Windows pool's workers are `<pool>-w<n>`. */
+export function isMemberOf(rowId: string, service: string): boolean {
+  if (service === rowId) return true;
+  const prefix = `${rowId}-w`;
+  return service.startsWith(prefix) && /^\d+$/.test(service.slice(prefix.length));
+}
+
+/** The number of a pool worker (`php-fcgi@8.3.36-w2` is 2), or `null` for any other service. */
+export function workerNumber(service: string): number | null {
+  const found = /-w(\d+)$/.exec(service);
+  return found?.[1] ? Number(found[1]) : null;
+}
+
+/** `14:03:07` in the user's own clock and format: when lunaRun read a log line. */
+export function formatLogTime(milliseconds: number): string {
+  return new Date(milliseconds).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}

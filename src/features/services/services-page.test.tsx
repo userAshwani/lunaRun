@@ -266,14 +266,15 @@ describe("ServicesPage", () => {
   });
 
   describe("services left from an earlier session", () => {
-    it("lists them in a notice, without offering to do anything yet", async () => {
+    it("lists them in a notice, by name, with what can be done about each", async () => {
       backendWith({ leftovers: () => [leftover] });
       renderPage();
 
       const notice = await screen.findByText("Services from an earlier session are still running");
       expect(notice).toBeInTheDocument();
-      expect(screen.getByText("mysql@8.4 (process 4242)")).toBeInTheDocument();
-      expect(screen.getByText(/comes in the next update; until then/)).toBeInTheDocument();
+      expect(screen.getByText("MySQL 8.4 (process 4242)")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Adopt MySQL 8.4" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Stop MySQL 8.4" })).toBeEnabled();
     });
 
     it("shows no notice when nothing was left", async () => {

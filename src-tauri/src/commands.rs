@@ -11,7 +11,7 @@ use luna_core::runtimes::{
     InstalledView, Installer, UninstallOptions, Uninstaller, UsageReport, list_installed,
 };
 use luna_core::services::{
-    Leftover, PortAllocator, ServiceAction, ServiceController, ServiceRow, Supervisor,
+    Leftover, PortAllocator, ServiceAction, ServiceController, ServiceLogs, ServiceRow, Supervisor,
     list_services,
 };
 use luna_core::{LunaError, LunaHome};
@@ -165,4 +165,40 @@ pub fn service_port_reassign(
     jobs: State<'_, JobManager>,
 ) -> Result<StartedJob, LunaError> {
     controller.reassign_and_start(&jobs, &id)
+}
+
+/// What a row's services have printed: for each service its log sources (`output` first), each with its last
+/// `tail_lines` lines (at most 2,000), oldest first. New lines arrive as `service:log` events.
+#[tauri::command]
+pub fn service_logs(
+    id: String,
+    tail_lines: usize,
+    controller: State<'_, ServiceController>,
+) -> Result<Vec<ServiceLogs>, LunaError> {
+    controller.logs(&id, tail_lines)
+}
+
+/// Take over a service an earlier session of the app left running. `NOT_FOUND` when nothing like it runs or its
+/// version is no longer installed, `INVALID_PATH` when what runs is another program.
+#[tauri::command]
+pub async fn service_adopt(
+    id: String,
+    controller: State<'_, ServiceController>,
+    leftovers: State<'_, Leftovers>,
+) -> Result<(), LunaError> {
+    controller.adopt(&id).await?;
+    leftovers.remove(&id);
+    Ok(())
+}
+
+/// End a service an earlier session of the app left running (asked to leave, ended after ten seconds).
+#[tauri::command]
+pub async fn service_stop_leftover(
+    id: String,
+    controller: State<'_, ServiceController>,
+    leftovers: State<'_, Leftovers>,
+) -> Result<(), LunaError> {
+    controller.stop_leftover(&id).await?;
+    leftovers.remove(&id);
+    Ok(())
 }

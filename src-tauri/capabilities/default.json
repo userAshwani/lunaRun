@@ -19,6 +19,9 @@
     "allow-service-start",
     "allow-service-stop",
     "allow-service-restart",
-    "allow-service-port-reassign"
+    "allow-service-port-reassign",
+    "allow-service-logs",
+    "allow-service-adopt",
+    "allow-service-stop-leftover"
   ]
 }

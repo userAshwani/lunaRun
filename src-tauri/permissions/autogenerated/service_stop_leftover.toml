@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-service-stop-leftover"
+description = "Enables the service_stop_leftover command without any pre-configured scope."
+commands.allow = ["service_stop_leftover"]
+
+[[permission]]
+identifier = "deny-service-stop-leftover"
+description = "Denies the service_stop_leftover command without any pre-configured scope."
+commands.deny = ["service_stop_leftover"]

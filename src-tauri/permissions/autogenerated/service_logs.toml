@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-service-logs"
+description = "Enables the service_logs command without any pre-configured scope."
+commands.allow = ["service_logs"]
+
+[[permission]]
+identifier = "deny-service-logs"
+description = "Denies the service_logs command without any pre-configured scope."
+commands.deny = ["service_logs"]

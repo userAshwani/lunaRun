@@ -8,6 +8,7 @@ import type { Leftover } from "@/bindings/Leftover";
 import type { LunaError } from "@/bindings/LunaError";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
+import type { ServiceLogs } from "@/bindings/ServiceLogs";
 import type { ServiceRow } from "@/bindings/ServiceRow";
 import type { StartedJob } from "@/bindings/StartedJob";
 import type { UsageReport } from "@/bindings/UsageReport";
@@ -96,4 +97,14 @@ export const ipc = {
   serviceRestart: (id: string) => call<StartedJob>("service_restart", { id }),
   /** "Use another port": give a stopped service other ports than the taken ones, and start it. */
   servicePortReassign: (id: string) => call<StartedJob>("service_port_reassign", { id }),
+  /**
+   * What a row's services have printed: per service its log sources (`output` first) with the last `tailLines` lines,
+   * oldest first. New lines arrive as `service:log` events.
+   */
+  serviceLogs: (id: string, tailLines: number) =>
+    call<ServiceLogs[]>("service_logs", { id, tailLines }),
+  /** Take over a service an earlier session left running. */
+  serviceAdopt: (id: string) => call<null>("service_adopt", { id }),
+  /** End a service an earlier session left running. */
+  serviceStopLeftover: (id: string) => call<null>("service_stop_leftover", { id }),
 } as const;

@@ -9,6 +9,7 @@ the real window for anything that touches IPC"). They are not part of the app or
 | `services-shots.mjs` | Screenshots of every state (data, leftovers notice, empty, error, loading), both themes, 1400 and 900 wide, in a browser with a fake Tauri backend. **Look at the images.** |
 | `contrast.mjs` | WCAG contrast (4.5:1) of every kind of text on the page, both themes, from the colours the browser really computed. Exits 1 on a failure. |
 | `real-start-stop.ps1` | The **real** app window with a **real Caddy** (installed from the Runtimes page into a throw-away data folder, about 18 MB): Start, the Running state by event, Restart, Stop, a taken admin port (the problem panel names who holds it), and **quitting with a service running** (the app exits, Caddy is gone, its port and PID file are free). Prints `ALL CHECKS PASSED` or the failures. Windows only. |
+| `real-logs-and-quit.ps1` | The **real** window with a **real Caddy and a real MariaDB** (about 120 MB of downloads, installed from the Runtimes page): the database's first start with its progress line, the live log viewer on both (lunaRun's note, the service's own output, MariaDB's error log as a tab), then **closing the window with both running**: the quit overlay shows "Stopping your services", the app exits by itself, nothing is left running and the database's log ends in a clean shutdown. Windows only. |
 | `seed-home.mjs` + `real-window.ps1` | The **real** app window with a seeded throw-away `LUNA_HOME`: the command is permitted, the data is right, both themes at the real minimum size, and closing the window ends the process. Windows only. |
 
 ## Browser checks (screenshots and contrast)
@@ -54,6 +55,18 @@ variable the helper functions set through `$script:start`, so a button saved the
 The browser tools have two more scenarios for this task: `setup` (a database's first start in progress, a stop in progress) and `problems`
 (a taken port with XAMPP as the holder, a failed database setup, a rejected Caddyfile). At the minimum window width (900) the row buttons are
 icon-only (their names and tooltips stay): with text the Stop button was cut off at the edge of the table.
+
+### Logs, leftovers and the quit overlay (task 7c)
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ui-check/real-logs-and-quit.ps1 -Exe <repo>/target/release/lunarun.exe -HomeParent <an empty folder> -OutDir <folder>`
+(needs internet; refuses to run if a `caddy.exe` or `mariadbd.exe` is running). Pitfall that cost a run: a button with `aria-pressed` (the
+Logs toggle) offers UI Automation's **Toggle** pattern, not Invoke, so `Press` tries Invoke, Toggle, then SelectionItem. Adopting or stopping a
+leftover cannot be run on Windows (the Job Objects end every service with the app); it is tested with real processes in the Rust tests.
+
+The browser tools got scenarios `logs`, `logs-pool`, `quit` and `leftovers` and a way to script them: a scenario can have `steps` (click a
+button by name, push a backend event with `window.__emit(event, payload)`, wait for text), run by `runSteps` in `browser.mjs` for both the
+screenshots and the contrast measurement. The fake backend now keeps the listeners it is given and honours "unlisten" (before, an event was
+delivered to a listener the page had already removed, so a line showed twice in a screenshot).
 
 ## Contrast: what was found and how it was fixed
 

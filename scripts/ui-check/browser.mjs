@@ -36,3 +36,19 @@ export async function openPage(browser, { scenario, bridge, theme, width, height
   await page.waitForTimeout(300);
   return { context, page };
 }
+
+/**
+ * Runs the steps of a scenario after its page is ready: click a button by name, push a backend event
+ * (`window.__emit`, see services-scenarios.mjs) or wait for some text.
+ */
+export async function runSteps(page, scenario) {
+  for (const step of scenario.steps ?? []) {
+    if (step.click) await page.getByRole("button", { name: step.click }).click();
+    if (step.emit) {
+      await page.evaluate(([event, payload]) => window.__emit(event, payload), step.emit);
+    }
+    if (step.wait) {
+      await page.getByText(step.wait, { exact: false }).first().waitFor({ timeout: 30_000 });
+    }
+  }
+}

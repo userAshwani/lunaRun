@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, Outlet } from "react-router";
 import appIcon from "@/assets/app-icon.png";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { QuitOverlay } from "@/features/services/quit-overlay";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, NAV_ITEMS } from "./routes";
 
@@ -68,6 +69,7 @@ export function Layout() {
           <Outlet />
         </div>
       </main>
+      <QuitOverlay />
     </div>
   );
 }

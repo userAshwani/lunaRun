@@ -932,3 +932,298 @@ async fn cancelling_the_job_of_a_start_stops_the_service_and_ends_as_cancelled()
     assert_eq!(info.error.map(|e| e.code), Some(ErrorCode::Cancelled));
     assert_eq!(rig.state("caddy"), Some(ServiceState::Stopped));
 }
+
+// ---------------------------------------------------------------------------------------------
+// Logs
+// ---------------------------------------------------------------------------------------------
+
+/// Wait until `id` has printed at least `count` lines of its `output` source (the pump reads every tick).
+async fn wait_for_output(
+    rig: &Rig,
+    id: &str,
+    count: usize,
+) -> Vec<luna_core::services::ServiceLogs> {
+    for _ in 0..400 {
+        let logs = rig.controller.logs(id, 1_000).unwrap();
+        let have = logs
+            .iter()
+            .map(|service| {
+                service
+                    .sources
+                    .iter()
+                    .filter(|source| source.source == "output")
+                    .map(|source| source.lines.len())
+                    .sum::<usize>()
+            })
+            .min()
+            .unwrap_or(0);
+        if have >= count {
+            return logs;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("{id} did not print {count} lines in ten seconds");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_log_of_a_row_is_its_services_sources_with_the_last_lines_in_order() {
+    let rig = rig_with("control-logs", Os::Linux, |plan, bench| {
+        stand_in(plan, bench);
+        if let StartPlan::Web(def) = plan {
+            def.spec = bench.serving("caddy", def.admin_port, &[("LUNA_STUB_OUT_COUNT", "5")]);
+        }
+    });
+    install(&rig.bench.home, "caddy", "2.11.7");
+    rig.start("caddy").await.unwrap();
+
+    let logs = wait_for_output(&rig, "caddy", 6).await;
+
+    assert_eq!(logs.len(), 1, "one service");
+    assert_eq!(logs[0].service, "caddy");
+    assert_eq!(
+        logs[0].sources[0].source, "output",
+        "the output comes first"
+    );
+    let text: Vec<&str> = logs[0].sources[0]
+        .lines
+        .iter()
+        .map(|l| l.line.as_str())
+        .collect();
+    let printed: Vec<&str> = text
+        .iter()
+        .copied()
+        .filter(|l| l.starts_with("out "))
+        .collect();
+    assert_eq!(
+        printed,
+        ["out 0", "out 1", "out 2", "out 3", "out 4"],
+        "{text:?}"
+    );
+    assert!(
+        text[0].contains("[lunaRun]"),
+        "lunaRun writes the first line itself: {text:?}"
+    );
+
+    // Only the last lines, still oldest first; a huge request is capped, not an error.
+    let two = rig.controller.logs("caddy", 2).unwrap();
+    assert_eq!(two[0].sources[0].lines.len(), 2);
+    assert_eq!(two[0].sources[0].lines[1].line, text[text.len() - 1]);
+    assert!(rig.controller.logs("caddy", usize::MAX).is_ok());
+    assert_eq!(
+        rig.controller.logs("caddy", 0).unwrap()[0].sources[0]
+            .lines
+            .len(),
+        0
+    );
+
+    // A stopped service keeps what it printed until it is started again.
+    rig.controller.stop("caddy").await.unwrap();
+    let after = rig.controller.logs("caddy", 1_000).unwrap();
+    assert!(after[0].sources[0].lines.iter().any(|l| l.line == "out 4"));
+    assert!(
+        after[0].sources[0]
+            .lines
+            .iter()
+            .any(|l| l.line.contains("stopped"))
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_windows_pool_has_one_log_per_worker_and_an_unknown_id_is_not_found() {
+    let rig = rig("control-logs-pool", Os::Windows);
+    install(&rig.bench.home, "php", "8.3.36");
+    let pool = "php-fcgi@8.3.36";
+
+    // Never started: the row's services are named, with nothing to show yet.
+    let idle = rig.controller.logs(pool, 100).unwrap();
+    assert_eq!(
+        idle.iter().map(|l| l.service.clone()).collect::<Vec<_>>(),
+        workers(pool, 4)
+    );
+    assert!(idle.iter().all(|l| l.sources.is_empty()));
+
+    rig.start(pool).await.unwrap();
+    let logs = wait_for_output(&rig, pool, 1).await;
+    assert_eq!(logs.len(), 4);
+    for (log, worker) in logs.iter().zip(workers(pool, 4)) {
+        assert_eq!(log.service, worker);
+        assert_eq!(log.sources[0].source, "output");
+    }
+    rig.controller.stop(pool).await.unwrap();
+
+    assert_eq!(
+        rig.controller.logs("nginx", 10).unwrap_err().code,
+        ErrorCode::NotFound
+    );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Leftovers: adopt and stop
+// ---------------------------------------------------------------------------------------------
+
+/// A service an earlier run left behind: the stand-in running on the port the service is given, with a PID file.
+async fn leave_behind(rig: &Rig, id: &str, port: u16) -> Detached {
+    let left = detached(&rig.bench, port, &[]);
+    write_pid_file(&rig.bench, id, left.pid, &rig.bench.stub, Some(port));
+    for _ in 0..400 {
+        if port_open(port) {
+            return left;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("the left-over stand-in never listened on {port}");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_leftover_is_adopted_and_then_stopped_like_any_other_service() {
+    let rig = rig("control-adopt", Os::Linux);
+    install(&rig.bench.home, "mariadb", "11.8.9");
+    let port = rig
+        .ports
+        .assign("mariadb@11.8", PortPurpose::Database)
+        .unwrap()
+        .port;
+    let left = leave_behind(&rig, "mariadb@11.8", port).await;
+    let found = rig.supervisor.scan_leftovers();
+    assert_eq!(found.len(), 1);
+    assert_eq!(found[0].id, "mariadb@11.8");
+
+    rig.controller.adopt("mariadb@11.8").await.unwrap();
+
+    assert_eq!(rig.state("mariadb@11.8"), Some(ServiceState::Running));
+    assert_eq!(
+        rig.pid("mariadb@11.8"),
+        Some(left.pid),
+        "the same process, now tracked"
+    );
+    // From now on it is an ordinary service: a start is refused as busy, and a stop ends it.
+    assert_eq!(
+        rig.start("mariadb@11.8").await.unwrap_err().code,
+        ErrorCode::Busy
+    );
+    rig.controller.stop("mariadb@11.8").await.unwrap();
+    assert_eq!(rig.state("mariadb@11.8"), Some(ServiceState::Stopped));
+    assert!(
+        wait_gone(left.pid, Duration::from_secs(10)).await,
+        "the process is gone"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_worker_of_a_pool_is_adopted_through_its_pool() {
+    let rig = rig("control-adopt-worker", Os::Windows);
+    install(&rig.bench.home, "php", "8.3.36");
+    let pool = "php-fcgi@8.3.36";
+    let ports = rig
+        .ports
+        .assign(pool, PortPurpose::PhpFastCgi { pool: 4 })
+        .unwrap()
+        .ports();
+    let worker = "php-fcgi@8.3.36-w2";
+    let left = leave_behind(&rig, worker, ports[1]).await;
+
+    rig.controller.adopt(worker).await.unwrap();
+
+    assert_eq!(rig.state(worker), Some(ServiceState::Running));
+    assert_eq!(rig.pid(worker), Some(left.pid));
+    rig.controller.stop(pool).await.unwrap();
+    assert!(wait_gone(left.pid, Duration::from_secs(10)).await);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn adopting_what_is_not_there_or_not_installed_or_not_the_same_program_changes_nothing() {
+    // Nothing left running.
+    let rig = rig("control-adopt-refused", Os::Linux);
+    install(&rig.bench.home, "mariadb", "11.8.9");
+    let err = rig.controller.adopt("mariadb@11.8").await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::NotFound);
+    assert!(err.message.contains("left running"), "{}", err.message);
+    assert_eq!(rig.state("mariadb@11.8"), None);
+
+    // Its version is not installed any more: it can only be stopped.
+    let err = rig.controller.adopt("mysql@8.4").await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::NotFound);
+    assert!(err.message.contains("not installed"), "{}", err.message);
+
+    // Not a service of this system.
+    assert_eq!(
+        rig.controller.adopt("nginx").await.unwrap_err().code,
+        ErrorCode::NotFound
+    );
+
+    // What runs is not the program the definition names: it is left alone.
+    let other = rig_with("control-adopt-other", Os::Linux, |plan, bench| {
+        stand_in(plan, bench);
+        if let StartPlan::Database(def) = plan {
+            let copy = bench.stub.with_file_name("another-program");
+            fs::copy(&bench.stub, &copy).unwrap();
+            def.spec.program = copy;
+        }
+    });
+    install(&other.bench.home, "mariadb", "11.8.9");
+    let port = other
+        .ports
+        .assign("mariadb@11.8", PortPurpose::Database)
+        .unwrap()
+        .port;
+    let left = leave_behind(&other, "mariadb@11.8", port).await;
+    let err = other.controller.adopt("mariadb@11.8").await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::InvalidPath, "{}", err.message);
+    assert!(
+        luna_core::services::process_alive(left.pid),
+        "the process was not touched"
+    );
+    assert!(
+        pid_file(&other.bench, "mariadb@11.8").exists(),
+        "nor its PID file"
+    );
+    assert_eq!(other.state("mariadb@11.8"), None);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_leftover_is_stopped_and_forgotten_and_nothing_is_adopted_while_quitting() {
+    let rig = rig("control-stop-leftover", Os::Linux);
+    install(&rig.bench.home, "mariadb", "11.8.9");
+    let port = rig
+        .ports
+        .assign("mariadb@11.8", PortPurpose::Database)
+        .unwrap()
+        .port;
+    let left = leave_behind(&rig, "mariadb@11.8", port).await;
+    assert_eq!(rig.supervisor.scan_leftovers().len(), 1);
+
+    // The quit has begun: adopting is refused (a service adopted now would outlive the orderly stop), stopping is not.
+    rig.quitting.store(true, Ordering::SeqCst);
+    let err = rig.controller.adopt("mariadb@11.8").await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::Busy);
+    assert!(luna_core::services::process_alive(left.pid));
+
+    rig.controller.stop_leftover("mariadb@11.8").await.unwrap();
+
+    assert!(
+        wait_gone(left.pid, Duration::from_secs(15)).await,
+        "the process was ended"
+    );
+    assert!(
+        !pid_file(&rig.bench, "mariadb@11.8").exists(),
+        "and its PID file is gone"
+    );
+    let err = rig
+        .controller
+        .stop_leftover("mariadb@11.8")
+        .await
+        .unwrap_err();
+    assert_eq!(
+        err.code,
+        ErrorCode::NotFound,
+        "a second time there is nothing left"
+    );
+    assert_eq!(
+        rig.controller
+            .stop_leftover("nginx")
+            .await
+            .unwrap_err()
+            .code,
+        ErrorCode::NotFound
+    );
+}

@@ -1,11 +1,11 @@
-import { LoaderCircle, Play, RotateCw, Square, X } from "lucide-react";
+import { LoaderCircle, Play, RotateCw, ScrollText, Square, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { JobInfo } from "@/bindings/JobInfo";
 import type { ServiceRow } from "@/bindings/ServiceRow";
 import { Button } from "@/components/ui/button";
 import { serviceJobAction } from "./service-jobs";
 
-interface ServiceActionsProps {
+interface StateButtonsProps {
   row: ServiceRow;
   /** `MySQL 8.4`: what the buttons are called for a screen reader. */
   name: string;
@@ -24,7 +24,7 @@ interface ServiceActionsProps {
  * and Stop while it runs, only Stop while it is starting on its own (an automatic restart), nothing while it stops.
  * While its own start or restart job runs there is Cancel instead (a first start can take a minute).
  */
-export function ServiceActions({
+function StateButtons({
   row,
   name,
   job,
@@ -33,7 +33,7 @@ export function ServiceActions({
   onStop,
   onRestart,
   onCancel,
-}: ServiceActionsProps) {
+}: StateButtonsProps) {
   const { t } = useTranslation();
   const vars = { name };
   const jobAction = job?.state === "running" ? serviceJobAction(job) : null;
@@ -117,5 +117,35 @@ export function ServiceActions({
       <Play aria-hidden />
       <span className="max-lg:sr-only">{t("services.actions.start")}</span>
     </Button>
+  );
+}
+
+interface ServiceActionsProps extends StateButtonsProps {
+  /** The log panel of this row is open. */
+  logsOpen: boolean;
+  onLogs: () => void;
+}
+
+/** The buttons of a row: Logs (always there: a stopped service still has what it printed), then what its state allows. */
+export function ServiceActions({ logsOpen, onLogs, ...state }: ServiceActionsProps) {
+  const { t } = useTranslation();
+  const label = t(logsOpen ? "services.actions.hideLogsLabel" : "services.actions.logsLabel", {
+    name: state.name,
+  });
+  return (
+    <>
+      <Button
+        variant={logsOpen ? "secondary" : "outline"}
+        size="sm"
+        aria-pressed={logsOpen}
+        aria-label={label}
+        title={label}
+        onClick={onLogs}
+      >
+        <ScrollText aria-hidden />
+        <span className="max-lg:sr-only">{t("services.actions.logs")}</span>
+      </Button>
+      <StateButtons {...state} />
+    </>
   );
 }

@@ -48,6 +48,18 @@ pub fn run() {
             app.manage(JobManager::new(runtime, sink, JobOptions::default()));
             Ok(())
         })
+        // Closing the window while a service runs keeps it open, so it can show the orderly stop (D-029, D-033).
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event
+                && let services::CloseDecision::Hold { start_quit } =
+                    services::on_close_requested(window.app_handle())
+            {
+                api.prevent_close();
+                if start_quit {
+                    services::spawn_quit(window.app_handle(), 0);
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::jobs_list,
@@ -63,7 +75,10 @@ pub fn run() {
             commands::service_start,
             commands::service_stop,
             commands::service_restart,
-            commands::service_port_reassign
+            commands::service_port_reassign,
+            commands::service_logs,
+            commands::service_adopt,
+            commands::service_stop_leftover
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

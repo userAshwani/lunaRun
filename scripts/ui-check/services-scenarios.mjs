@@ -169,10 +169,61 @@ export const LEFTOVERS = [
   },
 ];
 
+const logLine = (text, source = "output", seconds = 0) => ({
+  source,
+  line: text,
+  ts: Date.UTC(2026, 10, 12, 14, 3, 7) + seconds * 1000,
+});
+
+/** Rows for the log scenarios: a running MySQL with two log sources. */
+const LOG_ROWS = [DATA[0], DATA[5]];
+const LOGS = {
+  "mysql@8.4": [
+    {
+      service: "mysql@8.4",
+      sources: [
+        {
+          source: "output",
+          lines: [
+            logLine("[lunaRun] starting", "output", 0),
+            logLine(
+              "mysqld: ready for connections. Version: 8.4.13  socket: ''  port: 3307",
+              "output",
+              2,
+            ),
+            logLine("[lunaRun] ready", "output", 3),
+          ],
+        },
+        {
+          source: "MySQL error log",
+          lines: [
+            logLine(
+              "2026-11-12T14:03:07.120000Z 0 [System] [MY-010116] [Server] mysqld (mysqld 8.4.13) starting as process 4444",
+              "MySQL error log",
+              1,
+            ),
+            logLine(
+              "2026-11-12T14:03:09.800000Z 0 [System] [MY-011323] [Server] X Plugin ready for connections",
+              "MySQL error log",
+              2,
+            ),
+          ],
+        },
+      ],
+    },
+  ],
+};
+const POOL_LOGS = {
+  "php-fcgi@8.3.36": [1, 2, 3, 4].map((n) => ({
+    service: `php-fcgi@8.3.36-w${String(n)}`,
+    sources: [{ source: "output", lines: [logLine(`[lunaRun] starting`, "output", n)] }],
+  })),
+};
+
 /** `ready` is a piece of text that is on the page once the state has settled. */
 export const SCENARIOS = {
   data: { list: DATA, leftovers: [], ready: "MySQL 8.4" },
-  leftovers: { list: DATA.slice(0, 3), leftovers: LEFTOVERS, ready: "earlier session" },
+  leftovers: { list: [DATA[0], DATA[5], DATA[2]], leftovers: LEFTOVERS, ready: "earlier session" },
   setup: {
     list: SETUP,
     leftovers: [],
@@ -213,6 +264,71 @@ export const SCENARIOS = {
     ],
     ready: "did not start",
   },
+  logs: {
+    list: LOG_ROWS,
+    leftovers: [],
+    logs: LOGS,
+    // Steps run after the page is ready: click a button, push an event, wait for some text.
+    steps: [
+      { click: "Show the logs of MySQL 8.4" },
+      { wait: "mysqld: ready for connections" },
+      {
+        emit: [
+          "service:log",
+          { id: "mysql@8.4", lines: [logLine("12 new connections accepted", "output", 5)] },
+        ],
+      },
+      { wait: "12 new connections accepted" },
+    ],
+    ready: "MySQL 8.4",
+  },
+  "logs-pool": {
+    list: [DATA[2]],
+    leftovers: [],
+    logs: POOL_LOGS,
+    steps: [{ click: "Show the logs of PHP 8.3.36" }, { wait: "Worker 1: Output" }],
+    ready: "PHP 8.3.36",
+  },
+  quit: {
+    list: LOG_ROWS,
+    leftovers: [],
+    steps: [
+      {
+        emit: [
+          "shutdown:progress",
+          { group: "web", total: 1, done: 1, remaining: [], finished: "caddy", elapsedMs: 300 },
+        ],
+      },
+      {
+        emit: [
+          "shutdown:progress",
+          {
+            group: "php",
+            total: 4,
+            done: 3,
+            remaining: ["php-fcgi@8.4.12-w4"],
+            finished: "php-fcgi@8.4.12-w3",
+            elapsedMs: 900,
+          },
+        ],
+      },
+      {
+        emit: [
+          "shutdown:progress",
+          {
+            group: "databases",
+            total: 2,
+            done: 0,
+            remaining: ["mysql@8.4", "mariadb@11.8"],
+            finished: null,
+            elapsedMs: 1500,
+          },
+        ],
+      },
+      { wait: "Stopping your services" },
+    ],
+    ready: "MySQL 8.4",
+  },
   empty: { list: [], leftovers: [], ready: "No services yet" },
   error: {
     listError: {
@@ -234,21 +350,39 @@ export const SCENARIOS = {
 export const bridge = (scenario) => `(() => {
   const s = ${JSON.stringify(scenario)};
   let n = 0;
+  const listeners = {};
   window.isTauri = true;
+  // window.__emit("service:log", payload) delivers an event to everything that listens, as Tauri does.
+  window.__emit = (event, payload) => {
+    for (const { handler } of listeners[event] ?? []) window["_" + String(handler)]({ event, payload, id: 0 });
+  };
   window.__TAURI_INTERNALS__ = {
-    transformCallback: () => ++n,
+    transformCallback: (callback) => {
+      n += 1;
+      window["_" + String(n)] = callback;
+      return n;
+    },
     unregisterCallback: () => {},
-    invoke: (cmd) => {
-      if (cmd === "plugin:event|listen") return Promise.resolve(++n);
+    invoke: (cmd, args = {}) => {
+      if (cmd === "plugin:event|listen") {
+        const eventId = ++n;
+        (listeners[args.event] ??= []).push({ eventId, handler: args.handler });
+        return Promise.resolve(eventId);
+      }
       if (cmd.startsWith("plugin:event|")) return Promise.resolve();
       if (cmd === "services_list") {
         if (s.pending) return new Promise(() => {});
         return s.listError ? Promise.reject(s.listError) : Promise.resolve(s.list);
       }
       if (cmd === "services_leftovers") return Promise.resolve(s.leftovers);
+      if (cmd === "service_logs") return Promise.resolve(s.logs?.[args.id] ?? []);
       if (cmd === "jobs_list") return Promise.resolve(s.jobs ?? []);
       return Promise.reject({ code: "INTERNAL", message: "not part of this screenshot: " + cmd });
     },
   };
-  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener() {} };
+  window.__TAURI_EVENT_PLUGIN_INTERNALS__ = {
+    unregisterListener(event, eventId) {
+      listeners[event] = (listeners[event] ?? []).filter((entry) => entry.eventId !== eventId);
+    },
+  };
 })();`;
