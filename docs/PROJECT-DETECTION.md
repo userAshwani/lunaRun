@@ -141,9 +141,10 @@ Two parsers, one matching model (`VersionReq` = a union of intervals over `semve
 | `8.2.*`, `8.*`, `*` | wildcard |
 | `@dev`, `@stable` suffixes, `dev-main` | stability flags: ignore flag; `dev-*` → unconstrained + warning |
 
+**Verified against the real parser.** The table above is implemented in `luna_core::constraints` and checked against Composer's own semver library (`tests/fixtures/constraints/composer.json`, made by `scripts/constraint-oracle/generate.mjs`). What the table leaves out, all from Composer: a bare version is **exact** (`8.1` means `==8.1.0`, use `8.1.*` for the line); `<=8.1` means `<=8.1.0` and `>8.1` means `>8.1.0`; `~8.1.2.3` moves the patch; `^0.0` is `<0.1.0`; a **tab**, `^ 8.1`, `8.1-8.3` and `^8.*` are errors; `>= 8.1` with a space after the operator is fine. A stability flag (`@dev`) is ignored, `@dev` alone is `*`. Development branches are the one deliberate difference (they do not restrict and warn): see D-034.
+
 ### npm semver syntax (Node `engines`)
-Standard node-semver: `^`, `~`, `x`/`*`, hyphen ranges, `||`, space-AND, `>=`. Use a well-tested crate
-if one matches node-semver semantics; otherwise implement it and test against node-semver's published test cases.
+Standard node-semver: `^`, `~`, `x`/`*`, hyphen ranges, `||`, space-AND, `>=`. Implemented in `luna_core::constraints::parse_npm` on the same interval model and checked against node-semver itself (`tests/fixtures/constraints/npm.json`, which includes real `engines.node` values), see D-034: an empty range is `*`, `>1.2` is `>=1.3.0`, `1.2.x-beta` is `1.2.x`, and `v=1.2.3` is refused.
 
 ## 7. Resolution algorithm
 

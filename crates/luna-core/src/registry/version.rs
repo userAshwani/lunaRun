@@ -56,6 +56,27 @@ impl RuntimeVersion {
         &self.text
     }
 
+    /// A version made from its numbers and an optional pre-release tag (`from_numbers(&[8, 3, 0], Some("rc1"))` is
+    /// `8.3.0-rc1`). `None` for fewer than two or more than four numbers, or a tag [`parse`](Self::parse) refuses.
+    pub fn from_numbers(numbers: &[u64], pre: Option<&str>) -> Option<Self> {
+        let core: Vec<String> = numbers.iter().map(u64::to_string).collect();
+        let text = match pre {
+            Some(tag) => format!("{}-{tag}", core.join(".")),
+            None => core.join("."),
+        };
+        Self::parse(&text)
+    }
+
+    /// The numbers of the version as written (two to four).
+    pub fn numbers(&self) -> &[u64] {
+        &self.numbers
+    }
+
+    /// The dot-separated pre-release identifiers after the `-`, empty for a release.
+    pub fn pre_identifiers(&self) -> &[String] {
+        &self.pre
+    }
+
     pub fn is_prerelease(&self) -> bool {
         !self.pre.is_empty()
     }
@@ -331,6 +352,32 @@ mod tests {
             order,
             ["8.10.1", "8.10.0", "8.9.0", "8.4.0-rc1", "8.3.14", "7.4.33"]
         );
+    }
+
+    #[test]
+    fn versions_can_be_made_from_their_parts() {
+        assert_eq!(
+            RuntimeVersion::from_numbers(&[8, 3, 0], None),
+            Some(v("8.3.0"))
+        );
+        let rc = RuntimeVersion::from_numbers(&[8, 3, 0], Some("rc1")).unwrap();
+        assert_eq!(rc.as_str(), "8.3.0-rc1");
+        assert!(rc.is_prerelease());
+        assert_eq!(rc.numbers(), [8, 3, 0]);
+        assert_eq!(rc.pre_identifiers(), ["rc1"]);
+        assert!(
+            RuntimeVersion::from_numbers(&[8], None).is_none(),
+            "one number"
+        );
+        assert!(
+            RuntimeVersion::from_numbers(&[1, 2, 3, 4, 5], None).is_none(),
+            "five numbers"
+        );
+        assert!(
+            RuntimeVersion::from_numbers(&[8, 3], Some("")).is_none(),
+            "an empty tag"
+        );
+        assert!(v("8.3.0").pre_identifiers().is_empty());
     }
 
     #[test]

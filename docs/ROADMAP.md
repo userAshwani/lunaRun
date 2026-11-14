@@ -89,9 +89,9 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
   - [x] 7c: the rest of the page: the live log viewer with a tab per source (`service_logs`, D-033), Adopt or Stop for services left from an earlier session (`service_adopt`, `service_stop_leftover`; Stop asks first), and the quit progress overlay (`shutdown:progress`, the window is held while services stop); proven in the real window with a real Caddy and a real MariaDB
 
 ### M1.5 Constraint engine
-- [ ] Composer constraint parser + matcher (PROJECT-DETECTION §6), exhaustive table tests
-- [ ] npm-semver range support for Node
-- [ ] Interval intersection + union
+- [x] Composer constraint parser + matcher (PROJECT-DETECTION §6), exhaustive table tests (`luna_core::constraints::parse_composer`, D-034; held to Composer's own answers for 340 constraints)
+- [x] npm-semver range support for Node (`parse_npm`; held to node-semver's own answers for 438 ranges, 52 of them real `engines.node` values)
+- [x] Interval intersection + union (`VersionReq::intersect`, `union`, `is_empty`, `highest_match`)
 
 ### M1.6 Detection & resolution
 - [ ] `detect()` for PHP, extensions, Node, DB hints, framework, doc root (PROJECT-DETECTION §2–5)
