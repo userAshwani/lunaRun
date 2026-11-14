@@ -1,0 +1,740 @@
+{
+  "detect": {
+    "database": {
+      "connection": "mysql",
+      "database": "laravel",
+      "engine": "mysql",
+      "file": ".env",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "username": "root"
+    },
+    "docRoot": {
+      "evidence": "Laravel serves from public/",
+      "path": "public"
+    },
+    "framework": {
+      "evidence": [
+        "artisan",
+        "laravel/framework in composer.lock"
+      ],
+      "kind": "laravel",
+      "version": "10.48.4"
+    },
+    "inputsHash": "b7f835946250909dc37c218260e5c52f5d0707c348e712c4e74fc922a93fa7be",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": null,
+      "constraint": ">=8.1.0 <9.0.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=8.1.0 <9.0.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^8.1"
+        },
+        {
+          "constraint": ">=8.1.0 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[laravel/framework].require.php",
+          "raw": "^8.1"
+        },
+        {
+          "constraint": ">=7.1.8 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[nesbot/carbon].require.php",
+          "raw": "^7.1.8 || ^8.0"
+        },
+        {
+          "constraint": ">=8.1.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[symfony/console].require.php",
+          "raw": ">=8.1"
+        },
+        {
+          "constraint": ">=8.1.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[monolog/monolog].require.php",
+          "raw": ">=8.1"
+        },
+        {
+          "constraint": ">=7.2.5 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[guzzlehttp/guzzle].require.php",
+          "raw": "^7.2.5 || ^8.0"
+        },
+        {
+          "constraint": ">=8.0.2 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[league/flysystem].require.php",
+          "raw": "^8.0.2"
+        },
+        {
+          "constraint": ">=8.0.0 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[ramsey/uuid].require.php",
+          "raw": "^8.0"
+        },
+        {
+          "constraint": ">=7.2.5 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[vlucas/phpdotenv].require.php",
+          "raw": "^7.2.5 || ^8.0"
+        },
+        {
+          "constraint": ">=7.2.0 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[doctrine/inflector].require.php",
+          "raw": "^7.2 || ^8.0"
+        },
+        {
+          "constraint": ">=8.1.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages-dev[phpunit/phpunit].require.php",
+          "raw": ">=8.1"
+        },
+        {
+          "constraint": ">=7.4.0 <9.0.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages-dev[fakerphp/faker].require.php",
+          "raw": "^7.4 || ^8.0"
+        }
+      ]
+    },
+    "phpExtensions": [
+      {
+        "iniName": "ctype",
+        "name": "ctype",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "vlucas/phpdotenv"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "curl",
+        "name": "curl",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "dom",
+        "name": "dom",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "fileinfo",
+        "name": "fileinfo",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "filter",
+        "name": "filter",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "vlucas/phpdotenv"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "hash",
+        "name": "hash",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "intl",
+        "name": "intl",
+        "neededBy": [
+          "fakerphp/faker"
+        ],
+        "unix": "absent",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "json",
+        "name": "json",
+        "neededBy": [
+          "guzzlehttp/guzzle",
+          "laravel/framework",
+          "nesbot/carbon",
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "libxml",
+        "name": "libxml",
+        "neededBy": [
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "mbstring",
+        "name": "mbstring",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "league/flysystem",
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "openssl",
+        "name": "openssl",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "pcre",
+        "name": "pcre",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "vlucas/phpdotenv"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "pdo",
+        "name": "pdo",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "pdo_mysql",
+        "name": "pdo_mysql",
+        "neededBy": [
+          "composer.json"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "session",
+        "name": "session",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "tokenizer",
+        "name": "tokenizer",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "xml",
+        "name": "xml",
+        "neededBy": [
+          "Laravel",
+          "laravel/framework",
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      },
+      {
+        "iniName": "xmlwriter",
+        "name": "xmlwriter",
+        "neededBy": [
+          "phpunit/phpunit"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      }
+    ],
+    "servicesHints": [
+      {
+        "reason": "REDIS_HOST=127.0.0.1",
+        "service": "redis"
+      },
+      {
+        "reason": "MAIL_HOST=127.0.0.1, MAIL_PORT=1025",
+        "service": "mail"
+      }
+    ],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": null,
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [
+        {
+          "availability": "enabled",
+          "iniName": "ctype",
+          "name": "ctype",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "curl",
+          "name": "curl",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "dom",
+          "name": "dom",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "fileinfo",
+          "name": "fileinfo",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "filter",
+          "name": "filter",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "hash",
+          "name": "hash",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "absent",
+          "iniName": "intl",
+          "name": "intl",
+          "neededBy": [
+            "fakerphp/faker"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "json",
+          "name": "json",
+          "neededBy": [
+            "guzzlehttp/guzzle",
+            "laravel/framework",
+            "nesbot/carbon",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "libxml",
+          "name": "libxml",
+          "neededBy": [
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "mbstring",
+          "name": "mbstring",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "league/flysystem",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "openssl",
+          "name": "openssl",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pcre",
+          "name": "pcre",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pdo",
+          "name": "pdo",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pdo_mysql",
+          "name": "pdo_mysql",
+          "neededBy": [
+            "composer.json"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "session",
+          "name": "session",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "tokenizer",
+          "name": "tokenizer",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "xml",
+          "name": "xml",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "xmlwriter",
+          "name": "xmlwriter",
+          "neededBy": [
+            "phpunit/phpunit"
+          ]
+        }
+      ],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.1.0 <9.0.0",
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": "8.4.3",
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [
+        {
+          "availability": "enabled",
+          "iniName": "ctype",
+          "name": "ctype",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "curl",
+          "name": "curl",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "dom",
+          "name": "dom",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "fileinfo",
+          "name": "fileinfo",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "filter",
+          "name": "filter",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "hash",
+          "name": "hash",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "intl",
+          "name": "intl",
+          "neededBy": [
+            "fakerphp/faker"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "json",
+          "name": "json",
+          "neededBy": [
+            "guzzlehttp/guzzle",
+            "laravel/framework",
+            "nesbot/carbon",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "libxml",
+          "name": "libxml",
+          "neededBy": [
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "mbstring",
+          "name": "mbstring",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "league/flysystem",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "openssl",
+          "name": "openssl",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pcre",
+          "name": "pcre",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "vlucas/phpdotenv"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pdo",
+          "name": "pdo",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "pdo_mysql",
+          "name": "pdo_mysql",
+          "neededBy": [
+            "composer.json"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "session",
+          "name": "session",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "tokenizer",
+          "name": "tokenizer",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "xml",
+          "name": "xml",
+          "neededBy": [
+            "Laravel",
+            "laravel/framework",
+            "phpunit/phpunit"
+          ]
+        },
+        {
+          "availability": "enabled",
+          "iniName": "xmlwriter",
+          "name": "xmlwriter",
+          "neededBy": [
+            "phpunit/phpunit"
+          ]
+        }
+      ],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.1.0 <9.0.0",
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

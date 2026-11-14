@@ -1,0 +1,25 @@
+{
+    "packages": [
+        {
+            "name": "laravel/framework",
+            "version": "v13.0.0",
+            "require": {
+                "php": ">=8.3",
+                "ext-ctype": "*",
+                "ext-curl": "*",
+                "ext-dom": "*",
+                "ext-fileinfo": "*",
+                "ext-filter": "*",
+                "ext-hash": "*",
+                "ext-mbstring": "*",
+                "ext-openssl": "*",
+                "ext-pcre": "*",
+                "ext-pdo": "*",
+                "ext-session": "*",
+                "ext-tokenizer": "*",
+                "ext-xml": "*"
+            }
+        }
+    ],
+    "packages-dev": []
+}

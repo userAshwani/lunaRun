@@ -1,0 +1,128 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "b89a338a0e0b4ed66d8673d4cac909c0b4603c110f1e2a2adfff17155ba7fd59",
+    "node": {
+      "computed": null,
+      "constraint": ">=20.0.0 <23.0.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=20.0.0 <23.0.0",
+          "file": "package.json",
+          "kind": "engines",
+          "path": "engines.node",
+          "raw": ">=20 <23"
+        }
+      ]
+    },
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "constraint",
+        "constraint": ">=20.0.0 <23.0.0",
+        "installedMatches": [
+          "22.11.0"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "22"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "22",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "22.11.0"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "constraint",
+        "constraint": ">=20.0.0 <23.0.0",
+        "installedMatches": [
+          "22.11.0",
+          "20.11.1"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "22"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "22",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "22.11.0"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

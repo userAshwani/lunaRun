@@ -31,7 +31,8 @@ pub use installed::{
     InstallReceipt, InstalledRuntime, InstalledView, RECEIPT_FILE, ReceiptArtifact, list_installed,
 };
 pub use php_config::{
-    CA_BUNDLE, PhpConfigPaths, PhpSettings, php_config_paths, php_environment, write_php_config,
+    CA_BUNDLE, PhpConfigPaths, PhpSettings, WINDOWS_EXTENSIONS, php_config_paths, php_environment,
+    write_php_config,
 };
 pub use uninstall::{
     RuntimeUsage, UninstallOptions, UninstallReport, Uninstaller, UsageChecker, UsageReport,

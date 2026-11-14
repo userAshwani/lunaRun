@@ -1,0 +1,106 @@
+{
+  "detect": {
+    "database": {
+      "connection": "mysql",
+      "database": "café",
+      "engine": "mysql",
+      "file": ".env",
+      "host": null,
+      "port": null,
+      "username": null
+    },
+    "docRoot": {
+      "evidence": "public/index.php exists",
+      "path": "public"
+    },
+    "framework": null,
+    "inputsHash": "11acd780447cf8dd90525dd2f6eba6f9be3bcf69709dea87dfd193255d875daa",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": null,
+      "constraint": ">=8.2.0 <9.0.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=8.2.0 <9.0.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^8.2"
+        }
+      ]
+    },
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": null,
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.2.0 <9.0.0",
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": "8.4.3",
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.2.0 <9.0.0",
+        "installedMatches": [
+          "8.3.14"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

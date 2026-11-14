@@ -1,0 +1,146 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "27a0c0d14518539b6a3ce0470600e0c97c5024c635e2b43a22e61d5325034013",
+    "node": {
+      "computed": ">=22.0.0",
+      "constraint": ">=20.0.0 <21.0.0",
+      "pin": {
+        "exact": false,
+        "file": ".nvmrc",
+        "text": "lts/iron"
+      },
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=20.0.0 <21.0.0",
+          "file": ".nvmrc",
+          "kind": "nvmRc",
+          "path": "",
+          "raw": "lts/iron"
+        },
+        {
+          "constraint": ">=22.0.0",
+          "file": "package.json",
+          "kind": "engines",
+          "path": "engines.node",
+          "raw": ">=22"
+        }
+      ]
+    },
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": [
+      {
+        "code": "PIN_CONFLICTS_WITH_ENGINES",
+        "details": [
+          "lts/iron",
+          ">=22.0.0"
+        ],
+        "file": ".nvmrc",
+        "message": ".nvmrc pins Node lts/iron, which engines.node does not allow (>=22.0.0)"
+      }
+    ]
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": ">=20.0.0 <21.0.0",
+        "installedMatches": [],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "20"
+          },
+          "eol": true,
+          "installed": false,
+          "line": "20",
+          "needsInstall": true,
+          "rosettaFallback": false,
+          "version": "20.20.2"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": ">=20.0.0 <21.0.0",
+        "installedMatches": [
+          "20.11.1"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "20"
+          },
+          "eol": true,
+          "installed": true,
+          "line": "20",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "20.11.1"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

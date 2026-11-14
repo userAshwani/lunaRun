@@ -439,7 +439,7 @@ fn normalize_sha256(text: &str) -> Result<String> {
 }
 
 /// Lowercase hexadecimal, the form SHA-256 sums are published in.
-fn to_hex(bytes: &[u8]) -> String {
+pub(crate) fn to_hex(bytes: &[u8]) -> String {
     use std::fmt::Write;
     bytes
         .iter()

@@ -1,0 +1,72 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "index.php is in the project folder",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "182a1eb9fd96883f056dede5e7e8c5663be0db06343c1aeb8b6c1821ee5fa08a",
+    "node": null,
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

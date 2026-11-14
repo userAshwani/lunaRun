@@ -1,0 +1,13 @@
+{
+    "packages": [
+        {
+            "name": "laravel/framework",
+            "version": "v10.48.4",
+            "require": {
+                "ext-mbstring": "*",
+                "ext-openssl": "*"
+            }
+        }
+    ],
+    "packages-dev": []
+}

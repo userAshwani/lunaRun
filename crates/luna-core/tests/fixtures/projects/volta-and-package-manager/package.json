@@ -1,0 +1,10 @@
+{
+    "name": "frontend",
+    "engines": {
+        "node": ">=18"
+    },
+    "volta": {
+        "node": "20.11.1"
+    },
+    "packageManager": "pnpm@9.1.0"
+}

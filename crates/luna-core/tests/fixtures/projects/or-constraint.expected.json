@@ -1,0 +1,87 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "96a475c22df029b39fa90a0ca3c2a813167df7f0402821711fc877787617fb81",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": null,
+      "constraint": ">=7.4.0 <9.0.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=7.4.0 <9.0.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^7.4 || ^8.0"
+        }
+      ]
+    },
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=7.4.0 <9.0.0",
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=7.4.0 <9.0.0",
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

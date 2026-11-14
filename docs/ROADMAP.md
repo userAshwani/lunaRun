@@ -94,10 +94,10 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] Interval intersection + union (`VersionReq::intersect`, `union`, `is_empty`, `highest_match`)
 
 ### M1.6 Detection & resolution
-- [ ] `detect()` for PHP, extensions, Node, DB hints, framework, doc root (PROJECT-DETECTION §2–5)
-- [ ] Data files: `laravel-php.json`, `php-extensions.json`
-- [ ] `resolve()` (§7)
-- [ ] All fixtures from §8 with golden `expected.json`; ≥ 95 % pass
+- [x] `detect()` for PHP, extensions, Node, DB hints, framework, doc root (PROJECT-DETECTION §2–5) (`luna_core::projects::detect`, D-035)
+- [x] Data files: `laravel-php.json`, `php-extensions.json` (and `node-lts.json`), built in, validated on load
+- [x] `resolve()` (§7) (`luna_core::projects::resolve`; 15 tests, one per rule)
+- [x] All fixtures from §8 with golden `expected.json`; ≥ 95 % pass (21 fixtures, all match, each in a Windows and a macOS world)
 
 ### M1.7 Projects & sites
 - [ ] Project store, add (picker + drag & drop), remove (never deletes files), rename, change doc root

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "checked": "2026-11-14",
+  "source": "The `lts` field of every release in https://nodejs.org/dist/index.json: the codename of the line, and the major number of the first release that carries it.",
+  "note": "A major number in this table is a long-term-support line. `lts/*` and the default Node mean the highest of them that is installed or can be installed; a new LTS line is one more entry here, with no code change. A table that is out of date makes `lts/*` pick an older LTS line, never a line that is not LTS.",
+  "codenames": {
+    "argon": 4,
+    "boron": 6,
+    "carbon": 8,
+    "dubnium": 10,
+    "erbium": 12,
+    "fermium": 14,
+    "gallium": 16,
+    "hydrogen": 18,
+    "iron": 20,
+    "jod": 22,
+    "krypton": 24,
+    "lithium": 26
+  }
+}

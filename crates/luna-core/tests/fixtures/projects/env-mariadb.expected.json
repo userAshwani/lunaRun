@@ -1,0 +1,92 @@
+{
+  "detect": {
+    "database": {
+      "connection": "mariadb",
+      "database": "blog",
+      "engine": "mariadb",
+      "file": ".env",
+      "host": "127.0.0.1",
+      "port": 3307,
+      "username": "blog"
+    },
+    "docRoot": {
+      "evidence": "index.php is in the project folder",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "2039e3e0ea84345fa8f64094639b2088a888831c0c32d7bf32571be6822e63ff",
+    "node": null,
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": {
+        "engine": "mariadb",
+        "installedVersion": null,
+        "line": "8.4",
+        "note": "mariadbNotOnMacos",
+        "runtime": "mysql"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": {
+        "engine": "mariadb",
+        "installedVersion": null,
+        "line": "12.3",
+        "note": "none",
+        "runtime": "mariadb"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

@@ -184,6 +184,6 @@ The UI shows the result as a checklist with one-click fixes (`project_apply_fix`
 | `env-missing-uses-example` | only `.env.example` |
 | `broken-composer-json` | invalid JSON → warning, no panic |
 | `generic-php-root-index` | `index.php` at root → doc root `.` |
-| `path with spaces ü` | the fixture folder name itself contains a space and a non-ASCII character |
+| `path with spaces ü` | the fixture folder name itself contains a space and a non-ASCII character (`dossier ü avec espaces`) |
 
-Each fixture has an `expected.json` that the test compares against (golden tests).
+Each fixture has an `<name>.expected.json` beside it that the test compares against (golden tests, `tests/projects_golden.rs`): the detection report and the resolution in a fixed Windows and a fixed macOS "world" (`tests/projects_world`). There are 21 fixtures: the table above plus real-world cases it did not list (`nvmrc-codename`, `volta-and-package-manager`, `dev-requirement`, `env-sqlite-and-friends`, `empty-project`). `LUNA_UPDATE_GOLDEN=1 cargo test -p luna-core --test projects_golden` rewrites the golden files; read the diff before committing it. How `detect` and `resolve` decide, and where they differ from the plain reading of this document, is D-035.

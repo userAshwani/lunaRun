@@ -1,0 +1,97 @@
+{
+  "detect": {
+    "database": {
+      "connection": "mysql",
+      "database": "app",
+      "engine": "mysql",
+      "file": ".env.example",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "username": "root"
+    },
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "7af7f97e39c836bda284205e6ed657c2e86281c357bad07100deac26968a6f15",
+    "node": null,
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [
+      {
+        "reason": "CACHE_STORE=redis",
+        "service": "redis"
+      }
+    ],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": null,
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": {
+        "engine": "mysql",
+        "installedVersion": "8.4.3",
+        "line": "8.4",
+        "note": "none",
+        "runtime": "mysql"
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

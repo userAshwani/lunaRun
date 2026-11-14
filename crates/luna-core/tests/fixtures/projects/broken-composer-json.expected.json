@@ -1,0 +1,138 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "1a6c71b5796663bf5301d28e474e08d9f4d230ad78d338d9eaaeb291d358b2a3",
+    "node": {
+      "computed": null,
+      "constraint": ">=20.0.0 <21.0.0",
+      "pin": {
+        "exact": false,
+        "file": ".nvmrc",
+        "text": "20"
+      },
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=20.0.0 <21.0.0",
+          "file": ".nvmrc",
+          "kind": "nvmRc",
+          "path": "",
+          "raw": "20"
+        }
+      ]
+    },
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": [
+      {
+        "code": "INVALID_JSON",
+        "details": [
+          "line 1, column 31"
+        ],
+        "file": "composer.json",
+        "message": "composer.json is not valid JSON (trailing comma at line 1 column 31): it is ignored"
+      }
+    ]
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": ">=20.0.0 <21.0.0",
+        "installedMatches": [],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "20"
+          },
+          "eol": true,
+          "installed": false,
+          "line": "20",
+          "needsInstall": true,
+          "rosettaFallback": false,
+          "version": "20.20.2"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": ">=20.0.0 <21.0.0",
+        "installedMatches": [
+          "20.11.1"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "20"
+          },
+          "eol": true,
+          "installed": true,
+          "line": "20",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "20.11.1"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

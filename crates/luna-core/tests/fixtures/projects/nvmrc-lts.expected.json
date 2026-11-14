@@ -1,0 +1,132 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "6e403997d0d0d9570477661d4e0ab8231b9744f053d1b29862ac0cfa67c5f876",
+    "node": {
+      "computed": null,
+      "constraint": "lts/*",
+      "pin": {
+        "exact": false,
+        "file": ".nvmrc",
+        "text": "lts/*"
+      },
+      "preferred": null,
+      "selector": "latestLts",
+      "sources": [
+        {
+          "constraint": "lts/*",
+          "file": ".nvmrc",
+          "kind": "nvmRc",
+          "path": "",
+          "raw": "lts/*"
+        }
+      ]
+    },
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": "lts/*",
+        "installedMatches": [
+          "22.11.0"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "22"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "22",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "22.11.0"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": "lts/*",
+        "installedMatches": [
+          "22.11.0",
+          "20.11.1"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "22"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "22",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "22.11.0"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

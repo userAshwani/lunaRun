@@ -1,0 +1,13 @@
+{
+    "name": "laravel/laravel",
+    "require": {
+        "php": "^8.1",
+        "guzzlehttp/guzzle": "^7.2",
+        "laravel/framework": "^10.10",
+        "ext-pdo_mysql": "*"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.9.1",
+        "phpunit/phpunit": "^10.1"
+    }
+}

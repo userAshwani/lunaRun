@@ -1,0 +1,100 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "a26bb8f209daa53f1a23ea88ccd72b946572465276099cb0bcf4e964b1baeb40",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": null,
+      "constraint": ">=8.1.0 <8.2.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=8.1.0 <8.2.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^8.1 <8.2"
+        },
+        {
+          "constraint": ">=8.2.0",
+          "file": "composer.lock",
+          "kind": "composerLock",
+          "path": "packages[acme/needs-eight-two].require.php",
+          "raw": ">=8.2"
+        }
+      ]
+    },
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": [
+      {
+        "code": "UNSATISFIABLE_PHP_CONSTRAINT",
+        "details": [
+          "composer.lock packages[acme/needs-eight-two].require.php = >=8.2"
+        ],
+        "file": "composer.lock",
+        "message": "no PHP version satisfies every requirement of the Composer files: the requirement of composer.json alone is used"
+      }
+    ]
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.1.0 <8.2.0",
+        "installedMatches": [],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.1"
+          },
+          "eol": true,
+          "installed": false,
+          "line": "8.1",
+          "needsInstall": true,
+          "rosettaFallback": false,
+          "version": "8.1.31"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=8.1.0 <8.2.0",
+        "installedMatches": [
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.1"
+          },
+          "eol": true,
+          "installed": true,
+          "line": "8.1",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.1.30"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

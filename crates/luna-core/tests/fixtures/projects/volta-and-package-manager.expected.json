@@ -1,0 +1,131 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "de83870ae8cc520e9742d93b38865585e334a4fd55bf59fe7eef541b119f870a",
+    "node": {
+      "computed": ">=18.0.0",
+      "constraint": "=20.11.1",
+      "pin": {
+        "exact": true,
+        "file": "package.json",
+        "text": "20.11.1"
+      },
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": "=20.11.1",
+          "file": "package.json",
+          "kind": "volta",
+          "path": "volta.node",
+          "raw": "20.11.1"
+        },
+        {
+          "constraint": ">=18.0.0",
+          "file": "package.json",
+          "kind": "engines",
+          "path": "engines.node",
+          "raw": ">=18"
+        }
+      ]
+    },
+    "packageManager": "pnpm@9.1.0",
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": "=20.11.1",
+        "installedMatches": [],
+        "issues": [
+          {
+            "code": "NO_COMPATIBLE_VERSION",
+            "message": "no Node.js version known to lunaRun satisfies =20.11.1",
+            "unavailableLines": []
+          }
+        ],
+        "recommended": null,
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": {
+        "basis": "pinned",
+        "constraint": "=20.11.1",
+        "installedMatches": [
+          "20.11.1"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "exact",
+            "value": "20.11.1"
+          },
+          "eol": true,
+          "installed": true,
+          "line": "20",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "20.11.1"
+        },
+        "runtime": "node"
+      },
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

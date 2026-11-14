@@ -1,0 +1,101 @@
+{
+  "detect": {
+    "database": {
+      "connection": "sqlite",
+      "database": "database/database.sqlite",
+      "engine": "sqlite",
+      "file": ".env",
+      "host": null,
+      "port": null,
+      "username": null
+    },
+    "docRoot": {
+      "evidence": "nothing says otherwise, so the project folder itself",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "08020cf0e5a9947ad57407cbe91a79c100631abb94a38e5d8dbc95a064a6fcf1",
+    "node": null,
+    "packageManager": null,
+    "php": null,
+    "phpExtensions": [],
+    "servicesHints": [
+      {
+        "reason": "SESSION_DRIVER=redis",
+        "service": "redis"
+      },
+      {
+        "reason": "MAIL_HOST=mailpit, MAIL_PORT=1025",
+        "service": "mail"
+      }
+    ],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": {
+        "engine": "sqlite",
+        "installedVersion": null,
+        "line": null,
+        "note": "sqliteNeedsNothing",
+        "runtime": null
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.32"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.32"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": {
+        "engine": "sqlite",
+        "installedVersion": null,
+        "line": null,
+        "note": "sqliteNeedsNothing",
+        "runtime": null
+      },
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "noRequirement",
+        "constraint": null,
+        "installedMatches": [
+          "8.3.14",
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.3"
+          },
+          "eol": false,
+          "installed": true,
+          "line": "8.3",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.3.14"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

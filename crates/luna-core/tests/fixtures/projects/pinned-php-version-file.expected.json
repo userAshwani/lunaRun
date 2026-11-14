@@ -1,0 +1,105 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "public/index.php exists",
+      "path": "public"
+    },
+    "framework": null,
+    "inputsHash": "257b0cd6988b1a3dc5e3619b6f044fd89dac442eb29b91ce56b42f1fdb563d29",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": ">=8.2.0 <9.0.0",
+      "constraint": ">=8.1.0 <8.2.0",
+      "pin": {
+        "exact": false,
+        "file": ".php-version",
+        "text": "8.1"
+      },
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=8.1.0 <8.2.0",
+          "file": ".php-version",
+          "kind": "phpVersionFile",
+          "path": "",
+          "raw": "8.1"
+        },
+        {
+          "constraint": ">=8.2.0 <9.0.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^8.2"
+        }
+      ]
+    },
+    "phpExtensions": [],
+    "servicesHints": [],
+    "warnings": [
+      {
+        "code": "PIN_CONFLICTS_WITH_COMPOSER",
+        "details": [
+          "8.1",
+          ">=8.2.0 <9.0.0"
+        ],
+        "file": ".php-version",
+        "message": ".php-version pins PHP 8.1, which the Composer files do not allow (>=8.2.0 <9.0.0)"
+      }
+    ]
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "pinned",
+        "constraint": ">=8.1.0 <8.2.0",
+        "installedMatches": [],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.1"
+          },
+          "eol": true,
+          "installed": false,
+          "line": "8.1",
+          "needsInstall": true,
+          "rosettaFallback": false,
+          "version": "8.1.31"
+        },
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [],
+      "node": null,
+      "php": {
+        "basis": "pinned",
+        "constraint": ">=8.1.0 <8.2.0",
+        "installedMatches": [
+          "8.1.30"
+        ],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "8.1"
+          },
+          "eol": true,
+          "installed": true,
+          "line": "8.1",
+          "needsInstall": false,
+          "rosettaFallback": false,
+          "version": "8.1.30"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

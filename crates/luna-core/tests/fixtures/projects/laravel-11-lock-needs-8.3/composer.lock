@@ -1,0 +1,40 @@
+{
+    "packages": [
+        {
+            "name": "laravel/framework",
+            "version": "v11.9.0",
+            "require": {
+                "php": "^8.2",
+                "ext-ctype": "*",
+                "ext-curl": "*",
+                "ext-dom": "*",
+                "ext-fileinfo": "*",
+                "ext-filter": "*",
+                "ext-hash": "*",
+                "ext-mbstring": "*",
+                "ext-openssl": "*",
+                "ext-pcre": "*",
+                "ext-pdo": "*",
+                "ext-session": "*",
+                "ext-tokenizer": "*",
+                "ext-xml": "*"
+            }
+        },
+        {
+            "name": "symfony/console",
+            "version": "v7.1.1",
+            "require": {
+                "php": ">=8.2"
+            }
+        },
+        {
+            "name": "acme/needs-eight-three",
+            "version": "1.4.0",
+            "require": {
+                "php": ">=8.3",
+                "ext-intl": "*"
+            }
+        }
+    ],
+    "packages-dev": []
+}

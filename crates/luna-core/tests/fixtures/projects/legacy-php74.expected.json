@@ -1,0 +1,108 @@
+{
+  "detect": {
+    "database": null,
+    "docRoot": {
+      "evidence": "index.php is in the project folder",
+      "path": "."
+    },
+    "framework": null,
+    "inputsHash": "55f17d59303c69ea2890f779a8e713667a8f116bf0be13a9bad277746326315a",
+    "node": null,
+    "packageManager": null,
+    "php": {
+      "computed": null,
+      "constraint": ">=7.4.0 <8.0.0",
+      "pin": null,
+      "preferred": null,
+      "selector": "constraint",
+      "sources": [
+        {
+          "constraint": ">=7.4.0 <8.0.0",
+          "file": "composer.json",
+          "kind": "composerRequire",
+          "path": "require.php",
+          "raw": "^7.4"
+        }
+      ]
+    },
+    "phpExtensions": [
+      {
+        "iniName": "json",
+        "name": "json",
+        "neededBy": [
+          "composer.json"
+        ],
+        "unix": "enabled",
+        "windows": "enabled",
+        "zendExtension": false
+      }
+    ],
+    "servicesHints": [],
+    "warnings": []
+  },
+  "resolve": {
+    "macos": {
+      "database": null,
+      "extensions": [
+        {
+          "availability": "enabled",
+          "iniName": "json",
+          "name": "json",
+          "neededBy": [
+            "composer.json"
+          ]
+        }
+      ],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=7.4.0 <8.0.0",
+        "installedMatches": [],
+        "issues": [
+          {
+            "code": "NO_COMPATIBLE_VERSION",
+            "message": "PHP 7.4 satisfies >=7.4.0 <8.0.0 but has no download for macOS",
+            "unavailableLines": [
+              "7.4"
+            ]
+          }
+        ],
+        "recommended": null,
+        "runtime": "php"
+      }
+    },
+    "windows": {
+      "database": null,
+      "extensions": [
+        {
+          "availability": "enabled",
+          "iniName": "json",
+          "name": "json",
+          "neededBy": [
+            "composer.json"
+          ]
+        }
+      ],
+      "node": null,
+      "php": {
+        "basis": "constraint",
+        "constraint": ">=7.4.0 <8.0.0",
+        "installedMatches": [],
+        "issues": [],
+        "recommended": {
+          "binding": {
+            "mode": "line",
+            "value": "7.4"
+          },
+          "eol": true,
+          "installed": false,
+          "line": "7.4",
+          "needsInstall": true,
+          "rosettaFallback": false,
+          "version": "7.4.33"
+        },
+        "runtime": "php"
+      }
+    }
+  }
+}

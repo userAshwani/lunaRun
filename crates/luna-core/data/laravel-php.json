@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "checked": "2026-11-14",
+  "source": "Support Policy tables in the Laravel documentation: https://laravel.com/docs/12.x/releases (Laravel 10 to 13), https://laravel.com/docs/10.x/releases (Laravel 8 and 9) and https://laravel.com/docs/8.x/releases (Laravel 6 and 7). The PHP column gives the lowest and the highest PHP version a Laravel major supports.",
+  "note": "Laravel 13 is listed by the 12.x documentation with its release as Q1 2026. Check these rows against laravel.com again before a release of lunaRun (PRD FR-PJ-07): a new Laravel major is one more row, with no code change.",
+  "laravel": [
+    { "framework": "^6.0", "php": ">=7.2 <8.1" },
+    { "framework": "^7.0", "php": ">=7.2 <8.1" },
+    { "framework": "^8.0", "php": ">=7.3 <8.2" },
+    { "framework": "^9.0", "php": ">=8.0 <8.3" },
+    { "framework": "^10.0", "php": ">=8.1 <8.4" },
+    { "framework": "^11.0", "php": ">=8.2 <8.5" },
+    { "framework": "^12.0", "php": ">=8.2 <8.6" },
+    { "framework": "^13.0", "php": ">=8.3 <8.6" }
+  ]
+}
