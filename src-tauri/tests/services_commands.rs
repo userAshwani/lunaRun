@@ -10,6 +10,7 @@ use std::fs;
 
 use luna_core::diagnostics::{Arch, Os};
 use luna_core::jobs::{JobManager, JobOptions, JobState};
+use luna_core::projects::ProjectStore;
 use luna_core::runtimes::{InstallReceipt, Uninstaller};
 use luna_core::services::{
     Leftover, PortAllocator, ReadyCheck, ServiceController, ServiceSpec, Supervisor,
@@ -34,7 +35,7 @@ fn bench() -> Bench {
     home.ensure_layout().unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home);
+    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
     // The job manager `lib.rs` adds last: starting, stopping and restarting are jobs.
     app.manage(JobManager::new(
         tauri::async_runtime::handle().inner().clone(),
@@ -185,7 +186,7 @@ fn a_stale_pid_file_is_not_a_leftover() {
     .unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home);
+    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
 
     assert!(
         commands::services_leftovers(app.state())
@@ -478,7 +479,7 @@ fn bench_with_a_leftover() -> (Bench, std::process::Child) {
     .unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home);
+    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
     app.manage(JobManager::new(
         tauri::async_runtime::handle().inner().clone(),
         |_| {},

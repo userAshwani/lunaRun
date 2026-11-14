@@ -440,6 +440,7 @@ async fn the_uninstaller_is_told_what_runs_so_it_can_refuse() {
         supervisor.clone(),
         bench.home.clone(),
         Os::current(),
+        std::sync::Arc::new(|_, _| Vec::new()),
     ));
     assert!(
         uninstaller

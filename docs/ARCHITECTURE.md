@@ -176,17 +176,16 @@ All files carry `"schema": <int>`. `state.rs` runs migrations on load.
     "id": "4b1e…",                 // uuid v4
     "name": "shop",
     "path": "D:\\Work\\shop",       // absolute, stored as given (no canonical lowercasing)
-    "docRoot": "public",            // relative to path
-    "framework": { "kind": "laravel", "version": "12.3.0" },
-    "bindings": {
-      "php":      { "mode": "line",  "value": "8.3" },     // or { "mode": "exact", "value": "8.3.14" }
-      "node":     { "mode": "exact", "value": "24.11.0" },
-      "database": { "engine": "mysql", "line": "8.4" }      // optional
+    "docRoot": "public",            // relative to path, with "/"; "." is the folder itself
+    "docRootCustom": false,         // true once the user chose it: a re-scan then leaves it alone
+    "framework": { "kind": "laravel", "version": "12.3.0", "evidence": ["artisan"] },   // from the last scan
+    "bindings": {                   // only what the USER chose by hand (FR-PJ-04); null = follow the project (D-036)
+      "php":  { "mode": "line",  "value": "8.3" },     // or { "mode": "exact", "value": "8.3.14" }
+      "node": null
     },
-    "site": { "port": 8101, "domain": null, "https": false },
-    "autoStart": false,
-    "lastDetection": { "at": "2026-10-29T10:00:00Z", "hash": "…" },  // hash of inputs, to detect changes
-    "createdAt": "…", "updatedAt": "…"
+    "lastDetection": { "at": 1793000000, "hash": "…" },  // seconds since 1970; hash of the inputs, to detect changes
+    "createdAt": 1793000000, "updatedAt": 1793000000   // seconds since 1970 (numbers, not strings: no date library, D-036)
+    // later sub-steps add: "site": { "port": 8101, "domain": null, "https": false }, "autoStart": false, a database binding
   }]
 }
 ```
@@ -222,10 +221,10 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `service_port_reassign(id)` | `StartedJob` (give a stopped service other ports than the taken ones, then start it; Caddy's single admin port answers `PORT_IN_USE` with who holds it) |
 | | `service_logs(id, tailLines)` | `ServiceLogs[]` (per service of the row: its log sources, `output` first, each with the last `tailLines` lines, at most 2,000; new lines arrive as `service:log` events; D-033) |
 | | `service_adopt(id)` / `service_stop_leftover(id)` | `()` (take over or end a service an earlier session left running; the id is the one in `services_leftovers`; D-033) |
-| Projects | `projects_list()` / `project_get(id)` | `Project` |
-| | `project_add(path)` | `Project` + `DetectionReport` |
-| | `project_detect(id)` | `DetectionReport` |
-| | `project_update(id, patch)` | `Project` |
+| Projects | `projects_list()` / `project_get(id)` | `Project[]` / `Project` (the stored list only: no project folder is opened; D-036) |
+| | `project_add(path)` | `ProjectDetection` = `{ project, report: DetectionReport, resolution: Resolution }`; `path` must be an absolute folder that exists (`INVALID_PATH`), adding it twice is `PROJECT_EXISTS` (`details.id`) |
+| | `project_detect(id)` | `ProjectDetection` ("Re-scan": reads the folder again; an unreadable folder is a warning in the report, not an error) |
+| | `project_update(id, patch)` | `Project`; `patch` is `{ name?, docRoot?: {kind:"auto"} or {kind:"use",path}, php?, node?: {kind:"auto"} or {kind:"use",binding} }`; a part that is not acceptable is `INVALID_INPUT` (`details.field`) and nothing changes |
 | | `project_remove(id)` | `()` (never deletes files on disk) |
 | | `project_start(id)` / `project_stop(id)` | `()` |
 | | `project_open(id, target: "browser"\|"terminal"\|"folder"\|"editor")` | `()` |

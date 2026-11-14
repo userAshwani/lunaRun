@@ -43,7 +43,8 @@ mod supervisor;
 
 pub use caddy::{CaddyDefinition, Site, caddy_definition};
 pub use catalog::{
-    ServiceKind, ServiceRow, aggregate_state, list_services, running_from, usage_checker,
+    BoundProjects, ServiceKind, ServiceRow, aggregate_state, list_services, running_from,
+    usage_checker,
 };
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use control::{

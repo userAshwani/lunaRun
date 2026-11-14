@@ -99,6 +99,8 @@ export const en = {
     DATABASE_INIT_FAILED: "The database could not be set up",
     CONFIG_INVALID: "The generated configuration was rejected",
     RELOAD_FAILED: "The service could not load its new configuration",
+    INVALID_INPUT: "That value cannot be used",
+    PROJECT_EXISTS: "Project already added",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {

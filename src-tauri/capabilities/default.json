@@ -22,6 +22,12 @@
     "allow-service-port-reassign",
     "allow-service-logs",
     "allow-service-adopt",
-    "allow-service-stop-leftover"
+    "allow-service-stop-leftover",
+    "allow-projects-list",
+    "allow-project-get",
+    "allow-project-add",
+    "allow-project-detect",
+    "allow-project-update",
+    "allow-project-remove"
   ]
 }

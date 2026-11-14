@@ -3,10 +3,11 @@
 //! state and sends its events to the webview.
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Arc, Mutex, PoisonError};
 
 use luna_core::LunaHome;
 use luna_core::diagnostics::Os;
+use luna_core::projects::ProjectStore;
 use luna_core::runtimes::Uninstaller;
 use luna_core::services::{
     DEFAULT_GROUP_LIMIT, Leftover, PortAllocator, ServiceController, ShutdownReport, Supervisor,
@@ -74,8 +75,12 @@ impl QuitState {
 /// Create the supervisor and the port allocator, look **once** for services left from an earlier session, and put all of
 /// it into the app's state, together with the uninstaller (which asks the supervisor what runs from a version, so it
 /// refuses to remove one that is in use) and the quit state. Returns the supervisor and the allocator for whoever needs
-/// them while the app is being set up.
-pub fn manage<R: Runtime>(app: &AppHandle<R>, home: &LunaHome) -> (Supervisor, PortAllocator) {
+/// them while the app is being set up. The uninstaller also asks `projects` which projects are bound to a version.
+pub fn manage<R: Runtime>(
+    app: &AppHandle<R>,
+    home: &LunaHome,
+    projects: &ProjectStore,
+) -> (Supervisor, PortAllocator) {
     let state_app = app.clone();
     let log_app = app.clone();
     let supervisor = Supervisor::new(
@@ -88,11 +93,13 @@ pub fn manage<R: Runtime>(app: &AppHandle<R>, home: &LunaHome) -> (Supervisor, P
 
     app.manage(Leftovers::new(supervisor.scan_leftovers()));
     app.manage(QuitState::default());
+    let bound = projects.clone();
     app.manage(Uninstaller::new(home.clone()).with_usage(usage_checker(
         ports.clone(),
         supervisor.clone(),
         home.clone(),
         Os::current(),
+        Arc::new(move |runtime, version| bound.bound_to(runtime, version)),
     )));
     // Starting, stopping and restarting by the id of a row. Nothing may be started once the quit has begun.
     let quit_app = app.clone();

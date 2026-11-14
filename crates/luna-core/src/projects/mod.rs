@@ -10,15 +10,17 @@
 //!   ([`Resolution`]): the highest installed one that fits, else the one to install. That nothing fits is an answer
 //!   ([`ResolutionIssue`]), not an error.
 //!
-//! The project store (the list of projects, bindings, overrides) is M1.7: it will call these two and keep the result.
+//! [`ProjectStore`] keeps the list of projects the user added (their folder, name, document root and manual version
+//! choices) in `config/projects.json` and calls these two for the report; it never keeps the report itself.
 
 mod data;
 mod detect;
 mod dotenv;
 mod files;
 mod resolve;
+mod store;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::constraints::VersionReq;
@@ -26,6 +28,10 @@ use crate::constraints::VersionReq;
 pub use data::DetectionData;
 pub use detect::detect;
 pub use resolve::{ResolvePrefs, resolve};
+pub use store::{
+    BindingChoice, Bindings, DocRootChoice, LastDetection, Project, ProjectDetection, ProjectPatch,
+    ProjectStore, Surroundings,
+};
 
 /// How much of the data the page needs to tell apart: whether a source is an exact pin, a constraint or a table row.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
@@ -117,14 +123,14 @@ pub struct Requirement {
     pub sources: Vec<Source>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum FrameworkKind {
     Laravel,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Framework {
@@ -282,7 +288,7 @@ pub struct DetectionReport {
 }
 
 /// How a binding is made: to a version line (`8.3`, follows its patch versions) or to an exact version.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub enum BindingMode {
@@ -290,7 +296,7 @@ pub enum BindingMode {
     Exact,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Binding {

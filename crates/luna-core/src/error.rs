@@ -82,6 +82,11 @@ pub enum ErrorCode {
     ReloadFailed,
     /// A service could not be stopped when lunaRun quit (it was still running when its group ran out of time).
     ServiceStopFailed,
+    /// A value the user gave is not acceptable (an empty name, a document root outside the project, a version that is
+    /// not a version). `details.field` names it.
+    InvalidInput,
+    /// The folder is already one of the projects (`details.id` and `details.name` say which).
+    ProjectExists,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

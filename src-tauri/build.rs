@@ -19,6 +19,12 @@ const COMMANDS: &[&str] = &[
     "service_logs",
     "service_adopt",
     "service_stop_leftover",
+    "projects_list",
+    "project_get",
+    "project_add",
+    "project_detect",
+    "project_update",
+    "project_remove",
 ];
 
 fn main() {

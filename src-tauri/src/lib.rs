@@ -5,9 +5,12 @@ pub mod events;
 mod registry;
 pub mod services;
 
+use std::sync::Arc;
+
 use luna_core::LunaHome;
 use luna_core::download::{DownloadOptions, Downloader};
 use luna_core::jobs::{JobManager, JobOptions};
+use luna_core::projects::{DetectionData, ProjectStore};
 use luna_core::registry::RegistryHolder;
 use luna_core::runtimes::{Installer, cleanup_incomplete};
 use tauri::Manager;
@@ -39,7 +42,10 @@ pub fn run() {
             ));
             // The supervisor, the port allocator, services left from an earlier session (looked for once, here), the
             // quit state, and the uninstaller, which asks the supervisor what runs from a version before it removes it.
-            services::manage(app.handle(), &home);
+            let projects = ProjectStore::open(&home)?;
+            services::manage(app.handle(), &home, &projects);
+            app.manage(projects);
+            app.manage(Arc::new(DetectionData::bundled()?));
             app.manage(home);
 
             // Jobs run on Tauri's own Tokio runtime and report to the webview through events.
@@ -78,7 +84,13 @@ pub fn run() {
             commands::service_port_reassign,
             commands::service_logs,
             commands::service_adopt,
-            commands::service_stop_leftover
+            commands::service_stop_leftover,
+            commands::projects_list,
+            commands::project_get,
+            commands::project_add,
+            commands::project_detect,
+            commands::project_update,
+            commands::project_remove
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

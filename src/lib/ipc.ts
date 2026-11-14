@@ -6,6 +6,9 @@ import type { InstalledView } from "@/bindings/InstalledView";
 import type { JobInfo } from "@/bindings/JobInfo";
 import type { Leftover } from "@/bindings/Leftover";
 import type { LunaError } from "@/bindings/LunaError";
+import type { Project } from "@/bindings/Project";
+import type { ProjectDetection } from "@/bindings/ProjectDetection";
+import type { ProjectPatch } from "@/bindings/ProjectPatch";
 import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
 import type { ServiceLogs } from "@/bindings/ServiceLogs";
@@ -107,4 +110,19 @@ export const ipc = {
   serviceAdopt: (id: string) => call<null>("service_adopt", { id }),
   /** End a service an earlier session left running. */
   serviceStopLeftover: (id: string) => call<null>("service_stop_leftover", { id }),
+  /** The projects the user added, in the order they were added. Reads the stored list only. */
+  projectsList: () => call<Project[]>("projects_list"),
+  projectGet: (id: string) => call<Project>("project_get", { id }),
+  /**
+   * Add a folder (an absolute path) as a project and say what it needs and what to run it with. `INVALID_PATH` when
+   * it is not a folder that exists, `PROJECT_EXISTS` when it is already one. Reads the folder; writes nothing in it.
+   */
+  projectAdd: (path: string) => call<ProjectDetection>("project_add", { path }),
+  /** Read the project's folder again ("Re-scan") and say what it needs now. */
+  projectDetect: (id: string) => call<ProjectDetection>("project_detect", { id }),
+  /** Rename, change the document root, or choose PHP or Node by hand (or back to automatic). `INVALID_INPUT` changes nothing. */
+  projectUpdate: (id: string, patch: ProjectPatch) =>
+    call<Project>("project_update", { id, patch }),
+  /** Forget a project. The folder and its files are never touched. */
+  projectRemove: (id: string) => call<null>("project_remove", { id }),
 } as const;

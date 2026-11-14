@@ -6,6 +6,9 @@
 
 use luna_core::diagnostics::{self, AppInfo, Arch, Os};
 use luna_core::jobs::{JobInfo, JobManager, StartedJob};
+use luna_core::projects::{
+    DetectionData, Project, ProjectDetection, ProjectPatch, ProjectStore, Surroundings,
+};
 use luna_core::registry::{CalDate, RegistryHolder, RegistryStatus, RuntimesAvailable};
 use luna_core::runtimes::{
     InstalledView, Installer, UninstallOptions, Uninstaller, UsageReport, list_installed,
@@ -15,6 +18,7 @@ use luna_core::services::{
     list_services,
 };
 use luna_core::{LunaError, LunaHome};
+use std::sync::Arc;
 use tauri::{AppHandle, State};
 
 use crate::registry;
@@ -201,4 +205,109 @@ pub async fn service_stop_leftover(
     controller.stop_leftover(&id).await?;
     leftovers.remove(&id);
     Ok(())
+}
+
+/// Every project, in the order they were added. Reads the stored list only: no project folder is opened.
+#[tauri::command]
+pub fn projects_list(projects: State<'_, ProjectStore>) -> Result<Vec<Project>, LunaError> {
+    Ok(projects.list())
+}
+
+#[tauri::command]
+pub fn project_get(id: String, projects: State<'_, ProjectStore>) -> Result<Project, LunaError> {
+    projects.get(&id)
+}
+
+/// Add a folder as a project (`INVALID_PATH` when it is not an absolute folder that exists, `PROJECT_EXISTS` when it is
+/// already one), read it, and say what it needs and what to run it with. Reads the folder; writes nothing into it.
+#[tauri::command]
+pub async fn project_add(
+    path: String,
+    projects: State<'_, ProjectStore>,
+    data: State<'_, Arc<DetectionData>>,
+    home: State<'_, LunaHome>,
+    registry: State<'_, RegistryHolder>,
+) -> Result<ProjectDetection, LunaError> {
+    let (store, data) = (projects.inner().clone(), data.inner().clone());
+    let (installed, available) = world(&home, &registry)?;
+    blocking(move || {
+        let around = Surroundings {
+            installed: &installed,
+            available: &available,
+            os: Os::current(),
+        };
+        store.add(std::path::Path::new(&path), &data, &around)
+    })
+    .await
+}
+
+/// Read the project's folder again ("Re-scan") and say what it needs now and what to run it with.
+#[tauri::command]
+pub async fn project_detect(
+    id: String,
+    projects: State<'_, ProjectStore>,
+    data: State<'_, Arc<DetectionData>>,
+    home: State<'_, LunaHome>,
+    registry: State<'_, RegistryHolder>,
+) -> Result<ProjectDetection, LunaError> {
+    let (store, data) = (projects.inner().clone(), data.inner().clone());
+    let (installed, available) = world(&home, &registry)?;
+    blocking(move || {
+        let around = Surroundings {
+            installed: &installed,
+            available: &available,
+            os: Os::current(),
+        };
+        store.inspect(&id, &data, &around)
+    })
+    .await
+}
+
+/// Rename a project, change its document root, or choose its PHP or Node by hand (or back to automatic). A part that
+/// is not acceptable is `INVALID_INPUT` (`details.field` names it) and nothing is changed.
+#[tauri::command]
+pub async fn project_update(
+    id: String,
+    patch: ProjectPatch,
+    projects: State<'_, ProjectStore>,
+    data: State<'_, Arc<DetectionData>>,
+) -> Result<Project, LunaError> {
+    let (store, data) = (projects.inner().clone(), data.inner().clone());
+    blocking(move || store.update(&id, &patch, &data)).await
+}
+
+/// Forget a project. The folder and its files are never touched.
+#[tauri::command]
+pub fn project_remove(id: String, projects: State<'_, ProjectStore>) -> Result<(), LunaError> {
+    projects.remove(&id)
+}
+
+/// What is installed and what the registry offers for this computer: what a project is resolved against.
+fn world(
+    home: &LunaHome,
+    registry: &RegistryHolder,
+) -> Result<
+    (
+        Vec<luna_core::runtimes::InstalledRuntime>,
+        Vec<luna_core::registry::RuntimeCatalog>,
+    ),
+    LunaError,
+> {
+    let today = CalDate::today()
+        .ok_or_else(|| LunaError::internal("the system clock does not give a usable date"))?;
+    Ok((
+        list_installed(home)?,
+        registry
+            .available(Os::current(), Arch::current(), today)
+            .runtimes,
+    ))
+}
+
+/// Run work that reads a project's folder off the thread that serves the window.
+async fn blocking<T: Send + 'static>(
+    work: impl FnOnce() -> Result<T, LunaError> + Send + 'static,
+) -> Result<T, LunaError> {
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|err| LunaError::internal(format!("a background task failed: {err}")))?
 }

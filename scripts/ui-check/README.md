@@ -74,3 +74,18 @@ The first measurement found the light theme's status badges at 3.9:1 to 4.4:1 (t
 `--destructive` are right for fills and icons but too pale as 12px text on a tint). They now use
 `--*-soft-foreground` tokens (darker in the light theme, unchanged in the dark theme). Other places that use the semantic
 colours as text (`error-state`, `toast`, `registry-status`, `runtime-problem`, the uninstall dialog) have not been measured.
+
+## Calling the commands of the real app without a page: `real-projects-ipc.mjs`
+
+When a command exists but no page calls it yet (the project commands of M1.7 sub-step a), the real window cannot be clicked
+through. `real-projects-ipc.mjs` starts the release app with WebView2's remote debugging port open
+(`WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333`), connects with a small Chrome DevTools Protocol client
+(Node's own `WebSocket`, no library) and evaluates `window.__TAURI_INTERNALS__.invoke(...)` in the page. A command that is missing
+from `capabilities/default.json` fails there exactly as it would for a page, which unit tests with a mocked backend cannot show.
+
+    pnpm tauri build --no-bundle
+    node scripts/ui-check/real-projects-ipc.mjs target/release/lunarun.exe <scratch folder>
+
+It makes its own data folder and project folder under the scratch folder (both with a space and a non-ASCII letter), checks 13 things
+(add, the typed errors, update, re-scan, remove, the project folder untouched, `projects.json` on disk) and ends the app. Copy it for
+the next set of commands.

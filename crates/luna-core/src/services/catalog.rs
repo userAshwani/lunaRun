@@ -269,18 +269,23 @@ pub fn running_from(
         .collect())
 }
 
+/// Which projects are bound to a runtime version: the project store's answer (`ProjectStore::bound_to`), given as a
+/// function so `services` does not depend on `projects`.
+pub type BoundProjects = Arc<dyn Fn(&str, &str) -> Vec<String> + Send + Sync>;
+
 /// The answer the uninstaller asks for ([`Uninstaller::with_usage`](crate::runtimes::Uninstaller::with_usage)): which
-/// running services were started from a version. Bound projects stay empty until the project store exists (M1.7).
+/// running services were started from a version, and which projects are bound to it.
 pub fn usage_checker(
     ports: PortAllocator,
     supervisor: Supervisor,
     home: LunaHome,
     os: Os,
+    bound_projects: BoundProjects,
 ) -> UsageChecker {
     Arc::new(move |runtime, version| {
         Ok(RuntimeUsage {
             running_services: running_from(&ports, &supervisor, &home, os, runtime, version)?,
-            bound_projects: Vec::new(),
+            bound_projects: bound_projects(runtime, version),
         })
     })
 }

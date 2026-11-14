@@ -100,8 +100,8 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] All fixtures from §8 with golden `expected.json`; ≥ 95 % pass (21 fixtures, all match, each in a Windows and a macOS world)
 
 ### M1.7 Projects & sites
-- [ ] Project store, add (picker + drag & drop), remove (never deletes files), rename, change doc root
-- [ ] Bindings (line/exact), manual override with incompatibility warning (FR-PJ-04)
+- [x] Project store (`ProjectStore`, `config/projects.json`, D-036), add, remove (never deletes files), rename, change doc root, and their IPC commands (sub-step a); the picker and drag & drop come with the Projects page (sub-step b)
+- [ ] Bindings (line/exact), manual override with incompatibility warning (FR-PJ-04) (stored and validated, and `bound_to` makes an uninstall ask first: sub-step a; the page and its warning: sub-step b)
 - [ ] Caddyfile generation, validate, reload; per-site port (FR-ST-01..03)
 - [ ] Project start/stop = ensure DB + PHP pool + Caddy site
 - [ ] Quick actions: browser, folder, editor, copy DB credentials (FR-PJ-09)
