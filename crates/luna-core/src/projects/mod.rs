@@ -373,6 +373,11 @@ pub struct RuntimeResolution {
     /// Installed versions that satisfy it, newest first.
     pub installed_matches: Vec<String>,
     pub issues: Vec<ResolutionIssue>,
+    /// Set when the user's own choice (`basis` is `manual`) does not satisfy what the project asks for (FR-PJ-04): that
+    /// requirement as text, so the page can warn "this project asks for >=8.3.0 <9.0.0". Absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub conflicts_with: Option<String>,
 }
 
 /// What lunaRun suggests for the database a project expects.

@@ -337,6 +337,13 @@ fn resolve_runtime(
         favoured.or_else(|| pick(&available_c))
     });
     let recommended = chosen.as_ref().map(|c| recommendation(c, spec.exact));
+    // A choice made by hand is allowed to disagree with the project (FR-PJ-04), and the page says when it does.
+    let conflicts_with = match (spec.basis, requirement, chosen.as_ref()) {
+        (Basis::Manual, Some(asked), Some(c)) if !asked.req.matches(&c.version) => {
+            Some(asked.constraint.clone())
+        }
+        _ => None,
+    };
 
     let mut issues = Vec::new();
     if recommended.is_none() {
@@ -392,6 +399,7 @@ fn resolve_runtime(
         recommended,
         installed_matches,
         issues,
+        conflicts_with,
     }
 }
 

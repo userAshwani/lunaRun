@@ -274,6 +274,35 @@ fn what_the_user_chose_for_this_project_wins_over_everything() {
         exact.php.recommended.as_ref().unwrap().binding.mode,
         BindingMode::Exact
     );
+    // A choice that disagrees with the project says so (FR-PJ-04); one that agrees does not.
+    assert_eq!(
+        chosen.php.conflicts_with.as_deref(),
+        Some(">=8.3.0 <8.4.0"),
+        "8.1 against the .php-version pin of 8.3"
+    );
+    assert_eq!(exact.php.conflicts_with, None, "8.3.14 satisfies the pin");
+    let plain = php("^8.3");
+    let against_composer = run(&plain, Os::Windows, |p| {
+        p.php_override = Some("8.1".to_owned())
+    });
+    assert_eq!(
+        against_composer.php.conflicts_with.as_deref(),
+        Some(">=8.3.0 <9.0.0")
+    );
+    let agreeing = run(&plain, Os::Windows, |p| {
+        p.php_override = Some("8.3".to_owned())
+    });
+    assert_eq!(agreeing.php.conflicts_with, None);
+    assert_eq!(
+        windows(&plain).php.conflicts_with,
+        None,
+        "not a manual choice"
+    );
+    // Without any requirement there is nothing to disagree with.
+    let free = run(&report(&[]), Os::Windows, |p| {
+        p.php_override = Some("8.1".to_owned())
+    });
+    assert_eq!(free.php.conflicts_with, None);
     // An override that is not a version is ignored: the project's own requirement stands.
     let nonsense = run(&project, Os::Windows, |p| {
         p.php_override = Some("latest and greatest".to_owned())

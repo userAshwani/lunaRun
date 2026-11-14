@@ -75,18 +75,35 @@ socket.onmessage = (event) => {
   const message = JSON.parse(event.data);
   if (message.id && waiting.has(message.id)) waiting.get(message.id)(message);
 };
-const evaluate = (expression) =>
+const send = (method, params = {}) =>
   new Promise((resolve) => {
     const id = nextId++;
     waiting.set(id, resolve);
-    socket.send(
-      JSON.stringify({
-        id,
-        method: "Runtime.evaluate",
-        params: { expression, awaitPromise: true, returnByValue: true },
-      }),
-    );
+    socket.send(JSON.stringify({ id, method, params }));
   });
+const evaluate = (expression) =>
+  send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+
+/** Wait until the window shows `text` (the real page, rendered by the real webview). */
+async function waitForText(text, seconds = 60) {
+  for (let attempt = 0; attempt < seconds * 2; attempt++) {
+    const reply = await evaluate(`document.body.innerText.includes(${JSON.stringify(text)})`);
+    if (reply.result?.result?.value === true) return true;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return false;
+}
+
+async function bodyText() {
+  return (await evaluate("document.body.innerText")).result?.result?.value ?? "";
+}
+
+async function screenshot(name) {
+  const reply = await send("Page.captureScreenshot", { format: "png" });
+  const file = path.join(path.resolve(scratch), `${name}.png`);
+  fs.writeFileSync(file, Buffer.from(reply.result.data, "base64"));
+  return file;
+}
 
 /** `{ ok: value }` or `{ err: LunaError }`, as the page would see it. */
 async function invoke(command, args = {}) {
@@ -178,6 +195,47 @@ check("project_detect re-scans and the hand-made binding decides", () => {
 });
 const gone = await invoke("project_get", { id: "nope" });
 check("an unknown id is NOT_FOUND", () => assert.equal(gone.err?.code, "NOT_FOUND"));
+
+// The pages themselves, rendered by the real webview of the real app.
+await evaluate("location.hash = '#/projects'");
+const listShown = await waitForText("Shop é");
+check("the Projects list shows the project in the real window", () => {
+  assert.ok(listShown, "the list never showed the project");
+});
+const listText = await bodyText();
+check("and what each project needs, not a placeholder", () => {
+  assert.ok(!listText.includes("Coming soon"), listText);
+  assert.ok(listText.includes("Laravel"), listText);
+  assert.ok(listText.includes("Node.js"), listText);
+});
+console.log("screenshot:", await screenshot("real-projects-list"));
+
+await evaluate(`location.hash = '#/projects/${id}'`);
+const detailShown = await waitForText("What this project needs");
+check("the project's detail page renders the checklist in the real window", () => {
+  assert.ok(detailShown, "the detail page never rendered");
+});
+const detailText = await bodyText();
+check("with PHP, the extensions, the document root and Settings", () => {
+  assert.ok(detailText.includes("PHP"), detailText);
+  assert.ok(detailText.includes("PHP extensions"), detailText);
+  assert.ok(detailText.includes("Document root"), detailText);
+  assert.ok(detailText.includes("PHP version"), detailText);
+  assert.ok(!detailText.includes("never-in-a-report"), "the password must not be on the page");
+});
+console.log("screenshot:", await screenshot("real-projects-detail"));
+
+// The folder picker is a native dialog and cannot be driven from here, but the permission can be told apart from the
+// call itself: a call that is not allowed fails with "not allowed", one that is allowed fails on its (deliberately
+// wrong) arguments instead, without opening anything.
+const openAnswer = String(JSON.stringify(await invoke("plugin:dialog|open", { options: 5 })));
+const saveAnswer = String(JSON.stringify(await invoke("plugin:dialog|save", { options: 5 })));
+check("the folder picker is permitted (dialog:allow-open)", () => {
+  assert.ok(!/not allowed|permission/i.test(openAnswer), openAnswer);
+});
+check("and nothing else of the dialog plugin is (dialog:allow-save is not granted)", () => {
+  assert.ok(/not allowed|permission/i.test(saveAnswer), saveAnswer);
+});
 
 const removed = await invoke("project_remove", { id });
 check("project_remove", () => assert.deepEqual(removed, { ok: null }));

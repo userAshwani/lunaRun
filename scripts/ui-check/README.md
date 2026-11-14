@@ -86,6 +86,21 @@ from `capabilities/default.json` fails there exactly as it would for a page, whi
     pnpm tauri build --no-bundle
     node scripts/ui-check/real-projects-ipc.mjs target/release/lunarun.exe <scratch folder>
 
-It makes its own data folder and project folder under the scratch folder (both with a space and a non-ASCII letter), checks 13 things
-(add, the typed errors, update, re-scan, remove, the project folder untouched, `projects.json` on disk) and ends the app. Copy it for
-the next set of commands.
+It makes its own data folder and project folder under the scratch folder (both with a space and a non-ASCII letter), checks 19 things
+(add, the typed errors, update, re-scan, remove, the project folder untouched, `projects.json` on disk, **the list and detail pages rendered by the real
+webview** with a screenshot of each saved in the scratch folder, and that the dialog plugin grants `open` but not `save`) and ends the app. Copy it for
+the next set of commands or pages.
+
+## The Projects pages: `projects-shots.mjs`, `projects-scenarios.mjs` and `contrast.mjs --page projects`
+
+`projects-scenarios.mjs` holds the 17 states of the list and the detail page (data, empty, error, loading, add errors, drop overlay, install
+needed, installing, install failed, no version fits, folder missing, scan error, not found, remove dialog), the fake bridge that serves them (it
+also answers the folder dialog and the drag and drop events), and the texts whose contrast is measured. `projects-shots.mjs` saves every state in
+both themes at 1400 and 900 wide; `contrast.mjs --page projects` measures 59 kinds of text in both themes (all at least 4.5:1).
+
+- **Serve a production build, not the dev server:** `pnpm exec vite build`, then `pnpm exec vite preview --host 127.0.0.1 --port 1420 --strictPort`.
+  The dev server's dependency optimizer hung here after a new dependency was added (it stayed on "bundling dependencies" and every request timed out);
+  `vite preview` answers in milliseconds. Rebuild after every UI change, the preview serves `dist/`.
+- A scenario's `ready` text must be **visible text**: an `aria-label` (the skeleton's) is not found by `getByText`.
+- A screenshot is the height of the viewport because the app scrolls inside its own container; for a long page use a tall viewport.
+- In `contrast.mjs` the first target of a scenario with `steps` has to be the text of the page **before** the steps run.

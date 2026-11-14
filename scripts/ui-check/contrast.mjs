@@ -2,14 +2,20 @@
 // (any CSS colour, including oklch, is converted through a canvas; transparent backgrounds are composited over their
 // ancestors). The UI standard wants 4.5:1 for text of this size. Exits 1 if anything is below.
 //
-//   node scripts/ui-check/contrast.mjs
+//   node scripts/ui-check/contrast.mjs                  # the Services page
+//   node scripts/ui-check/contrast.mjs --page projects  # the Projects pages
 //
 // Needs the dev server and PLAYWRIGHT_CORE (README.md). To check another page, add its scenarios and targets.
 import { launch, openPage, runSteps } from "./browser.mjs";
-import { SCENARIOS, bridge } from "./services-scenarios.mjs";
+import * as projectsPage from "./projects-scenarios.mjs";
+import * as servicesPage from "./services-scenarios.mjs";
+
+const pageArg = process.argv.indexOf("--page");
+const onProjects = pageArg >= 0 && process.argv[pageArg + 1] === "projects";
+const { SCENARIOS, bridge } = onProjects ? projectsPage : servicesPage;
 
 /** Per scenario: [label, text on the page whose colours are measured]. */
-const TARGETS = {
+const SERVICES_TARGETS = {
   data: [
     ["page description", "Start, stop and restart the web server"],
     ["table header", "Service"],
@@ -75,6 +81,8 @@ const TARGETS = {
   ],
 };
 
+const TARGETS = onProjects ? projectsPage.TARGETS : SERVICES_TARGETS;
+
 /** Runs in the page. Returns a function from a piece of text to the contrast ratio of the text node that holds it. */
 const measurer = () => {
   const canvas = document.createElement("canvas");
@@ -135,7 +143,7 @@ for (const theme of ["light", "dark"]) {
       theme,
       width: 1400,
       height: 900,
-      route: "/services",
+      route: scenario.route ?? "/services",
     });
     await runSteps(page, scenario);
     const results = await page.evaluate(

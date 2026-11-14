@@ -21,6 +21,8 @@ use tauri::Manager;
 )]
 pub fn run() {
     let app = tauri::Builder::default()
+        // The native folder picker of the Projects page (and nothing else: only `dialog:allow-open` is granted).
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let home = LunaHome::resolve()?;
             home.ensure_layout()?;

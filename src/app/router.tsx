@@ -1,6 +1,7 @@
 import { createHashRouter, type RouteObject } from "react-router";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { DiagnosticsPage } from "@/features/diagnostics/diagnostics-page";
+import { ProjectDetailPage } from "@/features/projects/project-detail-page";
 import { ProjectsPage } from "@/features/projects/projects-page";
 import { RuntimesPage } from "@/features/runtimes/runtimes-page";
 import { ServicesPage } from "@/features/services/services-page";
@@ -15,6 +16,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "projects", element: <ProjectsPage /> },
+      { path: "projects/:id", element: <ProjectDetailPage /> },
       { path: "runtimes", element: <RuntimesPage /> },
       { path: "services", element: <ServicesPage /> },
       { path: "settings", element: <SettingsPage /> },

@@ -100,14 +100,14 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] All fixtures from §8 with golden `expected.json`; ≥ 95 % pass (21 fixtures, all match, each in a Windows and a macOS world)
 
 ### M1.7 Projects & sites
-- [x] Project store (`ProjectStore`, `config/projects.json`, D-036), add, remove (never deletes files), rename, change doc root, and their IPC commands (sub-step a); the picker and drag & drop come with the Projects page (sub-step b)
-- [ ] Bindings (line/exact), manual override with incompatibility warning (FR-PJ-04) (stored and validated, and `bound_to` makes an uninstall ask first: sub-step a; the page and its warning: sub-step b)
+- [x] Project store (`ProjectStore`, `config/projects.json`, D-036), add, remove (never deletes files), rename, change doc root, and their IPC commands (sub-step a); the native folder picker and drag & drop (sub-step b, D-037)
+- [x] Bindings (line/exact), manual override with incompatibility warning (FR-PJ-04) (stored and validated, and `bound_to` makes an uninstall ask first: sub-step a; the PHP and Node.js controls and the warning from `conflictsWith`: sub-step b, D-037)
 - [ ] Caddyfile generation, validate, reload; per-site port (FR-ST-01..03)
 - [ ] Project start/stop = ensure DB + PHP pool + Caddy site
 - [ ] Quick actions: browser, folder, editor, copy DB credentials (FR-PJ-09)
 - [ ] Open terminal with project env (FR-PJ-08, SERVICES §5)
 - [ ] "Update DB_PORT in .env" with diff preview + backup; "Create database" (PROJECT-DETECTION §4)
-- [ ] **UI: Projects list + Project detail** (detection checklist with one-click fixes, bindings, site URL, actions)
+- [ ] **UI: Projects list + Project detail** (detection checklist with one-click fixes, bindings, site URL, actions) (sub-step b done: list, add by picker and drag and drop, remove, the detail with the checklist, Install from the page, settings and bindings; the site URL and the quick actions come with sub-steps c and d)
 
 ### M1.8 App shell
 - [ ] Tray / menu bar with menu (FR-AP-01/02); close-to-tray
