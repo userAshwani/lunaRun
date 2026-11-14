@@ -34,6 +34,7 @@ pub fn run() {
             // loads in the background and is announced with the `registry:updated` event.
             let registry = RegistryHolder::with_bundled()?;
             app.manage(registry.clone());
+            let site_registry = registry.clone();
             let (handle, refresh_home) = (app.handle().clone(), home.clone());
             tauri::async_runtime::spawn(async move {
                 let _ = registry::refresh_and_announce(&handle, &registry, &refresh_home).await;
@@ -45,9 +46,10 @@ pub fn run() {
             // The supervisor, the port allocator, services left from an earlier session (looked for once, here), the
             // quit state, and the uninstaller, which asks the supervisor what runs from a version before it removes it.
             let projects = ProjectStore::open(&home)?;
-            services::manage(app.handle(), &home, &projects);
+            let data = Arc::new(DetectionData::bundled()?);
+            services::manage(app.handle(), &home, &projects, &data, &site_registry);
             app.manage(projects);
-            app.manage(Arc::new(DetectionData::bundled()?));
+            app.manage(data);
             app.manage(home);
 
             // Jobs run on Tauri's own Tokio runtime and report to the webview through events.
@@ -92,7 +94,9 @@ pub fn run() {
             commands::project_add,
             commands::project_detect,
             commands::project_update,
-            commands::project_remove
+            commands::project_remove,
+            commands::sites_list,
+            commands::sites_sync
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

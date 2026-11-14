@@ -199,6 +199,34 @@ const PHP_CATALOG = {
   })),
 };
 
+const site = (projectId, extra = {}) => ({
+  projectId,
+  state: "ready",
+  name: `${projectId}-abc123`,
+  port: 8101,
+  address: "http://127.0.0.1:8101",
+  phpVersion: "8.3.14",
+  ...extra,
+});
+const noSite = (projectId, state) => ({
+  projectId,
+  state,
+  name: `${projectId}-abc123`,
+  port: null,
+  address: null,
+  phpVersion: null,
+});
+const SITES = (webServer = "stopped", problem = null) => ({
+  sites: [
+    site("shop"),
+    noSite("blog", "noPhp"),
+    noSite("legacy", "noPhp"),
+    noSite("gone", "folderMissing"),
+  ],
+  webServer,
+  problem,
+});
+
 const SCANS = { shop: FULL, blog: NEEDS_INSTALL, legacy: NO_FIT, gone: MISSING };
 
 const LIST = [SHOP, BLOG, LEGACY, GONE];
@@ -268,6 +296,31 @@ export const SCENARIOS = {
     ready: "Legacy site",
   },
   detail: { route: "/projects/shop", projects: LIST, scans: SCANS, ready: "Things to look at" },
+  "detail-site-running": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: SITES("running"),
+    ready: "Caddy is running and serves",
+  },
+  "detail-site-not-installed": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: SITES("notInstalled"),
+    ready: "Caddy, the web server, is not installed",
+  },
+  "detail-site-problem": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: SITES("running", {
+      code: "CONFIG_INVALID",
+      message: "validating the Caddyfile: Caddy answered with exit code 1",
+      details: { tail: "Error: adapting config using caddyfile: unrecognized directive: bogus" },
+    }),
+    ready: "Caddy did not take the latest change",
+  },
   "detail-install": {
     route: "/projects/blog",
     projects: LIST,
@@ -386,10 +439,24 @@ export const TARGETS = {
     ["settings label", "Document root"],
     ["settings hint", "The folder that is served"],
     ["settings binding hint", "Automatic picks the best installed version"],
+    ["site label", "Site address"],
+    ["site address", "http://127.0.0.1:8101"],
+    ["site copy button", "Copy address"],
+    ["site note", "Caddy is not running"],
+    ["site php hint", "PHP pages also need"],
+  ],
+  "detail-site-running": [["running note", "Caddy is running and serves this address"]],
+  "detail-site-not-installed": [["not installed note", "Caddy, the web server, is not installed"]],
+  "detail-site-problem": [
+    ["problem title", "Caddy did not take the latest change"],
+    ["problem text", "Caddy rejected the configuration"],
+    ["problem message", "Caddy answered with exit code 1"],
+    ["retry button", "Try again"],
   ],
   "detail-install": [
     ["php title", "PHP 8.3.36 is needed and not installed yet"],
     ["install button", "Install PHP 8.3.36"],
+    ["no site", "No site yet: the PHP this project needs"],
   ],
   "detail-installing": [
     ["progress phase", "Downloading"],
@@ -428,6 +495,7 @@ export const TARGETS = {
 export const bridge = (scenario) => `(() => {
   const s = ${JSON.stringify(scenario)};
   const catalog = ${JSON.stringify(PHP_CATALOG)};
+  const defaultSites = ${JSON.stringify(SITES())};
   let n = 0;
   const listeners = {};
   window.isTauri = true;
@@ -472,6 +540,8 @@ export const bridge = (scenario) => `(() => {
           { runtime: "php", version: "8.3.14", dir: "x", installedAt: 1767225600, rosetta: false, parts: 1 },
         ]);
       }
+      if (cmd === "sites_list") return Promise.resolve(s.sitesView ?? defaultSites);
+      if (cmd === "sites_sync") return Promise.resolve({ ...(s.sitesView ?? defaultSites), problem: null });
       if (cmd === "jobs_list") return Promise.resolve(s.jobs ?? []);
       return Promise.reject({ code: "INTERNAL", message: "not part of this screenshot: " + cmd });
     },

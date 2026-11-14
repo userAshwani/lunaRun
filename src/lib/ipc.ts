@@ -13,6 +13,7 @@ import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
 import type { ServiceLogs } from "@/bindings/ServiceLogs";
 import type { ServiceRow } from "@/bindings/ServiceRow";
+import type { SitesView } from "@/bindings/SitesView";
 import type { StartedJob } from "@/bindings/StartedJob";
 import type { UsageReport } from "@/bindings/UsageReport";
 
@@ -125,4 +126,11 @@ export const ipc = {
     call<Project>("project_update", { id, patch }),
   /** Forget a project. The folder and its files are never touched. */
   projectRemove: (id: string) => call<null>("project_remove", { id }),
+  /**
+   * The site of every project (a port each, once its PHP is installed), whether a web server is there to serve it, and
+   * why the last change could not be given to Caddy, if it could not.
+   */
+  sitesList: () => call<SitesView>("sites_list"),
+  /** Give Caddy the sites as they are now (the "Try again" after a problem), and say how that went. */
+  sitesSync: () => call<SitesView>("sites_sync"),
 } as const;

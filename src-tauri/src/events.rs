@@ -1,8 +1,9 @@
 //! Forwards `luna-core` events to the webview as Tauri events. No logic here beyond the mapping.
 
-use luna_core::jobs::{JobEvent, JobEventSink};
+use luna_core::jobs::{JobEvent, JobEventSink, JobManager};
 use luna_core::services::{LogBatch, ServiceStatus, ShutdownProgress};
-use tauri::{AppHandle, Emitter, Runtime};
+use luna_core::sites::SiteManager;
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 /// Payload: `JobProgress` (see `src/bindings/JobProgress.ts`).
 pub const JOB_PROGRESS_EVENT: &str = "job:progress";
@@ -63,7 +64,32 @@ impl<R: Runtime> JobEventSink for TauriJobSink<R> {
         // then, and a job must never fail because of that.
         let _ = match event {
             JobEvent::Progress(progress) => self.app.emit(JOB_PROGRESS_EVENT, progress),
-            JobEvent::Done(done) => self.app.emit(JOB_DONE_EVENT, done),
+            JobEvent::Done(done) => {
+                resync_sites_after_runtime_job(&self.app, &done.job_id);
+                self.app.emit(JOB_DONE_EVENT, done)
+            }
         };
+    }
+}
+
+/// An install or an uninstall of a runtime changes which projects have a PHP to run on, so the sites are given to Caddy
+/// again (a project that could not be served until now can be). Other jobs (starting a service) change no site.
+fn resync_sites_after_runtime_job<R: Runtime>(app: &AppHandle<R>, job_id: &str) {
+    let (Some(jobs), Some(sites)) = (
+        app.try_state::<JobManager>(),
+        app.try_state::<SiteManager>(),
+    ) else {
+        return;
+    };
+    let is_runtime_job = jobs.list().iter().any(|job| {
+        job.id == job_id
+            && (job.label.starts_with("Install ") || job.label.starts_with("Uninstall "))
+    });
+    if is_runtime_job {
+        let sites = sites.inner().clone();
+        tauri::async_runtime::spawn(async move {
+            // A problem is kept by the manager and shown on the page of the project.
+            let _ = sites.sync().await;
+        });
     }
 }

@@ -30,7 +30,7 @@ pub use detect::detect;
 pub use resolve::{ResolvePrefs, resolve};
 pub use store::{
     BindingChoice, Bindings, DocRootChoice, LastDetection, Project, ProjectDetection, ProjectPatch,
-    ProjectStore, Surroundings,
+    ProjectStore, Surroundings, resolve_project,
 };
 
 /// How much of the data the page needs to tell apart: whether a source is an exact pin, a constraint or a table row.

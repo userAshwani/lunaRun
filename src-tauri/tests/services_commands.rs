@@ -22,6 +22,17 @@ use tauri::Manager;
 use tauri::test::MockRuntime;
 use tempfile::TempDir;
 
+/// What `lib.rs` passes to `services::manage`: the project store, the detection data and the version list.
+fn manage_services(app: &tauri::App<MockRuntime>, home: &LunaHome) {
+    services::manage(
+        app.handle(),
+        home,
+        &ProjectStore::open(home).unwrap(),
+        &std::sync::Arc::new(luna_core::projects::DetectionData::bundled().unwrap()),
+        &luna_core::registry::RegistryHolder::with_bundled().unwrap(),
+    );
+}
+
 struct Bench {
     _tmp: TempDir,
     app: tauri::App<MockRuntime>,
@@ -35,7 +46,7 @@ fn bench() -> Bench {
     home.ensure_layout().unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
+    manage_services(&app, &home);
     // The job manager `lib.rs` adds last: starting, stopping and restarting are jobs.
     app.manage(JobManager::new(
         tauri::async_runtime::handle().inner().clone(),
@@ -186,7 +197,7 @@ fn a_stale_pid_file_is_not_a_leftover() {
     .unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
+    manage_services(&app, &home);
 
     assert!(
         commands::services_leftovers(app.state())
@@ -479,7 +490,7 @@ fn bench_with_a_leftover() -> (Bench, std::process::Child) {
     .unwrap();
     let app = tauri::test::mock_app();
     app.manage(home.clone());
-    services::manage(app.handle(), &home, &ProjectStore::open(&home).unwrap());
+    manage_services(&app, &home);
     app.manage(JobManager::new(
         tauri::async_runtime::handle().inner().clone(),
         |_| {},

@@ -44,18 +44,18 @@ mod supervisor;
 pub use caddy::{CaddyDefinition, Site, caddy_definition};
 pub use catalog::{
     BoundProjects, ServiceKind, ServiceRow, aggregate_state, list_services, running_from,
-    usage_checker,
+    usage_checker, web_server_runtime,
 };
 pub use containment::{Containment, NoContainment, OsContainment};
 pub use control::{
-    MAX_LOG_TAIL, SETUP_LIMIT, ServiceAction, ServiceController, ServiceLogs, SourceLines,
-    StartPlan, job_key, phase as job_phase,
+    MAX_LOG_TAIL, SETUP_LIMIT, SITE_PREFIX, ServiceAction, ServiceController, ServiceLogs,
+    SiteSource, SourceLines, StartPlan, job_key, phase as job_phase,
 };
 pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use gate::hold as spawn_gate;
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
-pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition};
+pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition, pool_ports};
 pub use port_owner::{PortOwner, port_owners};
 pub use ports::{PortAllocator, PortAssignment, PortPurpose, PortRanges, check_ports};
 pub use restart::{Decision, RestartPolicy, RestartTracker};

@@ -213,6 +213,8 @@ host name `127.0.0.1` are additions to the template above: a site is not offered
 name `localhost` alone would not answer a request for `127.0.0.1`. A project folder is only written down as text and a
 name with braces (Caddy's placeholders) is refused.
 
+**The sites** (`luna_core::sites`, D-038): a project with an installed PHP gets a port from the allocator (`site@<project id>`, 8100 to 8999, the same one every time) and a block in the Caddyfile whose `php_fastcgi` points at the ports of its PHP pool. `SiteManager::sync` rewrites the Caddyfile after every change to the projects and, when Caddy runs, validates and reloads it only if the text changed. The Services page starts Caddy with the current sites; "Use another port" for Caddy moves a site whose port is taken.
+
 **Phase 2:** host-based blocks `shop.test { … }` on :80/:443 with `tls internal` (Caddy's local CA,
 trusted once via `caddy trust` with elevation), plus hosts-file entries managed between
 `# BEGIN lunaRun` / `# END lunaRun` markers.

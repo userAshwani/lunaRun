@@ -17,6 +17,7 @@ use luna_core::services::{
     Leftover, PortAllocator, ServiceAction, ServiceController, ServiceLogs, ServiceRow, Supervisor,
     list_services,
 };
+use luna_core::sites::{SiteManager, SitesView};
 use luna_core::{LunaError, LunaHome};
 use std::sync::Arc;
 use tauri::{AppHandle, State};
@@ -227,10 +228,11 @@ pub async fn project_add(
     data: State<'_, Arc<DetectionData>>,
     home: State<'_, LunaHome>,
     registry: State<'_, RegistryHolder>,
+    sites: State<'_, SiteManager>,
 ) -> Result<ProjectDetection, LunaError> {
     let (store, data) = (projects.inner().clone(), data.inner().clone());
     let (installed, available) = world(&home, &registry)?;
-    blocking(move || {
+    let added = blocking(move || {
         let around = Surroundings {
             installed: &installed,
             available: &available,
@@ -238,7 +240,9 @@ pub async fn project_add(
         };
         store.add(std::path::Path::new(&path), &data, &around)
     })
-    .await
+    .await?;
+    apply_sites(&sites).await;
+    Ok(added)
 }
 
 /// Read the project's folder again ("Re-scan") and say what it needs now and what to run it with.
@@ -249,10 +253,11 @@ pub async fn project_detect(
     data: State<'_, Arc<DetectionData>>,
     home: State<'_, LunaHome>,
     registry: State<'_, RegistryHolder>,
+    sites: State<'_, SiteManager>,
 ) -> Result<ProjectDetection, LunaError> {
     let (store, data) = (projects.inner().clone(), data.inner().clone());
     let (installed, available) = world(&home, &registry)?;
-    blocking(move || {
+    let scanned = blocking(move || {
         let around = Surroundings {
             installed: &installed,
             available: &available,
@@ -260,7 +265,10 @@ pub async fn project_detect(
         };
         store.inspect(&id, &data, &around)
     })
-    .await
+    .await?;
+    // A rescan can change the document root a project is served from.
+    apply_sites(&sites).await;
+    Ok(scanned)
 }
 
 /// Rename a project, change its document root, or choose its PHP or Node by hand (or back to automatic). A part that
@@ -271,15 +279,48 @@ pub async fn project_update(
     patch: ProjectPatch,
     projects: State<'_, ProjectStore>,
     data: State<'_, Arc<DetectionData>>,
+    sites: State<'_, SiteManager>,
 ) -> Result<Project, LunaError> {
     let (store, data) = (projects.inner().clone(), data.inner().clone());
-    blocking(move || store.update(&id, &patch, &data)).await
+    let updated = blocking(move || store.update(&id, &patch, &data)).await?;
+    apply_sites(&sites).await;
+    Ok(updated)
 }
 
 /// Forget a project. The folder and its files are never touched.
 #[tauri::command]
-pub fn project_remove(id: String, projects: State<'_, ProjectStore>) -> Result<(), LunaError> {
-    projects.remove(&id)
+pub async fn project_remove(
+    id: String,
+    projects: State<'_, ProjectStore>,
+    sites: State<'_, SiteManager>,
+) -> Result<(), LunaError> {
+    projects.remove(&id)?;
+    // It stops being served, and its port is free again.
+    apply_sites(&sites).await;
+    Ok(())
+}
+
+/// The site of every project, whether there is a web server to serve it, and why the last change could not be given to
+/// Caddy, if it could not. Reads the project folders; giving a new site its port is the only write.
+#[tauri::command]
+pub async fn sites_list(sites: State<'_, SiteManager>) -> Result<SitesView, LunaError> {
+    let sites = sites.inner().clone();
+    blocking(move || sites.view()).await
+}
+
+/// Give Caddy the sites as they are now (write the Caddyfile and, when Caddy runs, validate and reload it) and say how
+/// that went: the "Try again" of the project page.
+#[tauri::command]
+pub async fn sites_sync(sites: State<'_, SiteManager>) -> Result<SitesView, LunaError> {
+    let sites = sites.inner().clone();
+    apply_sites(&sites).await;
+    blocking(move || sites.view()).await
+}
+
+/// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is
+/// added, changed or removed either way): the manager keeps it and `sites_list` shows it.
+async fn apply_sites(sites: &SiteManager) {
+    let _ = sites.sync().await;
 }
 
 /// What is installed and what the registry offers for this computer: what a project is resolved against.

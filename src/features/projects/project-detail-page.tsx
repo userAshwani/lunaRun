@@ -1,5 +1,5 @@
 import { ArrowLeft, FolderSearch, RefreshCw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 import type { Project } from "@/bindings/Project";
@@ -16,7 +16,9 @@ import { useRuntimeJobEffects } from "@/features/runtimes/use-runtimes";
 import { formatUnixDate } from "@/lib/format";
 import { DatabaseRow, ExtensionsRow, RuntimeRow, WarningsList } from "./checklist";
 import { ProjectSettings } from "./project-settings";
+import { SiteFact, SitesProblem } from "./site-fact";
 import { folderIsMissing, runtimeName } from "./project-format";
+import { useSites, useSyncSites } from "./use-sites";
 import {
   useProjectDetection,
   useProjects,
@@ -27,14 +29,16 @@ import {
 function Facts({
   project,
   detection,
+  sites,
 }: {
   project: Project;
   detection: ProjectDetection | undefined;
+  sites: ReactNode;
 }) {
   const { t, i18n } = useTranslation();
   const framework = (detection?.project ?? project).framework;
   const report = detection?.report;
-  const rows: [string, string][] = [
+  const rows: [string, ReactNode][] = [
     [t("projects.detail.folder"), project.path],
     [
       t("projects.detail.framework"),
@@ -53,6 +57,7 @@ function Facts({
           })
         : project.docRoot,
     ],
+    [t("projects.site.label"), sites],
     [t("projects.detail.packageManager"), report?.packageManager ?? t("projects.detail.none")],
   ];
   const scanned = project.lastDetection?.at;
@@ -100,6 +105,8 @@ export function ProjectDetailPage() {
   const project = projects.data?.find((candidate) => candidate.id === id);
   const scan = useProjectDetection(id, project !== undefined);
   const remove = useRemoveProject();
+  const sites = useSites();
+  const syncSites = useSyncSites();
   const [confirmRemove, setConfirmRemove] = useState(false);
   useRescanWhenRuntimesChange();
   useRuntimeJobEffects(runtimeName);
@@ -252,7 +259,18 @@ export function ProjectDetailPage() {
           </Card>
         )}
 
-        <Facts project={project} detection={detection} />
+        <SitesProblem
+          view={sites.data}
+          retrying={syncSites.isPending}
+          onRetry={() => {
+            syncSites.mutate();
+          }}
+        />
+        <Facts
+          project={project}
+          detection={detection}
+          sites={<SiteFact view={sites.data} failed={sites.isError} projectId={project.id} />}
+        />
         <ProjectSettings
           key={`${project.id}:${project.name}:${project.docRoot}`}
           project={project}

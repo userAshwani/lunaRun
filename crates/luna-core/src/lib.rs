@@ -12,6 +12,7 @@ pub mod projects;
 pub mod registry;
 pub mod runtimes;
 pub mod services;
+pub mod sites;
 pub mod state;
 
 pub use error::{ErrorCode, LunaError, Result};

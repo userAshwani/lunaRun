@@ -225,7 +225,9 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `project_add(path)` | `ProjectDetection` = `{ project, report: DetectionReport, resolution: Resolution }`; `path` must be an absolute folder that exists (`INVALID_PATH`), adding it twice is `PROJECT_EXISTS` (`details.id`) |
 | | `project_detect(id)` | `ProjectDetection` ("Re-scan": reads the folder again; an unreadable folder is a warning in the report, not an error) |
 | | `project_update(id, patch)` | `Project`; `patch` is `{ name?, docRoot?: {kind:"auto"} or {kind:"use",path}, php?, node?: {kind:"auto"} or {kind:"use",binding} }`; a part that is not acceptable is `INVALID_INPUT` (`details.field`) and nothing changes |
-| | `project_remove(id)` | `()` (never deletes files on disk) |
+| | `project_remove(id)` | `()` (never deletes files on disk; the project stops being served and its port is freed) |
+| Sites | `sites_list()` | `SitesView` = `{ sites: SiteEntry[], webServer: notInstalled\|stopped\|running, problem }` (one `SiteEntry` per project: `state` ready, noPhp or folderMissing, `port`, `address`, `phpVersion`; `problem` is why the last change could not be given to Caddy; D-038) |
+| | `sites_sync()` | `SitesView` (write the Caddyfile and, when Caddy runs, validate and reload it; the page's "Try again") |
 | | `project_start(id)` / `project_stop(id)` | `()` |
 | | `project_open(id, target: "browser"\|"terminal"\|"folder"\|"editor")` | `()` |
 | | `project_apply_fix(id, fixId)` | `jobId` (e.g. install + bind recommended PHP) |

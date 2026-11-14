@@ -36,10 +36,12 @@ fn bench() -> Bench {
     let app = tauri::test::mock_app();
     app.manage(home.clone());
     let projects = ProjectStore::open(&home).unwrap();
-    services::manage(app.handle(), &home, &projects);
+    let data = Arc::new(DetectionData::bundled().unwrap());
+    let registry = RegistryHolder::with_bundled().unwrap();
+    services::manage(app.handle(), &home, &projects, &data, &registry);
     app.manage(projects);
-    app.manage(Arc::new(DetectionData::bundled().unwrap()));
-    app.manage(RegistryHolder::with_bundled().unwrap());
+    app.manage(data);
+    app.manage(registry);
     app.manage(JobManager::new(
         tauri::async_runtime::handle().inner().clone(),
         |_| {},
@@ -63,6 +65,7 @@ impl Bench {
     fn add(&self, dir: &Path) -> Result<serde_json::Value, luna_core::LunaError> {
         let added = tauri::async_runtime::block_on(commands::project_add(
             dir.to_str().unwrap().to_owned(),
+            self.app.state(),
             self.app.state(),
             self.app.state(),
             self.app.state(),
@@ -129,6 +132,7 @@ fn an_added_project_arrives_as_the_json_the_page_reads() {
         b.app.state(),
         b.app.state(),
         b.app.state(),
+        b.app.state(),
     ))
     .unwrap();
     assert_eq!(
@@ -159,6 +163,7 @@ fn what_the_page_sends_to_change_a_project_is_understood_and_what_is_wrong_is_re
         patch,
         b.app.state(),
         b.app.state(),
+        b.app.state(),
     ))
     .unwrap();
     let updated = serde_json::to_value(updated).unwrap();
@@ -182,6 +187,7 @@ fn what_the_page_sends_to_change_a_project_is_understood_and_what_is_wrong_is_re
     let error = tauri::async_runtime::block_on(commands::project_update(
         id,
         bad,
+        b.app.state(),
         b.app.state(),
         b.app.state(),
     ))
@@ -211,9 +217,13 @@ fn errors_reach_the_page_as_typed_codes() {
         ErrorCode::NotFound
     );
     assert_eq!(
-        commands::project_remove("nope".into(), b.app.state())
-            .unwrap_err()
-            .code,
+        tauri::async_runtime::block_on(commands::project_remove(
+            "nope".into(),
+            b.app.state(),
+            b.app.state()
+        ))
+        .unwrap_err()
+        .code,
         ErrorCode::NotFound
     );
 }
@@ -226,7 +236,8 @@ fn removing_a_project_leaves_the_folder_and_the_list_empty() {
         .as_str()
         .unwrap()
         .to_owned();
-    commands::project_remove(id, b.app.state()).unwrap();
+    tauri::async_runtime::block_on(commands::project_remove(id, b.app.state(), b.app.state()))
+        .unwrap();
     assert!(commands::projects_list(b.app.state()).unwrap().is_empty());
     assert_eq!(fs::read_to_string(dir.join("composer.json")).unwrap(), "{}");
 }
@@ -255,6 +266,7 @@ fn a_project_bound_by_hand_is_listed_by_the_uninstall_dialog_and_the_uninstall_a
     tauri::async_runtime::block_on(commands::project_update(
         id.clone(),
         bind,
+        b.app.state(),
         b.app.state(),
         b.app.state(),
     ))
@@ -287,6 +299,117 @@ fn a_project_bound_by_hand_is_listed_by_the_uninstall_dialog_and_the_uninstall_a
     );
 
     // Forgetting the project frees the version.
-    commands::project_remove(id, b.app.state()).unwrap();
+    tauri::async_runtime::block_on(commands::project_remove(id, b.app.state(), b.app.state()))
+        .unwrap();
     assert!(usage("8.3.14").bound_projects.is_empty());
+}
+
+fn sites_view(b: &Bench) -> serde_json::Value {
+    let view = tauri::async_runtime::block_on(commands::sites_list(b.app.state())).unwrap();
+    serde_json::to_value(view).unwrap()
+}
+
+fn caddyfile(b: &Bench) -> String {
+    fs::read_to_string(b.home.config_dir().join("caddy").join("Caddyfile")).unwrap_or_default()
+}
+
+#[test]
+fn a_project_with_php_installed_is_served_and_the_caddyfile_follows_the_list() {
+    let b = bench();
+    b.install_fake("php", "8.3.14");
+    b.install_fake("caddy", "2.11.7");
+    let dir = b.folder(
+        "served shop",
+        &[
+            ("artisan", ""),
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("public/index.php", "<?php"),
+        ],
+    );
+    let added = b.add(&dir).unwrap();
+    let id = added["project"]["id"].as_str().unwrap().to_owned();
+
+    let view = sites_view(&b);
+    let site = &view["sites"][0];
+    assert_eq!(site["projectId"], id.as_str());
+    assert_eq!(site["state"], "ready");
+    assert_eq!(site["phpVersion"], "8.3.14");
+    let port = site["port"].as_u64().unwrap();
+    assert_eq!(site["address"], format!("http://127.0.0.1:{port}"));
+    assert_eq!(view["webServer"], "stopped", "installed, not running");
+    assert_eq!(view["problem"], serde_json::Value::Null);
+
+    // The Caddyfile was written when the project was added, without anyone asking for it.
+    let served = dir.join("public").display().to_string().replace('\\', "/");
+    let text = caddyfile(&b);
+    assert!(text.contains(&format!("http://localhost:{port}")), "{text}");
+    assert!(text.contains(&served), "{text}");
+
+    // Removing the project stops serving it, and the folder is untouched.
+    tauri::async_runtime::block_on(commands::project_remove(id, b.app.state(), b.app.state()))
+        .unwrap();
+    assert!(!caddyfile(&b).contains(&served));
+    assert_eq!(sites_view(&b)["sites"], serde_json::json!([]));
+    assert!(dir.join("artisan").is_file());
+}
+
+#[test]
+fn without_php_there_is_no_site_and_the_view_says_so() {
+    let b = bench();
+    let dir = b.folder(
+        "no php",
+        &[("composer.json", r#"{"require":{"php":"^8.2"}}"#)],
+    );
+    b.add(&dir).unwrap();
+
+    let view = sites_view(&b);
+    let site = &view["sites"][0];
+    assert_eq!(site["state"], "noPhp");
+    assert_eq!(
+        (site["port"].clone(), site["address"].clone()),
+        (serde_json::Value::Null, serde_json::Value::Null)
+    );
+    assert_eq!(view["webServer"], "notInstalled");
+}
+
+#[test]
+fn sites_sync_answers_with_the_view_it_leaves_behind() {
+    let b = bench();
+    b.install_fake("php", "8.3.14");
+    b.install_fake("caddy", "2.11.7");
+    let dir = b.folder(
+        "sync me",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+        ],
+    );
+    b.add(&dir).unwrap();
+
+    let synced = tauri::async_runtime::block_on(commands::sites_sync(b.app.state())).unwrap();
+    let synced = serde_json::to_value(synced).unwrap();
+    assert_eq!(synced, sites_view(&b));
+    assert_eq!(synced["sites"][0]["state"], "ready");
+}
+
+#[test]
+fn installing_php_gives_the_project_a_site_without_anyone_asking() {
+    // The job sink re-syncs the sites when an install job ends. Here the PHP appears and the sync is asked for the way the
+    // sink does it: the sites are planned from what is installed now.
+    let b = bench();
+    b.install_fake("caddy", "2.11.7");
+    let dir = b.folder(
+        "late php",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+        ],
+    );
+    b.add(&dir).unwrap();
+    assert_eq!(sites_view(&b)["sites"][0]["state"], "noPhp");
+
+    b.install_fake("php", "8.3.14");
+    tauri::async_runtime::block_on(commands::sites_sync(b.app.state())).unwrap();
+    assert_eq!(sites_view(&b)["sites"][0]["state"], "ready");
+    assert!(caddyfile(&b).contains("php_fastcgi"));
 }

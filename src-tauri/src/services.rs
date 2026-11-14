@@ -7,12 +7,14 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use luna_core::LunaHome;
 use luna_core::diagnostics::Os;
-use luna_core::projects::ProjectStore;
+use luna_core::projects::{DetectionData, ProjectStore};
+use luna_core::registry::RegistryHolder;
 use luna_core::runtimes::Uninstaller;
 use luna_core::services::{
     DEFAULT_GROUP_LIMIT, Leftover, PortAllocator, ServiceController, ShutdownReport, Supervisor,
     usage_checker,
 };
+use luna_core::sites::SiteManager;
 use tauri::{AppHandle, Manager, Runtime};
 
 use crate::events::{emit_service_log, emit_service_state, emit_shutdown_progress};
@@ -75,11 +77,14 @@ impl QuitState {
 /// Create the supervisor and the port allocator, look **once** for services left from an earlier session, and put all of
 /// it into the app's state, together with the uninstaller (which asks the supervisor what runs from a version, so it
 /// refuses to remove one that is in use) and the quit state. Returns the supervisor and the allocator for whoever needs
-/// them while the app is being set up. The uninstaller also asks `projects` which projects are bound to a version.
+/// them while the app is being set up. The uninstaller also asks `projects` which projects are bound to a version, and
+/// the sites of the projects (`SiteManager`) are what Caddy serves when the Services page starts it.
 pub fn manage<R: Runtime>(
     app: &AppHandle<R>,
     home: &LunaHome,
     projects: &ProjectStore,
+    data: &Arc<DetectionData>,
+    registry: &RegistryHolder,
 ) -> (Supervisor, PortAllocator) {
     let state_app = app.clone();
     let log_app = app.clone();
@@ -101,6 +106,17 @@ pub fn manage<R: Runtime>(
         Os::current(),
         Arc::new(move |runtime, version| bound.bound_to(runtime, version)),
     )));
+    // The sites of the projects: a port each, and the Caddyfile (FR-ST-01 to FR-ST-03).
+    let sites = SiteManager::new(
+        home.clone(),
+        projects.clone(),
+        Arc::clone(data),
+        registry.clone(),
+        ports.clone(),
+        supervisor.clone(),
+        Os::current(),
+    );
+    let site_source = sites.clone();
     // Starting, stopping and restarting by the id of a row. Nothing may be started once the quit has begun.
     let quit_app = app.clone();
     app.manage(
@@ -110,8 +126,10 @@ pub fn manage<R: Runtime>(
             supervisor.clone(),
             Os::current(),
         )
-        .with_quit_check(move || quit_app.state::<QuitState>().is_quitting()),
+        .with_quit_check(move || quit_app.state::<QuitState>().is_quitting())
+        .with_sites(move || site_source.sites()),
     );
+    app.manage(sites);
     app.manage(ports.clone());
     app.manage(supervisor.clone());
     (supervisor, ports)

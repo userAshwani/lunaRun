@@ -61,6 +61,20 @@ pub(super) fn pool_size(ports: &PortAllocator, os: Os, pool_id: &str) -> Result<
         .map_or(DEFAULT_WORKERS, |assigned| assigned.count))
 }
 
+/// The FastCGI ports of the pool of PHP `version`, **assigned if they were not yet**: the same assignment
+/// [`php_definition`] makes (same id, same size), so a site written into the Caddyfile points at exactly the ports the
+/// pool gets when it is started later.
+///
+/// # Errors
+/// `NO_FREE_PORT` and I/O errors from the allocator.
+pub fn pool_ports(ports: &PortAllocator, os: Os, version: &str) -> Result<Vec<u16>> {
+    let pool = pool_id(os, version);
+    let size = pool_size(ports, os, &pool)?;
+    Ok(ports
+        .assign(&pool, PortPurpose::PhpFastCgi { pool: size })?
+        .ports())
+}
+
 /// The service ids behind a pool: the workers `-w1` and up on Windows, the pool itself elsewhere.
 pub(super) fn pool_members(ports: &PortAllocator, os: Os, pool_id: &str) -> Result<Vec<String>> {
     if os != Os::Windows {

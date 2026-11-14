@@ -615,6 +615,29 @@ export const en = {
       FRAMEWORK_VERSION_UNKNOWN:
         "The Laravel version could not be read, so the usual PHP range for it could not be looked up.",
     },
+    site: {
+      label: "Site address",
+      loading: "Reading the site",
+      unknown: "The site could not be read.",
+      noPhp: "No site yet: the PHP this project needs is not installed.",
+      folderMissing: "No site: the project folder is missing.",
+      copy: "Copy address",
+      copied: "Copied",
+      copyFailed: "Could not copy",
+      webNotInstalled:
+        "Caddy, the web server, is not installed, so nothing answers at this address yet. Install it on the Runtimes page.",
+      webStopped: "Caddy is not running. Start it on the Services page and this address answers.",
+      webRunning: "Caddy is running and serves this address.",
+      phpHint: "PHP pages also need the PHP {{version}} service to be running (Services page).",
+      problem: {
+        title: "Caddy did not take the latest change",
+        CONFIG_INVALID:
+          "Caddy rejected the configuration lunaRun generated. It keeps serving what it had.",
+        RELOAD_FAILED: "Caddy could not load the new configuration. It keeps serving what it had.",
+        other: "The sites could not be given to Caddy.",
+        retry: "Try again",
+      },
+    },
     settings: {
       title: "Settings",
       name: "Name",

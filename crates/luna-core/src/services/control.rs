@@ -9,8 +9,9 @@
 //!   the supervisor starts it.
 //! - **A PHP pool** (`php-fcgi@8.3.36`, `php-fpm@8.3.36`): every process of the pool, **all or none**: a worker that
 //!   cannot start stops the ones already started, so a pool is never left half up.
-//! - **Caddy**: with **no sites yet** (the project store is M1.7, so only its admin API runs), its Caddyfile is
-//!   validated first.
+//! - **Caddy**: its Caddyfile holds **the sites of the projects** ([`with_sites`](ServiceController::with_sites): the
+//!   project store's answer, so `services` does not depend on `projects`) and is validated first. Without a source of
+//!   sites only its admin API runs.
 //!
 //! "Started" means **running**: the call returns when the service answers its ready check, and fails with what the
 //! supervisor knows about why it did not (`SERVICE_START_FAILED`, `PORT_IN_USE`, ...). [`ServiceController::run`] wraps
@@ -32,7 +33,7 @@ use super::php::{PhpDefinition, pool_id, pool_kind, pool_members, pool_size};
 use super::ports::{PortAllocator, PortPurpose, check_ports};
 use super::state::{ServiceState, ServiceStatus};
 use super::supervisor::Supervisor;
-use super::{CaddyDefinition, caddy_definition, database_definition, php_definition};
+use super::{CaddyDefinition, Site, caddy_definition, database_definition, php_definition};
 use crate::diagnostics::Os;
 use crate::error::{ErrorCode, LunaError, Result};
 use crate::jobs::{JobContext, JobManager, StartedJob};
@@ -43,6 +44,8 @@ use crate::runtimes::{InstalledRuntime, list_installed};
 /// A database's setup program gets this long. The first start of MySQL 9.7 took 8 s and MariaDB 12.3 5 s on a slow PC;
 /// a slow disk or a scanner can multiply that.
 pub const SETUP_LIMIT: Duration = Duration::from_secs(300);
+/// The allocator's key of a site's port is this followed by the project's id.
+pub const SITE_PREFIX: &str = "site@";
 /// `caddy validate` reads one small file.
 const VALIDATE_LIMIT: Duration = Duration::from_secs(30);
 /// Slack on top of a spec's own start timeout before giving up on waiting for it to settle: the supervisor times the
@@ -142,6 +145,8 @@ impl StartPlan {
 
 type PlanHook = Arc<dyn Fn(&mut StartPlan) + Send + Sync>;
 type QuitCheck = Arc<dyn Fn() -> bool + Send + Sync>;
+/// Where the controller gets the sites Caddy serves when it plans Caddy.
+pub type SiteSource = Arc<dyn Fn() -> Result<Vec<Site>> + Send + Sync>;
 
 /// Starts, stops and restarts services by row id. Cheap to clone.
 #[derive(Clone)]
@@ -152,6 +157,7 @@ pub struct ServiceController {
     os: Os,
     quitting: QuitCheck,
     hook: Option<PlanHook>,
+    sites: Option<SiteSource>,
 }
 
 fn busy(message: String, id: &str) -> LunaError {
@@ -176,7 +182,19 @@ impl ServiceController {
             os,
             quitting: Arc::new(|| false),
             hook: None,
+            sites: None,
         }
+    }
+
+    /// The sites Caddy serves, asked for each time Caddy is planned (a start, a restart, adopting it), so a project added
+    /// since is served without anything else being told.
+    #[must_use]
+    pub fn with_sites(
+        mut self,
+        sites: impl Fn() -> Result<Vec<Site>> + Send + Sync + 'static,
+    ) -> Self {
+        self.sites = Some(Arc::new(sites));
+        self
     }
 
     /// Nothing is started while `quitting` says the app is quitting (`BUSY`, D-029): the orderly stop has begun, and a
@@ -297,13 +315,19 @@ impl ServiceController {
                     workers,
                 )?)
             }
-            ServiceKind::Web => StartPlan::Web(caddy_definition(
-                &self.home,
-                &self.ports,
-                runtime,
-                &[],
-                self.os,
-            )?),
+            ServiceKind::Web => {
+                let sites = match &self.sites {
+                    Some(source) => source()?,
+                    None => Vec::new(),
+                };
+                StartPlan::Web(caddy_definition(
+                    &self.home,
+                    &self.ports,
+                    runtime,
+                    &sites,
+                    self.os,
+                )?)
+            }
         })
     }
 
@@ -449,6 +473,10 @@ impl ServiceController {
     /// "Use another port": give row `id` other ports than it has (the old ones are taken, or the user wants to move),
     /// and start it. The service must not be running.
     ///
+    /// For **Caddy** the ports that can be taken are the ones of its **sites** (one per project): every site whose port
+    /// is taken now is moved to another one, and the Caddyfile written at the start has the new ports. Only when none
+    /// is taken is it the admin port, which is one port with no other to offer (the error names who has it).
+    ///
     /// # Errors
     /// `BUSY` while it runs or the app quits, `PORT_IN_USE` for Caddy's admin port (it is one port and there is no
     /// other to offer: the error names who has it), `NO_FREE_PORT`, `NOT_FOUND`, and what a start refuses with.
@@ -469,8 +497,22 @@ impl ServiceController {
                 &running.id,
             ));
         }
-        self.ports.reassign(id, self.port_purpose(id)?)?;
+        if !(id == "caddy" && self.move_taken_sites()?) {
+            self.ports.reassign(id, self.port_purpose(id)?)?;
+        }
         self.run(jobs, id, ServiceAction::Start)
+    }
+
+    /// Give every site whose port is taken another port. `true` when at least one was moved.
+    fn move_taken_sites(&self) -> Result<bool> {
+        let mut moved = false;
+        for (key, assignment) in self.ports.all()? {
+            if key.starts_with(SITE_PREFIX) && check_ports(&assignment.ports()).is_err() {
+                self.ports.reassign(&key, PortPurpose::Site)?;
+                moved = true;
+            }
+        }
+        Ok(moved)
     }
 
     /// What the ports of row `id` are for (the allocator keys them by the id, a pool by the pool id).

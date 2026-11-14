@@ -86,17 +86,17 @@ from `capabilities/default.json` fails there exactly as it would for a page, whi
     pnpm tauri build --no-bundle
     node scripts/ui-check/real-projects-ipc.mjs target/release/lunarun.exe <scratch folder>
 
-It makes its own data folder and project folder under the scratch folder (both with a space and a non-ASCII letter), checks 19 things
+It makes its own data folder and project folder under the scratch folder (both with a space and a non-ASCII letter), checks 22 things
 (add, the typed errors, update, re-scan, remove, the project folder untouched, `projects.json` on disk, **the list and detail pages rendered by the real
 webview** with a screenshot of each saved in the scratch folder, and that the dialog plugin grants `open` but not `save`) and ends the app. Copy it for
 the next set of commands or pages.
 
 ## The Projects pages: `projects-shots.mjs`, `projects-scenarios.mjs` and `contrast.mjs --page projects`
 
-`projects-scenarios.mjs` holds the 17 states of the list and the detail page (data, empty, error, loading, add errors, drop overlay, install
-needed, installing, install failed, no version fits, folder missing, scan error, not found, remove dialog), the fake bridge that serves them (it
+`projects-scenarios.mjs` holds the 20 states of the list and the detail page (data, empty, error, loading, add errors, drop overlay, install
+needed, installing, install failed, no version fits, folder missing, scan error, not found, remove dialog, and the site row: Caddy running, not installed, and a problem Caddy raised), the fake bridge that serves them (it
 also answers the folder dialog and the drag and drop events), and the texts whose contrast is measured. `projects-shots.mjs` saves every state in
-both themes at 1400 and 900 wide; `contrast.mjs --page projects` measures 59 kinds of text in both themes (all at least 4.5:1).
+both themes at 1400 and 900 wide; `contrast.mjs --page projects` measures 71 kinds of text in both themes (all at least 4.5:1).
 
 - **Serve a production build, not the dev server:** `pnpm exec vite build`, then `pnpm exec vite preview --host 127.0.0.1 --port 1420 --strictPort`.
   The dev server's dependency optimizer hung here after a new dependency was added (it stayed on "bundling dependencies" and every request timed out);

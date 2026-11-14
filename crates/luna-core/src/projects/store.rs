@@ -234,7 +234,7 @@ impl ProjectStore {
             file.projects.push(project.clone());
             Ok(project)
         })?;
-        let resolution = resolve_for(&project, &report, data, around);
+        let resolution = resolve_project(&project, &report, data, around);
         Ok(ProjectDetection {
             project,
             report,
@@ -274,7 +274,7 @@ impl ProjectStore {
                 Ok(entry.clone())
             })?
         };
-        let resolution = resolve_for(&project, &report, data, around);
+        let resolution = resolve_project(&project, &report, data, around);
         Ok(ProjectDetection {
             project,
             report,
@@ -372,7 +372,9 @@ impl ProjectStore {
     }
 }
 
-fn resolve_for(
+/// What `project` resolves to against `around`, **with** the user's own choices (a binding made by hand is the override).
+/// The same answer [`ProjectStore::inspect`] gives, without storing anything.
+pub fn resolve_project(
     project: &Project,
     report: &DetectionReport,
     data: &DetectionData,

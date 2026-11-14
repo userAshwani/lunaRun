@@ -143,6 +143,11 @@ pub(super) fn source_of<'a>(
     }
 }
 
+/// The Caddy that serves the sites: the newest installed one (the same rule as the `caddy` row of the Services page).
+pub fn web_server_runtime(installed: &[InstalledRuntime]) -> Option<&InstalledRuntime> {
+    newest(of(installed, "caddy"))
+}
+
 /// Every service lunaRun can run from `installed`, in the order the page shows them: the web server, PHP (newest
 /// first), then the databases. Reads the port assignments and asks the supervisor for states; writes nothing.
 ///

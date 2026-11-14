@@ -25,6 +25,8 @@ const COMMANDS: &[&str] = &[
     "project_detect",
     "project_update",
     "project_remove",
+    "sites_list",
+    "sites_sync",
 ];
 
 fn main() {

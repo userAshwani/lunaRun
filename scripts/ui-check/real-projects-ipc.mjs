@@ -196,6 +196,23 @@ check("project_detect re-scans and the hand-made binding decides", () => {
 const gone = await invoke("project_get", { id: "nope" });
 check("an unknown id is NOT_FOUND", () => assert.equal(gone.err?.code, "NOT_FOUND"));
 
+// The sites of the projects. Nothing is installed in this fresh data folder, so the project has no site yet and there is
+// no web server: the commands are permitted and answer honestly.
+const siteView = await invoke("sites_list");
+check("sites_list is permitted and says there is no site without PHP", () => {
+  assert.ok(siteView.ok, JSON.stringify(siteView));
+  assert.equal(siteView.ok.sites.length, 1);
+  assert.equal(siteView.ok.sites[0].projectId, id);
+  assert.equal(siteView.ok.sites[0].state, "noPhp");
+  assert.equal(siteView.ok.sites[0].port, null);
+  assert.equal(siteView.ok.webServer, "notInstalled");
+  assert.equal(siteView.ok.problem, null);
+});
+const siteSync = await invoke("sites_sync");
+check("sites_sync is permitted and answers with the same view", () => {
+  assert.deepEqual(siteSync, siteView);
+});
+
 // The pages themselves, rendered by the real webview of the real app.
 await evaluate("location.hash = '#/projects'");
 const listShown = await waitForText("Shop é");
@@ -221,6 +238,8 @@ check("with PHP, the extensions, the document root and Settings", () => {
   assert.ok(detailText.includes("PHP extensions"), detailText);
   assert.ok(detailText.includes("Document root"), detailText);
   assert.ok(detailText.includes("PHP version"), detailText);
+  assert.ok(detailText.includes("Site address"), detailText);
+  assert.ok(detailText.includes("No site yet"), detailText);
   assert.ok(!detailText.includes("never-in-a-report"), "the password must not be on the page");
 });
 console.log("screenshot:", await screenshot("real-projects-detail"));
@@ -238,6 +257,10 @@ check("and nothing else of the dialog plugin is (dialog:allow-save is not grante
 });
 
 const removed = await invoke("project_remove", { id });
+const afterRemove = await invoke("sites_list");
+check("a removed project has no site left", () => {
+  assert.deepEqual(afterRemove.ok?.sites, []);
+});
 check("project_remove", () => assert.deepEqual(removed, { ok: null }));
 check("and leaves the folder alone", () => {
   assert.ok(fs.existsSync(path.join(project, "artisan")));

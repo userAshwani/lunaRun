@@ -102,7 +102,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 ### M1.7 Projects & sites
 - [x] Project store (`ProjectStore`, `config/projects.json`, D-036), add, remove (never deletes files), rename, change doc root, and their IPC commands (sub-step a); the native folder picker and drag & drop (sub-step b, D-037)
 - [x] Bindings (line/exact), manual override with incompatibility warning (FR-PJ-04) (stored and validated, and `bound_to` makes an uninstall ask first: sub-step a; the PHP and Node.js controls and the warning from `conflictsWith`: sub-step b, D-037)
-- [ ] Caddyfile generation, validate, reload; per-site port (FR-ST-01..03)
+- [x] Caddyfile generation, validate, reload; per-site port (FR-ST-01..03) (`luna_core::sites::SiteManager`, D-038; the site address on the project page; sub-step c)
 - [ ] Project start/stop = ensure DB + PHP pool + Caddy site
 - [ ] Quick actions: browser, folder, editor, copy DB credentials (FR-PJ-09)
 - [ ] Open terminal with project env (FR-PJ-08, SERVICES §5)

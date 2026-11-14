@@ -5,6 +5,7 @@ import type { ProjectDetection } from "@/bindings/ProjectDetection";
 import type { ProjectPatch } from "@/bindings/ProjectPatch";
 import { onJobDone } from "@/lib/events";
 import { ipc } from "@/lib/ipc";
+import { SITES_KEY } from "./use-sites";
 
 export const PROJECTS_KEY = ["projects", "list"] as const;
 const DETECT_PREFIX = ["projects", "detect"] as const;
@@ -60,6 +61,7 @@ export function useAddProject() {
     mutationFn: (path: string) => ipc.projectAdd(path),
     onSuccess: (added) => {
       queryClient.setQueryData(detectKey(added.project.id), added);
+      void queryClient.invalidateQueries({ queryKey: SITES_KEY });
       return queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
     },
   });
@@ -71,6 +73,7 @@ export function useRemoveProject() {
     mutationFn: (id: string) => ipc.projectRemove(id),
     onSuccess: (_none, id) => {
       queryClient.removeQueries({ queryKey: detectKey(id) });
+      void queryClient.invalidateQueries({ queryKey: SITES_KEY });
       return queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
     },
   });
@@ -85,7 +88,8 @@ export function useUpdateProject() {
       queryClient.setQueryData<Project[]>(PROJECTS_KEY, (list) =>
         list?.map((existing) => (existing.id === project.id ? project : existing)),
       );
-      // A binding or a document root changes what the project resolves to.
+      // A binding or a document root changes what the project resolves to, and so its site.
+      void queryClient.invalidateQueries({ queryKey: SITES_KEY });
       return queryClient.invalidateQueries({ queryKey: detectKey(project.id) });
     },
   });
@@ -102,6 +106,7 @@ export function useRescanWhenRuntimesChange() {
     let unsubscribe: (() => void) | undefined;
     void onJobDone(() => {
       void queryClient.invalidateQueries({ queryKey: DETECT_PREFIX });
+      void queryClient.invalidateQueries({ queryKey: SITES_KEY });
     }).then((off) => {
       if (lifecycle.disposed) off();
       else unsubscribe = off;

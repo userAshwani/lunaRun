@@ -29,6 +29,8 @@
     "allow-project-add",
     "allow-project-detect",
     "allow-project-update",
-    "allow-project-remove"
+    "allow-project-remove",
+    "allow-sites-list",
+    "allow-sites-sync"
   ]
 }

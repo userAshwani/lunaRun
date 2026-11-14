@@ -12,6 +12,8 @@ import {
   renderList,
   requirement,
   shop,
+  siteEntry,
+  sitesView,
 } from "@/test/projects-fixtures";
 import { runtimeJob } from "@/test/runtimes-fixtures";
 
@@ -467,6 +469,162 @@ describe("ProjectDetailPage", () => {
     expect(card.getByText("public (Laravel serves from public/)")).toBeInTheDocument();
     expect(card.getByText("None detected")).toBeInTheDocument();
     expect(card.getByText(/Last scanned/)).toBeInTheDocument();
+  });
+
+  describe("the site", () => {
+    /** The "Site address" row of the About card. */
+    async function siteRow(): Promise<HTMLElement> {
+      const label = await screen.findByText("Site address");
+      const row = label.parentElement;
+      if (!row) throw new Error("no site row");
+      return row;
+    }
+
+    it("shows the address with a way to copy it, and says what is missing for it to answer", async () => {
+      const user = userEvent.setup();
+      backendWith({ sites: () => sitesView([siteEntry("shop")], "stopped") });
+      await openShop();
+
+      const row = await siteRow();
+      expect(await within(row).findByText("http://127.0.0.1:8101")).toBeInTheDocument();
+      expect(row).toHaveTextContent(
+        "Caddy is not running. Start it on the Services page and this address answers.",
+      );
+      expect(row).toHaveTextContent("PHP pages also need the PHP 8.3.14 service to be running");
+      await user.click(within(row).getByRole("button", { name: "Copy address" }));
+      expect(await within(row).findByText("Copied")).toBeInTheDocument();
+      expect(await navigator.clipboard.readText()).toBe("http://127.0.0.1:8101");
+    });
+
+    it("says whether the web server is installed and running", async () => {
+      backendWith({ sites: () => sitesView([siteEntry("shop")], "notInstalled") });
+      await openShop();
+      expect(
+        await screen.findByText(/Caddy, the web server, is not installed/),
+      ).toBeInTheDocument();
+    });
+
+    it("says the web server is serving it when it is", async () => {
+      backendWith({ sites: () => sitesView([siteEntry("shop")], "running") });
+      await openShop();
+      expect(
+        await screen.findByText("Caddy is running and serves this address."),
+      ).toBeInTheDocument();
+    });
+
+    it("says why there is no site yet, and does not invent an address", async () => {
+      backendWith({
+        sites: () =>
+          sitesView([
+            siteEntry("shop", { state: "noPhp", port: null, address: null, phpVersion: null }),
+          ]),
+      });
+      await openShop();
+
+      const row = await siteRow();
+      expect(
+        await within(row).findByText(/No site yet: the PHP this project needs is not installed/),
+      ).toBeInTheDocument();
+      expect(within(row).queryByText(/127\.0\.0\.1/)).not.toBeInTheDocument();
+      expect(within(row).queryByRole("button", { name: "Copy address" })).not.toBeInTheDocument();
+    });
+
+    it("says so when the folder is missing", async () => {
+      backendWith({
+        sites: () =>
+          sitesView([
+            siteEntry("shop", {
+              state: "folderMissing",
+              port: null,
+              address: null,
+              phpVersion: null,
+            }),
+          ]),
+      });
+      await openShop();
+      expect(
+        await screen.findByText("No site: the project folder is missing."),
+      ).toBeInTheDocument();
+    });
+
+    it("says the site could not be read when the backend fails, and the rest of the page still works", async () => {
+      backendWith({ sites: () => backendError("IO", "disk error") });
+      await openShop();
+      expect(await screen.findByText("The site could not be read.")).toBeInTheDocument();
+      expect(await screen.findByText("PHP 8.3.14 is installed")).toBeInTheDocument();
+    });
+
+    it("shows what Caddy refused, keeping the technical message, and tries again on request", async () => {
+      const user = userEvent.setup();
+      let problem: ReturnType<typeof sitesView>["problem"] = {
+        code: "CONFIG_INVALID",
+        message: "validating the Caddyfile: Caddy answered with exit code 1",
+      };
+      backendWith({
+        sites: () => sitesView([siteEntry("shop")], "running", problem),
+        more: {
+          sites_sync: () => {
+            problem = null;
+            return sitesView([siteEntry("shop")], "running", null);
+          },
+        },
+      });
+      await openShop();
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Caddy did not take the latest change");
+      expect(alert).toHaveTextContent(
+        "Caddy rejected the configuration lunaRun generated. It keeps serving what it had.",
+      );
+      expect(alert).toHaveTextContent("Caddy answered with exit code 1");
+      await user.click(within(alert).getByRole("button", { name: "Try again" }));
+
+      await waitFor(() => {
+        expect(screen.queryByText("Caddy did not take the latest change")).not.toBeInTheDocument();
+      });
+      expect(callsTo("sites_sync")).toHaveLength(1);
+    });
+
+    it("names the category for a problem it has no sentence for", async () => {
+      backendWith({
+        sites: () =>
+          sitesView([siteEntry("shop")], "stopped", {
+            code: "NO_FREE_PORT",
+            message: "no free port in 8100-8999",
+          }),
+      });
+      await openShop();
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("The sites could not be given to Caddy. No free port.");
+      expect(alert).toHaveTextContent("no free port in 8100-8999");
+    });
+
+    it("asks for the sites again after a change that can alter them", async () => {
+      const user = userEvent.setup();
+      let stored: Project = shop;
+      backendWith({
+        projects: () => [stored],
+        detect: () => detection(stored),
+        more: {
+          project_update: () => {
+            stored = { ...stored, name: "Renamed" };
+            return stored;
+          },
+        },
+      });
+      await openShop();
+      await screen.findByText("http://127.0.0.1:8101");
+      const before = callsTo("sites_list").length;
+
+      const field = await screen.findByLabelText("Name");
+      await user.clear(field);
+      await user.type(field, "Renamed");
+      await user.click(screen.getByRole("button", { name: "Save name" }));
+
+      await waitFor(() => {
+        expect(callsTo("sites_list").length).toBeGreaterThan(before);
+      });
+    });
   });
 
   describe("settings", () => {

@@ -9,6 +9,9 @@ import type { Recommendation } from "@/bindings/Recommendation";
 import type { Resolution } from "@/bindings/Resolution";
 import type { Requirement } from "@/bindings/Requirement";
 import type { RuntimeResolution } from "@/bindings/RuntimeResolution";
+import type { SiteEntry } from "@/bindings/SiteEntry";
+import type { SitesView } from "@/bindings/SitesView";
+import type { WebServer } from "@/bindings/WebServer";
 import { ToastProvider } from "@/components/toast";
 import { ProjectDetailPage } from "@/features/projects/project-detail-page";
 import { ProjectsPage } from "@/features/projects/projects-page";
@@ -134,6 +137,27 @@ export function detection(
   };
 }
 
+/** A project with a site on `port`, served from PHP 8.3.14. */
+export function siteEntry(projectId: string, extra: Partial<SiteEntry> = {}): SiteEntry {
+  return {
+    projectId,
+    state: "ready",
+    name: `${projectId}-abc123`,
+    port: 8101,
+    address: "http://127.0.0.1:8101",
+    phpVersion: "8.3.14",
+    ...extra,
+  };
+}
+
+export function sitesView(
+  sites: SiteEntry[],
+  webServer: WebServer = "stopped",
+  problem: SitesView["problem"] = null,
+): SitesView {
+  return { sites, webServer, problem };
+}
+
 export const shop = project("shop", { name: "Shop", path: "D:\\Work\\shop" });
 export const blog = project("blog", {
   name: "Blog",
@@ -163,6 +187,8 @@ export function backendWith(
     /** The scan of a project, by id (default: ready PHP). */
     detect?: (id: string) => unknown;
     jobs?: () => unknown;
+    /** The answer of `sites_list` (default: `shop` has a site, Caddy is stopped). */
+    sites?: () => unknown;
     more?: Record<string, (args?: unknown) => unknown>;
   } = {},
 ) {
@@ -174,6 +200,13 @@ export function backendWith(
     runtimes_available: () => available(fresh),
     runtimes_installed: () => [installedPhp],
     jobs_list: handlers.jobs ?? (() => []),
+    sites_list:
+      handlers.sites ??
+      (() =>
+        sitesView([
+          siteEntry("shop"),
+          siteEntry("blog", { port: 8102, address: "http://127.0.0.1:8102" }),
+        ])),
     ...handlers.more,
   });
 }
