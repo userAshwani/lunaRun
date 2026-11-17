@@ -27,6 +27,10 @@ const COMMANDS: &[&str] = &[
     "project_remove",
     "sites_list",
     "sites_sync",
+    "project_start",
+    "project_stop",
+    "project_open",
+    "project_database",
 ];
 
 fn main() {

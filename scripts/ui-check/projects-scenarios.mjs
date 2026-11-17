@@ -206,6 +206,9 @@ const site = (projectId, extra = {}) => ({
   port: 8101,
   address: "http://127.0.0.1:8101",
   phpVersion: "8.3.14",
+  databaseService: null,
+  served: false,
+  running: false,
   ...extra,
 });
 const noSite = (projectId, state) => ({
@@ -215,6 +218,9 @@ const noSite = (projectId, state) => ({
   port: null,
   address: null,
   phpVersion: null,
+  databaseService: null,
+  served: false,
+  running: false,
 });
 const SITES = (webServer = "stopped", problem = null) => ({
   sites: [
@@ -225,6 +231,37 @@ const SITES = (webServer = "stopped", problem = null) => ({
   ],
   webServer,
   problem,
+});
+
+const projectJob = (action, extra = {}) => ({
+  id: "job-p1",
+  key: "project:shop",
+  label: `${action} project Shop`,
+  state: "running",
+  phase: "starting",
+  bytesDone: 0,
+  bytesTotal: null,
+  message: null,
+  error: null,
+  ...extra,
+});
+const SETTINGS = {
+  service: "mysql@8.4",
+  runtime: "mysql",
+  host: "127.0.0.1",
+  port: 3307,
+  database: "shop",
+  username: "root",
+};
+const RUNNING = (served = true, running = true) => ({
+  sites: [
+    site("shop", { served, running, databaseService: "mysql@8.4" }),
+    noSite("blog", "noPhp"),
+    noSite("legacy", "noPhp"),
+    noSite("gone", "folderMissing"),
+  ],
+  webServer: running ? "running" : "stopped",
+  problem: null,
 });
 
 const SCANS = { shop: FULL, blog: NEEDS_INSTALL, legacy: NO_FIT, gone: MISSING };
@@ -320,6 +357,78 @@ export const SCENARIOS = {
       details: { tail: "Error: adapting config using caddyfile: unrecognized directive: bogus" },
     }),
     ready: "Caddy did not take the latest change",
+  },
+  "detail-running": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: RUNNING(),
+    database: SETTINGS,
+    ready: "Served at http://127.0.0.1:8101",
+  },
+  "detail-stopped-with-database": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    database: SETTINGS,
+    ready: "Copy database settings",
+  },
+  "detail-not-answering": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: RUNNING(true, false),
+    ready: "a service it needs is not running",
+  },
+  "detail-starting": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    jobs: [projectJob("Start", { phase: "setup" })],
+    ready: "Bringing up what this project needs",
+  },
+  "detail-stopping": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: RUNNING(),
+    jobs: [projectJob("Stop", { phase: "stopping" })],
+    ready: "Stopping what only this project needs",
+  },
+  "detail-start-failed": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    jobs: [
+      projectJob("Start", {
+        state: "failed",
+        error: {
+          code: "PORT_IN_USE",
+          message: "port 8101 is already in use by httpd.exe (process 4128)",
+          details: { port: 8101, processName: "httpd.exe", pid: 4128 },
+        },
+      }),
+    ],
+    ready: "could not be started",
+  },
+  "detail-open-problem": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    openError: {
+      code: "NOT_FOUND",
+      message: "Visual Studio Code was not found in the usual places",
+      details: { target: "editor" },
+    },
+    steps: [{ click: "Open in editor" }, { wait: "That could not be opened" }],
+    ready: "Open in editor",
+  },
+  "list-running": {
+    route: "/projects",
+    projects: LIST,
+    scans: SCANS,
+    sitesView: RUNNING(),
+    ready: "Running",
   },
   "detail-install": {
     route: "/projects/blog",
@@ -445,6 +554,45 @@ export const TARGETS = {
     ["site note", "Caddy is not running"],
     ["site php hint", "PHP pages also need"],
   ],
+  "detail-running": [
+    ["running badge", "Running"],
+    ["served at", "Served at http://127.0.0.1:8101"],
+    ["stop button", "Stop project"],
+    ["quick action: browser", "Open in browser"],
+    ["quick action: folder", "Open folder"],
+    ["quick action: editor", "Open in editor"],
+    ["database copy", "Copy database settings"],
+    ["database hint", "Connects as root with no password"],
+  ],
+  "detail-stopped-with-database": [
+    ["stopped badge", "Stopped"],
+    ["start explanation", "Starting brings up this project"],
+    ["start button", "Start project"],
+    ["database copy", "Copy database settings"],
+  ],
+  "detail-not-answering": [
+    ["warning badge", "Not answering"],
+    ["explanation", "a service it needs is not running"],
+  ],
+  "detail-starting": [
+    ["starting badge", "Starting"],
+    ["explanation", "Bringing up what this project needs"],
+    ["phase", "Setting up"],
+    ["cancel button", "Cancel"],
+  ],
+  "detail-stopping": [["stopping explanation", "Stopping what only this project needs"]],
+  "detail-start-failed": [
+    ["problem title", "Shop could not be started"],
+    ["problem advice", "Port 8101 is used by httpd.exe"],
+    ["problem message", "port 8101 is already in use by httpd.exe"],
+  ],
+  "detail-open-problem": [
+    ["quick action: editor", "Open in editor"],
+    ["problem title", "That could not be opened"],
+    ["problem text", "Visual Studio Code was not found"],
+    ["problem message", "was not found in the usual places"],
+  ],
+  "list-running": [["running badge", "Running"]],
   "detail-site-running": [["running note", "Caddy is running and serves this address"]],
   "detail-site-not-installed": [["not installed note", "Caddy, the web server, is not installed"]],
   "detail-site-problem": [
@@ -540,6 +688,9 @@ export const bridge = (scenario) => `(() => {
           { runtime: "php", version: "8.3.14", dir: "x", installedAt: 1767225600, rosetta: false, parts: 1 },
         ]);
       }
+      if (cmd === "project_start" || cmd === "project_stop") return Promise.resolve({ id: "job-p1", alreadyRunning: false });
+      if (cmd === "project_open") return s.openError ? Promise.reject(s.openError) : Promise.resolve(null);
+      if (cmd === "project_database") return Promise.resolve(s.database ?? null);
       if (cmd === "sites_list") return Promise.resolve(s.sitesView ?? defaultSites);
       if (cmd === "sites_sync") return Promise.resolve({ ...(s.sitesView ?? defaultSites), problem: null });
       if (cmd === "jobs_list") return Promise.resolve(s.jobs ?? []);

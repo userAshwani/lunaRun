@@ -24,6 +24,7 @@ use luna_core::LunaHome;
 use luna_core::diagnostics::{Arch, Os};
 use luna_core::download::{DownloadOptions, Downloader};
 use luna_core::jobs::{JobManager, JobOptions, JobState};
+use luna_core::launch::ProjectLauncher;
 use luna_core::projects::{DetectionData, ProjectStore, Surroundings};
 use luna_core::registry::{Registry, RegistryHolder};
 use luna_core::runtimes::{Installer, list_installed};
@@ -157,8 +158,19 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
     let controller = ServiceController::new(home.clone(), ports.clone(), supervisor.clone(), os)
         .with_sites(move || source.sites());
 
+    let launcher = ProjectLauncher::new(
+        store.clone(),
+        sites.clone(),
+        controller.clone(),
+        ports.clone(),
+        os,
+    );
     let planned = sites.plan().unwrap();
     assert_eq!(planned.entries[0].state, SiteState::Ready, "{planned:?}");
+    assert!(
+        !planned.entries[0].served,
+        "nothing is served until the user starts the project"
+    );
     assert_eq!(
         planned.entries[0].php_version.as_deref(),
         Some(php_version.as_str())
@@ -166,7 +178,7 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
     let shop_port = planned.entries[0].port.unwrap();
     eprintln!("shop is http://127.0.0.1:{shop_port}, PHP {php_version}");
 
-    // 4. Start the pool and Caddy as the Services page does; Caddy serves the project that was added before it started.
+    // 4. Start the project: its PHP pool and Caddy, with the project in the Caddyfile, as one start.
     let pool = format!(
         "{}@{php_version}",
         if os == Os::Windows {
@@ -176,8 +188,7 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
         }
     );
     let cancel = CancellationToken::new();
-    controller.start(&pool, &cancel, &|_| {}).await.unwrap();
-    controller.start("caddy", &cancel, &|_| {}).await.unwrap();
+    launcher.start(&shop.id, &cancel, &|_| {}).await.unwrap();
     let body = get_ok(shop_port, "/", Duration::from_secs(30)).await;
     assert!(body.contains("hello from shop"), "{body}");
     assert!(body.contains(&format!("php {php_version}")), "{body}");
@@ -186,11 +197,13 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
         "static ok"
     );
     assert_eq!(sites.view().unwrap().web_server, WebServer::Running);
+    let entry = &sites.plan().unwrap().entries[0];
+    assert!(entry.served && entry.running, "{entry:?}");
 
     // 5. A project is added while Caddy runs: validated and reloaded, without a restart.
     let caddy_pid = supervisor.status("caddy").unwrap().pid;
     let blog = store.add(&blog_dir, &data, &around).unwrap().project;
-    assert_eq!(sites.sync().await.unwrap(), SyncOutcome::Reloaded);
+    launcher.start(&blog.id, &cancel, &|_| {}).await.unwrap();
     let blog_port = sites
         .plan()
         .unwrap()
@@ -214,9 +227,10 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
     );
     assert_eq!(sites.sync().await.unwrap(), SyncOutcome::Unchanged);
 
-    // 6. A project is removed: it stops being served, the other keeps answering.
+    // 6. A project is stopped: it stops being served, the other keeps answering, and the shared pool and Caddy stay.
+    launcher.stop(&shop.id).await.unwrap();
     store.remove(&shop.id).unwrap();
-    assert_eq!(sites.sync().await.unwrap(), SyncOutcome::Reloaded);
+    sites.sync().await.unwrap();
     let until = Instant::now() + Duration::from_secs(10);
     while get(shop_port, "/")
         .await
@@ -238,9 +252,20 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
         "its port is free again"
     );
 
-    // 7. Stop in the order of a quit: Caddy first, then PHP.
-    controller.stop("caddy").await.unwrap();
-    controller.stop(&pool).await.unwrap();
+    // 7. The last project stopped takes everything its start began with it: Caddy first, then PHP.
+    launcher.stop(&blog.id).await.unwrap();
+    assert_ne!(
+        supervisor.status("caddy").map(|s| s.state),
+        Some(ServiceState::Running)
+    );
+    assert!(
+        !luna_core::services::pool_is_running(&ports, &supervisor, os, &php_version).unwrap(),
+        "the pool {pool} stopped with the last project"
+    );
+    assert!(
+        get(blog_port, "/").await.is_err(),
+        "nothing answers any more"
+    );
     assert_eq!(
         list_installed(&home).unwrap().len(),
         2,

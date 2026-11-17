@@ -145,7 +145,8 @@ impl Rig {
             .project
     }
 
-    fn laravel(&self, name: &str) -> Project {
+    /// A Laravel project the user has **not** started: it has a site, and Caddy does not serve it.
+    fn idle(&self, name: &str) -> Project {
         self.project(
             name,
             &[
@@ -154,6 +155,13 @@ impl Rig {
                 ("public/index.php", "<?php"),
             ],
         )
+    }
+
+    /// A Laravel project the user has started, so Caddy serves it.
+    fn laravel(&self, name: &str) -> Project {
+        let project = self.idle(name);
+        self.sites.serve(&project.id);
+        project
     }
 
     fn caddyfile(&self) -> String {
@@ -438,6 +446,45 @@ async fn site_names_are_safe_unique_and_short_whatever_the_project_is_called() {
 // ---------------------------------------------------------------------------------------------
 // What Caddy is told
 // ---------------------------------------------------------------------------------------------
+
+#[tokio::test(flavor = "multi_thread")]
+async fn only_a_project_the_user_started_is_in_the_caddyfile() {
+    let rig = rig("sites-started", Os::Windows);
+    install(&rig.bench.home, "php", "8.3.14");
+    install(&rig.bench.home, "caddy", "2.11.7");
+    let shop = rig.idle("shop");
+    let blog = rig.idle("blog");
+
+    // Both have a site (a port, a document root), neither is served.
+    let plan = rig.sites.plan().unwrap();
+    assert_eq!(plan.sites.len(), 2);
+    assert!(plan.served.is_empty());
+    assert!(plan.entries.iter().all(|e| !e.served && !e.running));
+    rig.sites.sync().await.unwrap();
+    assert!(
+        !rig.caddyfile().contains("php_fastcgi"),
+        "{}",
+        rig.caddyfile()
+    );
+
+    rig.sites.serve(&shop.id);
+    rig.sites.sync().await.unwrap();
+    let text = rig.caddyfile();
+    assert_eq!(text.matches("php_fastcgi").count(), 1);
+    assert!(text.contains(&forward(&Path::new(&shop.path).join("public"))));
+    assert!(!text.contains(&forward(Path::new(&blog.path))));
+    let entries = rig.sites.plan().unwrap().entries;
+    assert!(entries[0].served && !entries[1].served);
+    assert!(
+        !entries[0].running,
+        "served is not running: Caddy and the pool are not up"
+    );
+
+    rig.sites.unserve(&shop.id);
+    rig.sites.sync().await.unwrap();
+    assert!(!rig.caddyfile().contains("php_fastcgi"));
+    assert!(rig.sites.sites().unwrap().is_empty());
+}
 
 #[tokio::test(flavor = "multi_thread")]
 async fn the_caddyfile_holds_a_block_per_site_and_nothing_is_written_without_caddy() {

@@ -101,6 +101,7 @@ export const en = {
     RELOAD_FAILED: "The service could not load its new configuration",
     INVALID_INPUT: "That value cannot be used",
     PROJECT_EXISTS: "Project already added",
+    NO_SITE: "The project has no site yet",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {
@@ -614,6 +615,62 @@ export const en = {
         "No PHP version satisfies every requirement in composer.json and composer.lock. Only composer.json is used.",
       FRAMEWORK_VERSION_UNKNOWN:
         "The Laravel version could not be read, so the usual PHP range for it could not be looked up.",
+    },
+    run: {
+      title: "Run this project",
+      status: {
+        running: "Running",
+        stopped: "Stopped",
+        starting: "Starting",
+        stopping: "Stopping",
+        notAnswering: "Not answering",
+      },
+      explain: {
+        stopped:
+          "Starting brings up this project's PHP, the web server and, if it uses one, its database. Nothing else is touched.",
+        running: "Served at {{address}}.",
+        notAnswering:
+          "You started this project, but a service it needs is not running. Start it again.",
+        starting: "Bringing up what this project needs.",
+        stopping: "Stopping what only this project needs.",
+      },
+      start: "Start project",
+      startLabel: "Start {{name}}",
+      stop: "Stop project",
+      stopLabel: "Stop {{name}}",
+      cancel: "Cancel",
+      cancelLabel: "Cancel starting {{name}}",
+      progressLabel: "Starting {{name}}",
+      problem: {
+        startTitle: "{{name}} could not be started",
+        stopTitle: "{{name}} could not be stopped",
+        portInUse:
+          "Port {{port}} is used by {{process}}. Stop that program or use another port on the Services page.",
+        portInUseUnknown: "Port {{port}} is already in use. Use another port on the Services page.",
+        noSitePhp:
+          "Its PHP is not installed. Install it from the checklist above, then start the project.",
+        noSiteFolder: "Its folder is not there, so there is nothing to serve.",
+        notInstalled: "Something it needs is not installed. See the Runtimes page.",
+        dismiss: "Dismiss",
+      },
+      actions: {
+        label: "Quick actions",
+        browser: "Open in browser",
+        folder: "Open folder",
+        editor: "Open in editor",
+        database: "Copy database settings",
+        databaseCopied: "Copied",
+        databaseFailed: "Could not copy",
+        databaseHint:
+          "Connects as root with no password on port {{port}}. The password in your .env file is never read.",
+        browserNeedsSite: "This project has no site yet.",
+      },
+      open: {
+        title: "That could not be opened",
+        editorMissing:
+          "Visual Studio Code was not found in the usual places. Install it, or open the folder instead.",
+        dismiss: "Dismiss",
+      },
     },
     site: {
       label: "Site address",

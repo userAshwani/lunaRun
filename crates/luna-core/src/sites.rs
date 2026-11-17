@@ -13,6 +13,7 @@
 //!
 //! Nothing is written into a project folder: its path is only text in the Caddyfile (golden rule 3).
 
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -25,12 +26,15 @@ use ts_rs::TS;
 use crate::diagnostics::{Arch, Os};
 use crate::error::{LunaError, Result};
 use crate::paths::LunaHome;
-use crate::projects::{DetectionData, Project, ProjectStore, Surroundings, resolve_project};
-use crate::registry::{CalDate, RegistryHolder};
-use crate::runtimes::list_installed;
+use crate::projects::{
+    DatabaseSuggestion, DetectionData, DetectionReport, Project, ProjectStore, Resolution,
+    Surroundings, resolve_project,
+};
+use crate::registry::{CalDate, RegistryHolder, RuntimeCatalog};
+use crate::runtimes::{InstalledRuntime, list_installed};
 use crate::services::{
-    CaddyDefinition, PortAllocator, PortPurpose, SITE_PREFIX, Site, Supervisor, caddy_definition,
-    pool_ports, web_server_runtime,
+    CaddyDefinition, PortAllocator, PortPurpose, SITE_PREFIX, ServiceState, Site, Supervisor,
+    caddy_definition, pool_is_running, pool_ports, web_server_runtime,
 };
 
 /// `caddy validate` and `caddy reload` read one small file and talk to a local port.
@@ -65,6 +69,13 @@ pub struct SiteEntry {
     pub address: Option<String>,
     /// The PHP the site runs on, `8.3.14`, when it has one.
     pub php_version: Option<String>,
+    /// The database service a start of the project starts too (`mysql@8.4`): the one its `.env` expects, when that
+    /// runtime is installed.
+    pub database_service: Option<String>,
+    /// The user started this project in this session: Caddy serves it. Only a started project is in the Caddyfile.
+    pub served: bool,
+    /// It is served **and** Caddy and the pool of its PHP both run: its address answers.
+    pub running: bool,
 }
 
 /// Is there a web server to serve the sites?
@@ -96,8 +107,10 @@ pub struct SitesView {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SitePlan {
     pub entries: Vec<SiteEntry>,
-    /// The sites Caddy serves: the `Ready` entries, in the same order.
+    /// Every `Ready` site, in the same order as the entries.
     pub sites: Vec<Site>,
+    /// The sites of the projects the user started: **what Caddy serves**.
+    pub served: Vec<Site>,
 }
 
 /// What a [`sync`](SiteManager::sync) did.
@@ -131,6 +144,9 @@ pub struct SiteManager {
     problem: Arc<Mutex<Option<LunaError>>>,
     /// One sync at a time: two would race on the Caddyfile and on the reload.
     gate: Arc<tokio::sync::Mutex<()>>,
+    /// The ids of the projects the user started in this session. Not stored: the services stop with lunaRun (D-029),
+    /// so nothing is served after a restart until the user starts a project again (D-039).
+    started: Arc<Mutex<HashSet<String>>>,
 }
 
 /// `Shop (café)` and id `4b1e0c…` become `shop-caf-4b1e0c`: ASCII letters, digits and `-`, unique by the id.
@@ -148,6 +164,15 @@ fn site_name(project: &Project) -> String {
     let slug = if slug.is_empty() { "site" } else { slug };
     let short: String = project.id.chars().take(6).collect();
     format!("{slug}-{short}")
+}
+
+/// The database service a start of a project starts: `mysql@8.4`, only when that version line is installed.
+fn database_service(suggestion: &DatabaseSuggestion) -> Option<String> {
+    let (runtime, line) = (suggestion.runtime.as_ref()?, suggestion.line.as_ref()?);
+    suggestion
+        .installed_version
+        .as_ref()
+        .map(|_| format!("{runtime}@{line}"))
 }
 
 fn site_key(project: &Project) -> String {
@@ -177,6 +202,7 @@ impl SiteManager {
             applied: Arc::new(Mutex::new(None)),
             problem: Arc::new(Mutex::new(None)),
             gate: Arc::new(tokio::sync::Mutex::new(())),
+            started: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
@@ -190,6 +216,58 @@ impl SiteManager {
         self
     }
 
+    /// What is installed and what the registry offers for this computer: what a project is resolved against.
+    fn world(&self) -> Result<(Vec<InstalledRuntime>, Vec<RuntimeCatalog>)> {
+        let today = CalDate::today()
+            .ok_or_else(|| LunaError::internal("the system clock does not give a usable date"))?;
+        Ok((
+            list_installed(&self.home)?,
+            self.registry
+                .available(self.os, Arch::current(), today)
+                .runtimes,
+        ))
+    }
+
+    /// What `project` needs and what it resolves to now, as the page shows it. Read-only.
+    ///
+    /// # Errors
+    /// I/O errors from listing what is installed.
+    pub fn evaluate(&self, project: &Project) -> Result<(DetectionReport, Resolution)> {
+        let (installed, available) = self.world()?;
+        let around = Surroundings {
+            installed: &installed,
+            available: &available,
+            os: self.os,
+        };
+        let report = crate::projects::detect(Path::new(&project.path), &self.data);
+        let resolution = resolve_project(project, &report, &self.data, &around);
+        Ok((report, resolution))
+    }
+
+    /// The user starts this project: Caddy will serve it (the next [`sync`](Self::sync) or start of Caddy writes it in).
+    pub fn serve(&self, project_id: &str) {
+        self.started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(project_id.to_owned());
+    }
+
+    /// The user stops this project: Caddy no longer serves it.
+    pub fn unserve(&self, project_id: &str) {
+        self.started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(project_id);
+    }
+
+    /// Is this project one the user started in this session?
+    pub fn is_served(&self, project_id: &str) -> bool {
+        self.started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .contains(project_id)
+    }
+
     /// The site of every project. Reads each project folder (read-only) and asks the allocator for ports: the first
     /// time a project gets a site its port is chosen and saved, which is the one write.
     ///
@@ -197,21 +275,20 @@ impl SiteManager {
     /// `NO_FREE_PORT` and I/O and state-file errors; a project whose files cannot be read is not an error (its scan
     /// carries warnings and it simply has no PHP requirement).
     pub fn plan(&self) -> Result<SitePlan> {
-        let installed = list_installed(&self.home)?;
-        let today = CalDate::today()
-            .ok_or_else(|| LunaError::internal("the system clock does not give a usable date"))?;
-        let available = self
-            .registry
-            .available(self.os, Arch::current(), today)
-            .runtimes;
+        let (installed, available) = self.world()?;
         let around = Surroundings {
             installed: &installed,
             available: &available,
             os: self.os,
         };
 
+        let caddy_up = self
+            .supervisor
+            .status("caddy")
+            .is_some_and(|status| status.state == ServiceState::Running);
         let mut entries = Vec::new();
         let mut sites = Vec::new();
+        let mut served = Vec::new();
         for project in self.store.list() {
             let name = site_name(&project);
             let folder = Path::new(&project.path);
@@ -222,6 +299,9 @@ impl SiteManager {
                 port: None,
                 address: None,
                 php_version: None,
+                database_service: None,
+                served: self.is_served(&project.id),
+                running: false,
             };
             if !folder.is_dir() {
                 entries.push(entry);
@@ -253,27 +333,40 @@ impl SiteManager {
                 .ports
                 .assign(&site_key(&project), PortPurpose::Site)?
                 .port;
-            sites.push(Site {
+            let site = Site {
                 name,
                 port,
                 root,
                 php_ports: pool_ports(&self.ports, self.os, &php.version)?,
-            });
+            };
             entry.state = SiteState::Ready;
             entry.port = Some(port);
             entry.address = Some(format!("http://127.0.0.1:{port}"));
+            entry.database_service = resolution.database.as_ref().and_then(database_service);
+            entry.running = entry.served
+                && caddy_up
+                && pool_is_running(&self.ports, &self.supervisor, self.os, &php.version)?;
             entry.php_version = Some(php.version);
+            if entry.served {
+                served.push(site.clone());
+            }
+            sites.push(site);
             entries.push(entry);
         }
-        Ok(SitePlan { entries, sites })
+        Ok(SitePlan {
+            entries,
+            sites,
+            served,
+        })
     }
 
-    /// The sites Caddy serves, for [`ServiceController::with_sites`](crate::services::ServiceController::with_sites).
+    /// The sites Caddy serves (the projects the user started), for
+    /// [`ServiceController::with_sites`](crate::services::ServiceController::with_sites).
     ///
     /// # Errors
     /// What [`plan`](Self::plan) refuses with.
     pub fn sites(&self) -> Result<Vec<Site>> {
-        Ok(self.plan()?.sites)
+        Ok(self.plan()?.served)
     }
 
     /// What the page shows: each project's site, whether there is a web server to serve it, and the last problem.
@@ -329,7 +422,7 @@ impl SiteManager {
             let definition = match web_server_runtime(&installed) {
                 Some(runtime) => {
                     let mut definition =
-                        caddy_definition(&this.home, &this.ports, runtime, &plan.sites, this.os)?;
+                        caddy_definition(&this.home, &this.ports, runtime, &plan.served, this.os)?;
                     if let Some(hook) = &this.hook {
                         hook(&mut definition);
                     }

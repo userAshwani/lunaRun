@@ -107,6 +107,7 @@ export function useRescanWhenRuntimesChange() {
     void onJobDone(() => {
       void queryClient.invalidateQueries({ queryKey: DETECT_PREFIX });
       void queryClient.invalidateQueries({ queryKey: SITES_KEY });
+      void queryClient.invalidateQueries({ queryKey: ["projects", "database"] });
     }).then((off) => {
       if (lifecycle.disposed) off();
       else unsubscribe = off;

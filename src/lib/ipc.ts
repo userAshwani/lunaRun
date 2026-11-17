@@ -5,7 +5,9 @@ import type { AppInfo } from "@/bindings/AppInfo";
 import type { InstalledView } from "@/bindings/InstalledView";
 import type { JobInfo } from "@/bindings/JobInfo";
 import type { Leftover } from "@/bindings/Leftover";
+import type { DatabaseSettings } from "@/bindings/DatabaseSettings";
 import type { LunaError } from "@/bindings/LunaError";
+import type { OpenTarget } from "@/bindings/OpenTarget";
 import type { Project } from "@/bindings/Project";
 import type { ProjectDetection } from "@/bindings/ProjectDetection";
 import type { ProjectPatch } from "@/bindings/ProjectPatch";
@@ -133,4 +135,15 @@ export const ipc = {
   sitesList: () => call<SitesView>("sites_list"),
   /** Give Caddy the sites as they are now (the "Try again" after a problem), and say how that went. */
   sitesSync: () => call<SitesView>("sites_sync"),
+  /**
+   * Start a project as a background job `project:<id>`: its database (when it expects one that is installed), its PHP
+   * pool and Caddy with the project in the Caddyfile. All or none; `NO_SITE` when its PHP is not installed.
+   */
+  projectStart: (id: string) => call<StartedJob>("project_start", { id }),
+  /** Stop a project: Caddy stops serving it, and what its start began is stopped unless another project needs it. */
+  projectStop: (id: string) => call<StartedJob>("project_stop", { id }),
+  /** Open a project's site in the browser, its folder in the file manager, or its folder in Visual Studio Code. */
+  projectOpen: (id: string, target: OpenTarget) => call<null>("project_open", { id, target }),
+  /** How to connect to the database lunaRun runs for a project (root, no password), or `null`. */
+  projectDatabase: (id: string) => call<DatabaseSettings | null>("project_database", { id }),
 } as const;

@@ -16,4 +16,17 @@ address: string | null,
 /**
  * The PHP the site runs on, `8.3.14`, when it has one.
  */
-phpVersion: string | null, };
+phpVersion: string | null, 
+/**
+ * The database service a start of the project starts too (`mysql@8.4`): the one its `.env` expects, when that
+ * runtime is installed.
+ */
+databaseService: string | null, 
+/**
+ * The user started this project in this session: Caddy serves it. Only a started project is in the Caddyfile.
+ */
+served: boolean, 
+/**
+ * It is served **and** Caddy and the pool of its PHP both run: its address answers.
+ */
+running: boolean, };

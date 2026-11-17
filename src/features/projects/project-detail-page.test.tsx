@@ -542,9 +542,8 @@ describe("ProjectDetailPage", () => {
           ]),
       });
       await openShop();
-      expect(
-        await screen.findByText("No site: the project folder is missing."),
-      ).toBeInTheDocument();
+      // In the About card and in the Run card, which says why Start is not possible.
+      expect(await screen.findAllByText("No site: the project folder is missing.")).toHaveLength(2);
     });
 
     it("says the site could not be read when the backend fails, and the rest of the page still works", async () => {

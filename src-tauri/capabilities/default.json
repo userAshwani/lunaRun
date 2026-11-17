@@ -31,6 +31,10 @@
     "allow-project-update",
     "allow-project-remove",
     "allow-sites-list",
-    "allow-sites-sync"
+    "allow-sites-sync",
+    "allow-project-start",
+    "allow-project-stop",
+    "allow-project-open",
+    "allow-project-database"
   ]
 }

@@ -87,6 +87,9 @@ pub enum ErrorCode {
     InvalidInput,
     /// The folder is already one of the projects (`details.id` and `details.name` say which).
     ProjectExists,
+    /// The project has no site, so there is nothing to start or open: its PHP is not installed or its folder is gone
+    /// (`details.reason` is `php` or `folder`).
+    NoSite,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

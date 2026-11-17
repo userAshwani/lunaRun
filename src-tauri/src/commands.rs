@@ -6,6 +6,8 @@
 
 use luna_core::diagnostics::{self, AppInfo, Arch, Os};
 use luna_core::jobs::{JobInfo, JobManager, StartedJob};
+use luna_core::launch::{DatabaseSettings, ProjectAction, ProjectLauncher};
+use luna_core::opener::{self, OpenTarget};
 use luna_core::projects::{
     DetectionData, Project, ProjectDetection, ProjectPatch, ProjectStore, Surroundings,
 };
@@ -315,6 +317,73 @@ pub async fn sites_sync(sites: State<'_, SiteManager>) -> Result<SitesView, Luna
     let sites = sites.inner().clone();
     apply_sites(&sites).await;
     blocking(move || sites.view()).await
+}
+
+/// Start a project as a background job `project:<id>` (`job:progress`, `job:done`, Cancel): its database (when its `.env`
+/// expects MySQL or MariaDB and that is installed), its PHP pool and Caddy with the project in the Caddyfile, each only
+/// when it is not already running. All or none. `NO_SITE` when its PHP is not installed or its folder is gone.
+#[tauri::command]
+pub fn project_start(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    launcher.run(&jobs, &id, ProjectAction::Start)
+}
+
+/// Stop a project as a background job: Caddy stops serving it, and the services its start began are stopped unless
+/// another started project needs them. What the user started by hand is left running.
+#[tauri::command]
+pub fn project_stop(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+    jobs: State<'_, JobManager>,
+) -> Result<StartedJob, LunaError> {
+    launcher.run(&jobs, &id, ProjectAction::Stop)
+}
+
+/// Open the site of a project in the browser, its folder in the file manager, or its folder in Visual Studio Code. The
+/// page only names the project and what to open: the address and the folder are the ones lunaRun stored.
+#[tauri::command]
+pub async fn project_open(
+    id: String,
+    target: OpenTarget,
+    projects: State<'_, ProjectStore>,
+    sites: State<'_, SiteManager>,
+) -> Result<(), LunaError> {
+    let (projects, sites) = (projects.inner().clone(), sites.inner().clone());
+    blocking(move || {
+        let project = projects.get(&id)?;
+        let address = if target == OpenTarget::Browser {
+            sites
+                .plan()?
+                .entries
+                .into_iter()
+                .find(|entry| entry.project_id == id)
+                .and_then(|entry| entry.address)
+        } else {
+            None
+        };
+        let command = opener::command_here(
+            target,
+            address.as_deref(),
+            std::path::Path::new(&project.path),
+        )?;
+        opener::spawn(&command)
+    })
+    .await
+}
+
+/// How to connect to the database lunaRun runs for a project (`root`, no password, the port lunaRun gave it), or
+/// nothing when the project expects no MySQL or MariaDB or that is not installed. The password of the `.env` file is
+/// never read.
+#[tauri::command]
+pub async fn project_database(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+) -> Result<Option<DatabaseSettings>, LunaError> {
+    let launcher = launcher.inner().clone();
+    blocking(move || launcher.database_settings(&id)).await
 }
 
 /// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is

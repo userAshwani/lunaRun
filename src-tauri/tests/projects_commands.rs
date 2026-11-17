@@ -12,9 +12,12 @@ use std::sync::Arc;
 
 use luna_core::diagnostics::{Arch, Os};
 use luna_core::jobs::{JobManager, JobOptions, JobState};
+use luna_core::launch::{DatabaseSettings, ProjectLauncher};
+use luna_core::opener::OpenTarget;
 use luna_core::projects::{DetectionData, ProjectPatch, ProjectStore};
 use luna_core::registry::RegistryHolder;
 use luna_core::runtimes::InstallReceipt;
+use luna_core::sites::SiteManager;
 use luna_core::{ErrorCode, LunaHome};
 use lunarun_lib::{commands, services};
 use serde_json::json;
@@ -339,8 +342,12 @@ fn a_project_with_php_installed_is_served_and_the_caddyfile_follows_the_list() {
     assert_eq!(view["webServer"], "stopped", "installed, not running");
     assert_eq!(view["problem"], serde_json::Value::Null);
 
-    // The Caddyfile was written when the project was added, without anyone asking for it.
+    // A project is in the Caddyfile once it is started, not before: the project has a site and Caddy does not serve it.
     let served = dir.join("public").display().to_string().replace('\\', "/");
+    assert!(!caddyfile(&b).contains(&served), "{}", caddyfile(&b));
+    assert_eq!(site["served"], false);
+    b.app.state::<SiteManager>().serve(&id);
+    tauri::async_runtime::block_on(commands::sites_sync(b.app.state())).unwrap();
     let text = caddyfile(&b);
     assert!(text.contains(&format!("http://localhost:{port}")), "{text}");
     assert!(text.contains(&served), "{text}");
@@ -405,11 +412,158 @@ fn installing_php_gives_the_project_a_site_without_anyone_asking() {
             ("index.php", "<?php"),
         ],
     );
-    b.add(&dir).unwrap();
+    let id = b.add(&dir).unwrap()["project"]["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
     assert_eq!(sites_view(&b)["sites"][0]["state"], "noPhp");
 
     b.install_fake("php", "8.3.14");
+    b.app.state::<SiteManager>().serve(&id);
     tauri::async_runtime::block_on(commands::sites_sync(b.app.state())).unwrap();
     assert_eq!(sites_view(&b)["sites"][0]["state"], "ready");
     assert!(caddyfile(&b).contains("php_fastcgi"));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Starting and stopping a project, and the quick actions
+// ---------------------------------------------------------------------------------------------
+
+fn project_id(added: &serde_json::Value) -> String {
+    added["project"]["id"].as_str().unwrap().to_owned()
+}
+
+fn wait_job(b: &Bench, started: &luna_core::jobs::StartedJob) -> luna_core::jobs::JobInfo {
+    tauri::async_runtime::block_on(b.app.state::<JobManager>().wait(&started.id)).unwrap()
+}
+
+#[test]
+fn the_new_commands_say_not_found_for_a_project_that_is_not_there() {
+    let b = bench();
+    let codes = [
+        commands::project_start("nope".into(), b.app.state(), b.app.state())
+            .unwrap_err()
+            .code,
+        commands::project_stop("nope".into(), b.app.state(), b.app.state())
+            .unwrap_err()
+            .code,
+        // Nothing is opened for a project that does not exist: the id is checked before anything is run.
+        tauri::async_runtime::block_on(commands::project_open(
+            "nope".into(),
+            OpenTarget::Folder,
+            b.app.state(),
+            b.app.state(),
+        ))
+        .unwrap_err()
+        .code,
+        tauri::async_runtime::block_on(commands::project_database("nope".into(), b.app.state()))
+            .unwrap_err()
+            .code,
+    ];
+    assert_eq!(codes, [ErrorCode::NotFound; 4]);
+}
+
+#[test]
+fn starting_a_project_whose_php_is_not_installed_fails_the_job_with_no_site() {
+    let b = bench();
+    b.install_fake("caddy", "2.11.7");
+    let dir = b.folder(
+        "no php yet",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+        ],
+    );
+    let id = project_id(&b.add(&dir).unwrap());
+
+    let started = commands::project_start(id.clone(), b.app.state(), b.app.state()).unwrap();
+    let info = wait_job(&b, &started);
+
+    assert_eq!(info.key, format!("project:{id}"));
+    assert_eq!(info.state, JobState::Failed);
+    let error = info.error.unwrap();
+    assert_eq!(error.code, ErrorCode::NoSite);
+    assert_eq!(error.details.unwrap()["reason"], "php");
+    // Nothing was started, so the project is not served.
+    assert_eq!(sites_view(&b)["sites"][0]["served"], false);
+}
+
+#[test]
+fn stopping_a_project_that_was_never_started_succeeds() {
+    let b = bench();
+    let dir = b.folder("idle", &[("composer.json", "{}"), ("index.php", "<?php")]);
+    let id = project_id(&b.add(&dir).unwrap());
+
+    let started = commands::project_stop(id, b.app.state(), b.app.state()).unwrap();
+
+    assert_eq!(wait_job(&b, &started).state, JobState::Succeeded);
+}
+
+#[test]
+fn the_browser_cannot_be_opened_for_a_project_without_a_site() {
+    let b = bench();
+    let dir = b.folder(
+        "no site",
+        &[("composer.json", "{}"), ("index.php", "<?php")],
+    );
+    let id = project_id(&b.add(&dir).unwrap());
+
+    let error = tauri::async_runtime::block_on(commands::project_open(
+        id,
+        OpenTarget::Browser,
+        b.app.state(),
+        b.app.state(),
+    ))
+    .unwrap_err();
+
+    assert_eq!(error.code, ErrorCode::NoSite, "{}", error.message);
+}
+
+#[test]
+fn the_database_settings_arrive_as_the_json_the_page_reads() {
+    let b = bench();
+    b.install_fake("php", "8.3.14");
+    let dir = b.folder(
+        "with db",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+            (
+                ".env",
+                "DB_CONNECTION=mysql\nDB_DATABASE=shop\nDB_PASSWORD=never-in-a-report\n",
+            ),
+        ],
+    );
+    let added = b.add(&dir).unwrap();
+    let id = project_id(&added);
+    let database = |b: &Bench| {
+        tauri::async_runtime::block_on(commands::project_database(id.clone(), b.app.state()))
+            .unwrap()
+    };
+    assert_eq!(database(&b), None, "the runtime is not installed");
+
+    // Install the MySQL line the registry suggests for this project.
+    let project = b.app.state::<ProjectStore>().get(&id).unwrap();
+    let (_, resolution) = b.app.state::<SiteManager>().evaluate(&project).unwrap();
+    let line = resolution.database.unwrap().line.unwrap();
+    b.install_fake("mysql", &format!("{line}.13"));
+
+    let settings: DatabaseSettings = database(&b).unwrap();
+    let json = serde_json::to_value(&settings).unwrap();
+    assert_eq!(json["service"], format!("mysql@{line}"));
+    assert_eq!(json["runtime"], "mysql");
+    assert_eq!(json["host"], "127.0.0.1");
+    assert_eq!(json["username"], "root");
+    assert_eq!(json["database"], "shop");
+    assert!(json["port"].as_u64().unwrap() >= 3306);
+    assert!(
+        !json.to_string().contains("never-in-a-report") && json.get("password").is_none(),
+        "no password, of the .env file or any other: {json}"
+    );
+}
+
+#[test]
+fn the_launcher_is_part_of_the_apps_state() {
+    let b = bench();
+    let _ = b.app.state::<ProjectLauncher>();
 }

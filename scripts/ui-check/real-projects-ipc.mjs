@@ -213,6 +213,42 @@ check("sites_sync is permitted and answers with the same view", () => {
   assert.deepEqual(siteSync, siteView);
 });
 
+// Starting a project. Nothing is installed in this fresh data folder, so a start is refused for what it is: the job
+// fails with NO_SITE and nothing is left running. The commands are permitted and honest.
+const startedJob = await invoke("project_start", { id });
+check("project_start is permitted and starts a job named after the project", () => {
+  assert.ok(startedJob.ok, JSON.stringify(startedJob));
+  assert.ok(startedJob.ok.id);
+});
+let finishedJob = null;
+for (let attempt = 0; attempt < 60 && !finishedJob; attempt++) {
+  const jobs = await invoke("jobs_list");
+  const found = jobs.ok?.find((job) => job.id === startedJob.ok?.id);
+  if (found && found.state !== "running") finishedJob = found;
+  else await new Promise((r) => setTimeout(r, 250));
+}
+check("the start fails with NO_SITE without PHP, and says why", () => {
+  assert.ok(finishedJob, "the job never finished");
+  assert.equal(finishedJob.key, `project:${id}`);
+  assert.equal(finishedJob.state, "failed");
+  assert.equal(finishedJob.error.code, "NO_SITE");
+  assert.equal(finishedJob.error.details.reason, "php");
+});
+const stoppedJob = await invoke("project_stop", { id });
+check("project_stop is permitted", () => assert.ok(stoppedJob.ok, JSON.stringify(stoppedJob)));
+const browser = await invoke("project_open", { id, target: "browser" });
+check("the browser is not opened for a project without a site", () => {
+  assert.equal(browser.err?.code, "NO_SITE");
+});
+const database = await invoke("project_database", { id });
+check("project_database is permitted and there is no database to connect to", () => {
+  assert.deepEqual(database, { ok: null });
+});
+const nope = await invoke("project_open", { id: "nope", target: "folder" });
+check("an unknown project is NOT_FOUND and nothing is opened", () => {
+  assert.equal(nope.err?.code, "NOT_FOUND");
+});
+
 // The pages themselves, rendered by the real webview of the real app.
 await evaluate("location.hash = '#/projects'");
 const listShown = await waitForText("Shop é");
@@ -238,11 +274,36 @@ check("with PHP, the extensions, the document root and Settings", () => {
   assert.ok(detailText.includes("PHP extensions"), detailText);
   assert.ok(detailText.includes("Document root"), detailText);
   assert.ok(detailText.includes("PHP version"), detailText);
+  assert.ok(detailText.includes("Run this project"), detailText);
+  assert.ok(detailText.includes("Start project"), detailText);
+  assert.ok(detailText.includes("Open in browser"), detailText);
   assert.ok(detailText.includes("Site address"), detailText);
   assert.ok(detailText.includes("No site yet"), detailText);
   assert.ok(!detailText.includes("never-in-a-report"), "the password must not be on the page");
 });
 console.log("screenshot:", await screenshot("real-projects-detail"));
+
+// "Open folder" really opens the file manager (Windows: an Explorer window for the project folder, which is then
+// closed again). The browser and the editor open windows that cannot be closed this way and are not opened by a check.
+if (process.platform === "win32") {
+  const opened = await invoke("project_open", { id, target: "folder" });
+  const script = `
+    $shell = New-Object -ComObject Shell.Application
+    for ($i = 0; $i -lt 40; $i++) {
+      foreach ($window in $shell.Windows()) {
+        if ($window.LocationURL -like '*mon%20projet*') { $window.Quit(); 'closed'; exit 0 }
+      }
+      Start-Sleep -Milliseconds 250
+    }
+    'not found'`;
+  const answer = spawnSync("powershell", ["-NoProfile", "-Command", script], {
+    encoding: "utf8",
+  }).stdout.trim();
+  check("project_open opens the project folder in Explorer", () => {
+    assert.deepEqual(opened, { ok: null });
+    assert.equal(answer, "closed", `no Explorer window for the folder: ${answer}`);
+  });
+}
 
 // The folder picker is a native dialog and cannot be driven from here, but the permission can be told apart from the
 // call itself: a call that is not allowed fails with "not allowed", one that is allowed fails on its (deliberately

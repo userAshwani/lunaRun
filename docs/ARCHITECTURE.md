@@ -226,7 +226,10 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `project_detect(id)` | `ProjectDetection` ("Re-scan": reads the folder again; an unreadable folder is a warning in the report, not an error) |
 | | `project_update(id, patch)` | `Project`; `patch` is `{ name?, docRoot?: {kind:"auto"} or {kind:"use",path}, php?, node?: {kind:"auto"} or {kind:"use",binding} }`; a part that is not acceptable is `INVALID_INPUT` (`details.field`) and nothing changes |
 | | `project_remove(id)` | `()` (never deletes files on disk; the project stops being served and its port is freed) |
-| Sites | `sites_list()` | `SitesView` = `{ sites: SiteEntry[], webServer: notInstalled\|stopped\|running, problem }` (one `SiteEntry` per project: `state` ready, noPhp or folderMissing, `port`, `address`, `phpVersion`; `problem` is why the last change could not be given to Caddy; D-038) |
+| Sites | `sites_list()` | `SitesView` = `{ sites: SiteEntry[], webServer: notInstalled\|stopped\|running, problem }` (one `SiteEntry` per project: `state` ready, noPhp or folderMissing, `port`, `address`, `phpVersion`, `databaseService`, `served` (the user started it), `running` (served, Caddy and its PHP pool up); `problem` is why the last change could not be given to Caddy; D-038) |
+| | `project_start(id)` / `project_stop(id)` | `StartedJob` (job `project:<id>`, labels `Start project <name>` and `Stop project <name>`; a start brings up the database, the PHP pool and Caddy with the project in the Caddyfile, all or none; `NO_SITE` when its PHP is not installed; a stop ends only what the start began and no other started project needs; D-039) |
+| | `project_open(id, target: "browser"\|"folder"\|"editor")` | `()` (the address and the folder are the ones lunaRun stored; the page sends only the id and the target; `NOT_FOUND` with `details.target` `editor` when Visual Studio Code is not installed) |
+| | `project_database(id)` | `DatabaseSettings \| null` (how to connect to the database lunaRun runs for the project: `root`, no password, the port lunaRun gave it) |
 | | `sites_sync()` | `SitesView` (write the Caddyfile and, when Caddy runs, validate and reload it; the page's "Try again") |
 | | `project_start(id)` / `project_stop(id)` | `()` |
 | | `project_open(id, target: "browser"\|"terminal"\|"folder"\|"editor")` | `()` |

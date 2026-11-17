@@ -96,7 +96,11 @@ pub fn run() {
             commands::project_update,
             commands::project_remove,
             commands::sites_list,
-            commands::sites_sync
+            commands::sites_sync,
+            commands::project_start,
+            commands::project_stop,
+            commands::project_open,
+            commands::project_database
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

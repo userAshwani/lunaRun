@@ -18,6 +18,8 @@ use std::time::Duration;
 use super::databases::quoted;
 use super::ports::{PortAllocator, PortPurpose};
 use super::spec::{LogFile, ServiceSpec, StopMethod, StopPlan};
+use super::state::ServiceState;
+use super::supervisor::Supervisor;
 use crate::diagnostics::Os;
 use crate::error::{ErrorCode, IoResultExt, LunaError, Result};
 use crate::paths::LunaHome;
@@ -45,7 +47,7 @@ pub(super) fn pool_kind(os: Os) -> &'static str {
 }
 
 /// `php-fcgi@8.3.36` on Windows, `php-fpm@8.3.36` elsewhere: names a pool, and is the key of its ports.
-pub(super) fn pool_id(os: Os, version: &str) -> String {
+pub fn pool_id(os: Os, version: &str) -> String {
     format!("{}@{version}", pool_kind(os))
 }
 
@@ -73,6 +75,25 @@ pub fn pool_ports(ports: &PortAllocator, os: Os, version: &str) -> Result<Vec<u1
     Ok(ports
         .assign(&pool, PortPurpose::PhpFastCgi { pool: size })?
         .ports())
+}
+
+/// Is **every** process of the pool of PHP `version` running? (A Windows pool is several workers.)
+///
+/// # Errors
+/// State-file errors from reading the pool size.
+pub fn pool_is_running(
+    ports: &PortAllocator,
+    supervisor: &Supervisor,
+    os: Os,
+    version: &str,
+) -> Result<bool> {
+    let members = pool_members(ports, os, &pool_id(os, version))?;
+    Ok(!members.is_empty()
+        && members.iter().all(|member| {
+            supervisor
+                .status(member)
+                .is_some_and(|status| status.state == ServiceState::Running)
+        }))
 }
 
 /// The service ids behind a pool: the workers `-w1` and up on Windows, the pool itself elsewhere.

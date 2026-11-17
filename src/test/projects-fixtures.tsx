@@ -146,6 +146,9 @@ export function siteEntry(projectId: string, extra: Partial<SiteEntry> = {}): Si
     port: 8101,
     address: "http://127.0.0.1:8101",
     phpVersion: "8.3.14",
+    databaseService: null,
+    served: false,
+    running: false,
     ...extra,
   };
 }
@@ -189,6 +192,8 @@ export function backendWith(
     jobs?: () => unknown;
     /** The answer of `sites_list` (default: `shop` has a site, Caddy is stopped). */
     sites?: () => unknown;
+    /** The answer of `project_database` (default: none). */
+    database?: () => unknown;
     more?: Record<string, (args?: unknown) => unknown>;
   } = {},
 ) {
@@ -207,6 +212,7 @@ export function backendWith(
           siteEntry("shop"),
           siteEntry("blog", { port: 8102, address: "http://127.0.0.1:8102" }),
         ])),
+    project_database: handlers.database ?? (() => null),
     ...handlers.more,
   });
 }

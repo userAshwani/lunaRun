@@ -264,6 +264,19 @@ impl ServiceController {
             .collect()
     }
 
+    /// Does every service of row `id` run? `false` for a row that was never started, is starting, stopping or stopped.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` for an id that is not a service of this system.
+    pub fn is_running(&self, id: &str) -> Result<bool> {
+        let members = self.members(id)?;
+        Ok(!members.is_empty()
+            && self
+                .statuses(&members)
+                .iter()
+                .all(|status| status.state == ServiceState::Running))
+    }
+
     /// Build what it takes to start row `id`: config files written and ports assigned, **nothing started**.
     ///
     /// # Errors

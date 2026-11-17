@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-project-database"
+description = "Enables the project_database command without any pre-configured scope."
+commands.allow = ["project_database"]
+
+[[permission]]
+identifier = "deny-project-database"
+description = "Denies the project_database command without any pre-configured scope."
+commands.deny = ["project_database"]

@@ -55,7 +55,10 @@ pub use databases::{DatabaseDefinition, Engine, database_definition};
 pub use gate::hold as spawn_gate;
 pub use logs::{LogBatch, LogConfig, LogEventSink, LogLine, OUTPUT};
 pub use os::{process_alive, process_exe, same_program};
-pub use php::{DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition, pool_ports};
+pub use php::{
+    DEFAULT_WORKERS, MAX_WORKERS, PhpDefinition, php_definition, pool_id, pool_is_running,
+    pool_ports,
+};
 pub use port_owner::{PortOwner, port_owners};
 pub use ports::{PortAllocator, PortAssignment, PortPurpose, PortRanges, check_ports};
 pub use restart::{Decision, RestartPolicy, RestartTracker};

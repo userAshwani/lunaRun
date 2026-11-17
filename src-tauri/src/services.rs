@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use luna_core::LunaHome;
 use luna_core::diagnostics::Os;
+use luna_core::launch::ProjectLauncher;
 use luna_core::projects::{DetectionData, ProjectStore};
 use luna_core::registry::RegistryHolder;
 use luna_core::runtimes::Uninstaller;
@@ -119,16 +120,23 @@ pub fn manage<R: Runtime>(
     let site_source = sites.clone();
     // Starting, stopping and restarting by the id of a row. Nothing may be started once the quit has begun.
     let quit_app = app.clone();
-    app.manage(
-        ServiceController::new(
-            home.clone(),
-            ports.clone(),
-            supervisor.clone(),
-            Os::current(),
-        )
-        .with_quit_check(move || quit_app.state::<QuitState>().is_quitting())
-        .with_sites(move || site_source.sites()),
-    );
+    let controller = ServiceController::new(
+        home.clone(),
+        ports.clone(),
+        supervisor.clone(),
+        Os::current(),
+    )
+    .with_quit_check(move || quit_app.state::<QuitState>().is_quitting())
+    .with_sites(move || site_source.sites());
+    // Starting and stopping a project: its database, its PHP pool and Caddy, as one job (D-039).
+    app.manage(ProjectLauncher::new(
+        projects.clone(),
+        sites.clone(),
+        controller.clone(),
+        ports.clone(),
+        Os::current(),
+    ));
+    app.manage(controller);
     app.manage(sites);
     app.manage(ports.clone());
     app.manage(supervisor.clone());

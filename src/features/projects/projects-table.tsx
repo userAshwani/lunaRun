@@ -16,6 +16,7 @@ import {
   TableScroll,
 } from "@/components/ui/table";
 import { folderIsMissing, runtimeState } from "./project-format";
+import { RunStateBadge } from "./run-card";
 import { RuntimeStateBadge } from "./runtime-state-badge";
 
 /** Where a project's scan is: still being read, could not be read, or done. */
@@ -24,6 +25,8 @@ export type ScanView =
 
 interface ProjectsTableProps {
   projects: readonly Project[];
+  /** The ids of the projects that are running: served, with Caddy and their PHP up. */
+  running: ReadonlySet<string>;
   scanOf: (id: string) => ScanView;
   onRemove: (project: Project) => void;
 }
@@ -69,7 +72,7 @@ function RuntimeCell({
   return <RuntimeStateBadge runtime={runtime} state={runtimeState(resolution)} />;
 }
 
-export function ProjectsTable({ projects, scanOf, onRemove }: ProjectsTableProps) {
+export function ProjectsTable({ projects, running, scanOf, onRemove }: ProjectsTableProps) {
   const { t } = useTranslation();
   const frameworkLabel = useFrameworkLabel();
 
@@ -112,6 +115,11 @@ export function ProjectsTable({ projects, scanOf, onRemove }: ProjectsTableProps
                   <p className="truncate text-[13px] text-muted-foreground" title={project.path}>
                     {project.path}
                   </p>
+                  {running.has(project.id) && !missing && (
+                    <div className="mt-1">
+                      <RunStateBadge state="running" />
+                    </div>
+                  )}
                   {missing && (
                     <Badge variant="destructive" className="mt-1">
                       <TriangleAlert className="size-3" aria-hidden />

@@ -17,6 +17,7 @@ import { pickFolder } from "@/lib/native";
 import { AddProblem } from "./add-problem";
 import { ProjectsTable, type ScanView } from "./projects-table";
 import { useFolderDrop } from "./use-folder-drop";
+import { useSites } from "./use-sites";
 import {
   useAddProject,
   useProjectDetections,
@@ -69,6 +70,7 @@ export function ProjectsPage() {
   const toast = useToast();
   const projects = useProjects();
   const scans = useProjectDetections(projects.data);
+  const sites = useSites();
   const add = useAddProject();
   const remove = useRemoveProject();
   const [problem, setProblem] = useState<{ error: LunaError; path: string } | null>(null);
@@ -170,7 +172,18 @@ export function ProjectsPage() {
           ) : (
             <Card>
               <CardContent>
-                <ProjectsTable projects={projects.data} scanOf={scanOf} onRemove={setRemoving} />
+                <ProjectsTable
+                  projects={projects.data}
+                  running={
+                    new Set(
+                      (sites.data?.sites ?? [])
+                        .filter((site) => site.running)
+                        .map((site) => site.projectId),
+                    )
+                  }
+                  scanOf={scanOf}
+                  onRemove={setRemoving}
+                />
               </CardContent>
             </Card>
           )}

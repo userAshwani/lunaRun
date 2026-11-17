@@ -16,6 +16,7 @@ import { useRuntimeJobEffects } from "@/features/runtimes/use-runtimes";
 import { formatUnixDate } from "@/lib/format";
 import { DatabaseRow, ExtensionsRow, RuntimeRow, WarningsList } from "./checklist";
 import { ProjectSettings } from "./project-settings";
+import { RunCard } from "./run-card";
 import { SiteFact, SitesProblem } from "./site-fact";
 import { folderIsMissing, runtimeName } from "./project-format";
 import { useSites, useSyncSites } from "./use-sites";
@@ -205,6 +206,11 @@ export function ProjectDetailPage() {
       />
 
       <div className="space-y-6">
+        <RunCard
+          project={project}
+          entry={sites.data?.sites.find((site) => site.projectId === project.id)}
+          loading={sites.isPending}
+        />
         <Card>
           <CardHeader>
             <CardTitle>{t("projects.detail.checklistTitle")}</CardTitle>
