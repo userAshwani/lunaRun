@@ -355,29 +355,39 @@ mod tests {
 
     #[test]
     fn the_editor_is_visual_studio_code_where_it_is_installed() {
+        // The expected paths are joined the way the code joins them: `\` is a separator only on a Windows machine, and
+        // these tests run on every system.
         let local = r"C:\Users\Ada\AppData\Local";
-        let code = r"C:\Users\Ada\AppData\Local\Programs\Microsoft VS Code\Code.exe";
-        let world = World::new(&[("LOCALAPPDATA", local)], &[FOLDER_WIN, code]);
+        let code = PathBuf::from(local)
+            .join("Programs")
+            .join("Microsoft VS Code")
+            .join("Code.exe");
+        let world = World::new(
+            &[("LOCALAPPDATA", local)],
+            &[FOLDER_WIN, code.to_str().unwrap()],
+        );
         assert_eq!(
             world
                 .run(Os::Windows, OpenTarget::Editor, None, FOLDER_WIN)
                 .unwrap(),
-            command(code, &[FOLDER_WIN])
+            command(&code, &[FOLDER_WIN])
         );
 
         // The machine-wide install is found too, when the user one is not there.
         let program_files = r"C:\Program Files";
-        let machine = r"C:\Program Files\Microsoft VS Code\Code.exe";
+        let machine = PathBuf::from(program_files)
+            .join("Microsoft VS Code")
+            .join("Code.exe");
         let world = World::new(
             &[("LOCALAPPDATA", local), ("ProgramFiles", program_files)],
-            &[FOLDER_WIN, machine],
+            &[FOLDER_WIN, machine.to_str().unwrap()],
         );
         assert_eq!(
             world
                 .run(Os::Windows, OpenTarget::Editor, None, FOLDER_WIN)
                 .unwrap()
                 .program,
-            PathBuf::from(machine)
+            machine
         );
 
         let mac = World::new(
