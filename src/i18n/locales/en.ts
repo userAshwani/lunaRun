@@ -658,6 +658,9 @@ export const en = {
         browser: "Open in browser",
         folder: "Open folder",
         editor: "Open in editor",
+        terminal: "Open terminal",
+        terminalHint:
+          "A terminal in the project folder with its PHP, Composer and Node first on PATH",
         database: "Copy database settings",
         databaseCopied: "Copied",
         databaseFailed: "Could not copy",
@@ -669,6 +672,10 @@ export const en = {
         title: "That could not be opened",
         editorMissing:
           "Visual Studio Code was not found in the usual places. Install it, or open the folder instead.",
+        terminalMissing:
+          "No terminal program was found (x-terminal-emulator, gnome-terminal, konsole or xterm). Install one, or open the folder instead.",
+        terminalNoPhp:
+          "A terminal needs the PHP version this project uses, and it is not installed yet. Install it from the checklist above.",
         dismiss: "Dismiss",
       },
     },

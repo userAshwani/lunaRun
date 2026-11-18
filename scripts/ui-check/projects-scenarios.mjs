@@ -423,6 +423,18 @@ export const SCENARIOS = {
     steps: [{ click: "Open in editor" }, { wait: "That could not be opened" }],
     ready: "Open in editor",
   },
+  "detail-terminal-no-php": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    openError: {
+      code: "NO_SITE",
+      message: "a terminal needs the PHP of the project, and it is not installed",
+      details: { projectId: "shop", reason: "php" },
+    },
+    steps: [{ click: "Open terminal" }, { wait: "That could not be opened" }],
+    ready: "Open terminal",
+  },
   "list-running": {
     route: "/projects",
     projects: LIST,
@@ -591,6 +603,12 @@ export const TARGETS = {
     ["problem title", "That could not be opened"],
     ["problem text", "Visual Studio Code was not found"],
     ["problem message", "was not found in the usual places"],
+  ],
+  "detail-terminal-no-php": [
+    ["quick action: terminal", "Open terminal"],
+    ["problem title", "That could not be opened"],
+    ["problem text", "A terminal needs the PHP version this project uses"],
+    ["problem message", "a terminal needs the PHP of the project"],
   ],
   "list-running": [["running badge", "Running"]],
   "detail-site-running": [["running note", "Caddy is running and serves this address"]],

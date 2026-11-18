@@ -3,4 +3,4 @@
 /**
  * What to open.
  */
-export type OpenTarget = "browser" | "folder" | "editor";
+export type OpenTarget = "browser" | "folder" | "editor" | "terminal";

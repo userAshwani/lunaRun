@@ -29,6 +29,9 @@ pub enum OpenTarget {
     Folder,
     /// The project's folder in Visual Studio Code, when it is installed.
     Editor,
+    /// A terminal in the project's folder with its PHP, Composer and Node first on `PATH`. Built by `terminal::open`,
+    /// not by [`command_for`]: it needs files written and an environment.
+    Terminal,
 }
 
 /// A program and its arguments: what [`spawn`] runs.
@@ -36,6 +39,12 @@ pub enum OpenTarget {
 pub struct OpenCommand {
     pub program: PathBuf,
     pub args: Vec<String>,
+    /// The folder the program starts in, when it is not the one lunaRun is in.
+    pub cwd: Option<PathBuf>,
+    /// Environment variables set for the program, on top of lunaRun's own.
+    pub env: Vec<(OsString, OsString)>,
+    /// Windows: give a console program a console window of its own.
+    pub new_console: bool,
 }
 
 /// What [`command_for`] needs to know about the system, so tests can say it.
@@ -51,6 +60,9 @@ fn command(program: impl Into<PathBuf>, args: &[&str]) -> OpenCommand {
     OpenCommand {
         program: program.into(),
         args: args.iter().map(|a| (*a).to_owned()).collect(),
+        cwd: None,
+        env: Vec::new(),
+        new_console: false,
     }
 }
 
@@ -147,6 +159,9 @@ pub fn command_for(
         ));
     }
     match target {
+        OpenTarget::Terminal => Err(LunaError::internal(
+            "a terminal is opened by terminal::open, which writes what it needs first",
+        )),
         OpenTarget::Browser => {
             let address = address.ok_or_else(|| {
                 LunaError::new(ErrorCode::NoSite, "the project has no site to open")
@@ -216,18 +231,28 @@ pub fn command_here(
 /// # Errors
 /// I/O errors from starting it (`NOT_FOUND` when the program is missing).
 pub fn spawn(command: &OpenCommand) -> Result<()> {
-    let mut child = Command::new(&command.program)
+    let mut process = Command::new(&command.program);
+    process
         .args(&command.args)
+        .envs(command.env.iter().map(|(k, v)| (k, v)))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|err| {
-            let shown = command.program.display().to_string();
-            let mut error = LunaError::from(err);
-            error.message = format!("{shown} could not be started: {}", error.message);
-            error.with_details(json!({ "program": shown }))
-        })?;
+        .stderr(Stdio::null());
+    if let Some(cwd) = &command.cwd {
+        process.current_dir(cwd);
+    }
+    #[cfg(windows)]
+    if command.new_console {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+        process.creation_flags(CREATE_NEW_CONSOLE);
+    }
+    let mut child = process.spawn().map_err(|err| {
+        let shown = command.program.display().to_string();
+        let mut error = LunaError::from(err);
+        error.message = format!("{shown} could not be started: {}", error.message);
+        error.with_details(json!({ "program": shown }))
+    })?;
     // Collect it when it ends, so it does not stay a zombie on macOS and Linux.
     std::thread::spawn(move || {
         let _ = child.wait();

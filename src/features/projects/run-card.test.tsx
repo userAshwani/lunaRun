@@ -325,6 +325,54 @@ describe("the Run card", () => {
       expect(run.queryByRole("alert")).not.toBeInTheDocument();
     });
 
+    it("opens a terminal for the project", async () => {
+      const user = userEvent.setup();
+      backendWith({
+        sites: () => sitesView([siteEntry("shop")]),
+        more: { project_open: () => null },
+      });
+      const run = within(await card());
+
+      await user.click(await run.findByRole("button", { name: "Open terminal" }));
+
+      await waitFor(() => {
+        expect(callsTo("project_open")).toEqual([[{ id: "shop", target: "terminal" }]]);
+      });
+      expect(run.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("says what to do when the terminal cannot be opened: no PHP, or no terminal program", async () => {
+      const user = userEvent.setup();
+      let failure: { code: string; message: string; details: Record<string, string> } = {
+        code: "NO_SITE",
+        message: "a terminal needs the PHP of the project",
+        details: { projectId: "shop", reason: "php" },
+      };
+      backendWith({
+        sites: () => sitesView([siteEntry("shop")]),
+        more: {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the backend rejects with a plain object
+          project_open: () => Promise.reject(failure),
+        },
+      });
+      const run = within(await card());
+
+      await user.click(await run.findByRole("button", { name: "Open terminal" }));
+      const noPhp = await run.findByRole("alert");
+      expect(noPhp).toHaveTextContent("A terminal needs the PHP version this project uses");
+      expect(noPhp).toHaveTextContent("a terminal needs the PHP of the project");
+
+      failure = {
+        code: "NOT_FOUND",
+        message: "no terminal program was found",
+        details: { target: "terminal" },
+      };
+      await user.click(run.getByRole("button", { name: "Open terminal" }));
+      await waitFor(() => {
+        expect(run.getByRole("alert")).toHaveTextContent("No terminal program was found");
+      });
+    });
+
     it("names the category for anything else that cannot be opened", async () => {
       const user = userEvent.setup();
       backendWith({

@@ -20,6 +20,7 @@ use luna_core::services::{
     list_services,
 };
 use luna_core::sites::{SiteManager, SitesView};
+use luna_core::terminal;
 use luna_core::{LunaError, LunaHome};
 use std::sync::Arc;
 use tauri::{AppHandle, State};
@@ -342,17 +343,26 @@ pub fn project_stop(
     launcher.run(&jobs, &id, ProjectAction::Stop)
 }
 
-/// Open the site of a project in the browser, its folder in the file manager, or its folder in Visual Studio Code. The
-/// page only names the project and what to open: the address and the folder are the ones lunaRun stored.
+/// Open the site of a project in the browser, its folder in the file manager or in Visual Studio Code, or a terminal in
+/// its folder with its own PHP, Composer and Node first on `PATH`. The page only names the project and what to open: the
+/// address and the folder are the ones lunaRun stored.
 #[tauri::command]
 pub async fn project_open(
     id: String,
     target: OpenTarget,
+    home: State<'_, LunaHome>,
     projects: State<'_, ProjectStore>,
     sites: State<'_, SiteManager>,
 ) -> Result<(), LunaError> {
-    let (projects, sites) = (projects.inner().clone(), sites.inner().clone());
+    let (home, projects, sites) = (
+        home.inner().clone(),
+        projects.inner().clone(),
+        sites.inner().clone(),
+    );
     blocking(move || {
+        if target == OpenTarget::Terminal {
+            return terminal::open(&home, Os::current(), &projects, &sites, &id);
+        }
         let project = projects.get(&id)?;
         let address = if target == OpenTarget::Browser {
             sites

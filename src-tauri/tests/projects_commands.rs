@@ -453,6 +453,7 @@ fn the_new_commands_say_not_found_for_a_project_that_is_not_there() {
             OpenTarget::Folder,
             b.app.state(),
             b.app.state(),
+            b.app.state(),
         ))
         .unwrap_err()
         .code,
@@ -513,10 +514,53 @@ fn the_browser_cannot_be_opened_for_a_project_without_a_site() {
         OpenTarget::Browser,
         b.app.state(),
         b.app.state(),
+        b.app.state(),
     ))
     .unwrap_err();
 
     assert_eq!(error.code, ErrorCode::NoSite, "{}", error.message);
+}
+
+#[test]
+fn a_terminal_needs_the_php_of_the_project_and_nothing_is_written_without_it() {
+    let b = bench();
+    let dir = b.folder(
+        "no php for a terminal",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+        ],
+    );
+    let id = project_id(&b.add(&dir).unwrap());
+
+    let error = tauri::async_runtime::block_on(commands::project_open(
+        id.clone(),
+        OpenTarget::Terminal,
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+    ))
+    .unwrap_err();
+
+    assert_eq!(error.code, ErrorCode::NoSite, "{}", error.message);
+    assert_eq!(error.details.unwrap()["reason"], "php");
+    let home = b.app.state::<luna_core::LunaHome>();
+    assert!(!home.run_dir().join("terminals").exists());
+    assert!(!home.config_dir().join("shims").exists());
+}
+
+#[test]
+fn a_terminal_for_a_project_that_is_not_there_says_not_found() {
+    let b = bench();
+    let error = tauri::async_runtime::block_on(commands::project_open(
+        "nope".into(),
+        OpenTarget::Terminal,
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+    ))
+    .unwrap_err();
+    assert_eq!(error.code, ErrorCode::NotFound);
 }
 
 #[test]

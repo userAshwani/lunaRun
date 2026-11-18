@@ -228,8 +228,10 @@ runs `php composer.phar "$@"` with the bound PHP.
 
 | OS | Launch |
 |---|---|
-| Windows | Windows Terminal (`wt.exe -d <dir>`) if present, else PowerShell / cmd, env passed to the child process |
-| macOS | Write a temporary `.command` script that exports the env and `cd`s, then `open -a Terminal` (or iTerm if set in settings) |
-| Linux | First found of `x-terminal-emulator`, `gnome-terminal`, `konsole`, `xterm` with the env set |
+| Windows | `powershell.exe -NoLogo -NoExit` in the project folder with the env passed to the child process, in a console window of its own (the system shows it in the user's default terminal, Windows Terminal where that is the default) |
+| macOS | Write `run/terminals/<id>.command` that exports the env, `cd`s and starts the user's shell, then `open -a Terminal` (iTerm is not built) |
+| Linux | The same script as `<id>.sh`, run by the first found of `x-terminal-emulator`, `gnome-terminal`, `konsole`, `xterm` |
+
+Built in `luna_core::terminal` (D-040): `plan` is pure (every system is tested anywhere), `open` writes the shim and the script inside LUNA_HOME and starts the terminal with an argument array. A project whose PHP is not installed gets `NO_SITE` (`details.reason` `php`) and nothing is written; no terminal program on Linux is `NOT_FOUND` (`details.target` `terminal`).
 
 No global or user `PATH` changes in Phase 1 (shims come in Phase 2, opt-in, FR-SH-02).

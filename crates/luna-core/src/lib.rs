@@ -16,6 +16,7 @@ pub mod runtimes;
 pub mod services;
 pub mod sites;
 pub mod state;
+pub mod terminal;
 
 pub use error::{ErrorCode, LunaError, Result};
 pub use paths::LunaHome;

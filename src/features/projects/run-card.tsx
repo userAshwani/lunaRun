@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   Play,
   Square,
+  SquareTerminal,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -188,6 +189,21 @@ export function RunCard({ project, entry, loading }: RunCardProps) {
     );
   };
 
+  /** What to do about a quick action that failed, when lunaRun knows: the rest falls back to the category of the error. */
+  const openAdvice = (problem: LunaError): string | null => {
+    const target = details(problem, "target");
+    if (problem.code === "NOT_FOUND" && target === "editor") {
+      return t("projects.run.open.editorMissing");
+    }
+    if (problem.code === "NOT_FOUND" && target === "terminal") {
+      return t("projects.run.open.terminalMissing");
+    }
+    if (problem.code === "NO_SITE" && details(problem, "reason") === "php") {
+      return t("projects.run.open.terminalNoPhp");
+    }
+    return null;
+  };
+
   const explain =
     state === "running" && entry?.address
       ? t("projects.run.explain.running", { address: entry.address })
@@ -300,6 +316,18 @@ export function RunCard({ project, entry, loading }: RunCardProps) {
               <Code aria-hidden />
               {t("projects.run.actions.editor")}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={open.isPending}
+              title={t("projects.run.actions.terminalHint")}
+              onClick={() => {
+                openIt("terminal");
+              }}
+            >
+              <SquareTerminal aria-hidden />
+              {t("projects.run.actions.terminal")}
+            </Button>
             {database && (
               <CopyButton
                 text={databaseEnv(database)}
@@ -324,9 +352,7 @@ export function RunCard({ project, entry, loading }: RunCardProps) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{t("projects.run.open.title")}</p>
                 <p className="text-[13px] text-muted-foreground">
-                  {openProblem.code === "NOT_FOUND" && details(openProblem, "target") === "editor"
-                    ? t("projects.run.open.editorMissing")
-                    : categoryOf(openProblem.code)}
+                  {openAdvice(openProblem) ?? categoryOf(openProblem.code)}
                 </p>
                 <p className="mt-1 font-mono text-xs break-words text-muted-foreground">
                   {openProblem.message}
