@@ -197,11 +197,10 @@ fn mariadb_is_offered_on_windows_and_linux_x64_only() {
     assert!(!offered(Os::Macos, Arch::Aarch64));
     assert!(!offered(Os::Macos, Arch::X86_64));
 
+    // No version line is named here: upstream drops a line some time after its end of life, and a daily refresh that
+    // drops one (10.6 went on 2026-11-17) must not fail this test (the same trap as ea67b22).
     let lines = &registry.runtime("mariadb").unwrap().lines;
-    assert!(
-        lines.contains_key("10.6"),
-        "the end-of-life line is still listed"
-    );
+    assert!(!lines.is_empty(), "MariaDB has version lines");
 }
 
 #[test]

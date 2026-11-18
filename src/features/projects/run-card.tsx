@@ -204,12 +204,24 @@ export function RunCard({ project, entry, loading }: RunCardProps) {
     return null;
   };
 
-  const explain =
-    state === "running" && entry?.address
-      ? t("projects.run.explain.running", { address: entry.address })
-      : state === "stopped" && !canStart && entry
+  // One literal key per state: a key built from a template string cannot be checked by the types of i18next 27, because
+  // the text of "running" takes an option the others do not.
+  let explain: string;
+  if (state === "running") {
+    // A running project always has its address (it has a site); without one there is nothing true to say about it.
+    explain = entry?.address ? t("projects.run.explain.running", { address: entry.address }) : "";
+  } else if (state === "stopped") {
+    explain =
+      !canStart && entry
         ? t(entry.state === "noPhp" ? "projects.site.noPhp" : "projects.site.folderMissing")
-        : t(`projects.run.explain.${state}`);
+        : t("projects.run.explain.stopped");
+  } else if (state === "starting") {
+    explain = t("projects.run.explain.starting");
+  } else if (state === "stopping") {
+    explain = t("projects.run.explain.stopping");
+  } else {
+    explain = t("projects.run.explain.notAnswering");
+  }
 
   return (
     <Card>
