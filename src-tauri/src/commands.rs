@@ -4,10 +4,12 @@
 //! Adding a command: write it here, add it to `COMMANDS` in `build.rs` and to `generate_handler!`
 //! in `lib.rs`, then grant `allow-<command-name>` in `capabilities/default.json`.
 
+use luna_core::dbadmin::{DatabaseCreated, DatabaseStatus};
 use luna_core::diagnostics::{self, AppInfo, Arch, Os};
 use luna_core::jobs::{JobInfo, JobManager, StartedJob};
 use luna_core::launch::{DatabaseSettings, ProjectAction, ProjectLauncher};
 use luna_core::opener::{self, OpenTarget};
+use luna_core::projects::envfix::{EnvFixApplied, PortChange};
 use luna_core::projects::{
     DetectionData, Project, ProjectDetection, ProjectPatch, ProjectStore, Surroundings,
 };
@@ -394,6 +396,50 @@ pub async fn project_database(
 ) -> Result<Option<DatabaseSettings>, LunaError> {
     let launcher = launcher.inner().clone();
     blocking(move || launcher.database_settings(&id)).await
+}
+
+/// What would make the `.env` of a project connect to the database lunaRun runs: the **one line** of `DB_PORT` that would
+/// change, as a preview, and the backup that would be made. Nothing when there is nothing to fix. Writes nothing.
+#[tauri::command]
+pub async fn project_env_port_preview(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+) -> Result<Option<PortChange>, LunaError> {
+    let launcher = launcher.inner().clone();
+    blocking(move || launcher.env_port_preview(&id)).await
+}
+
+/// Make the change the user confirmed in the preview: a backup of the `.env` file, then that one line. The page sends back
+/// the preview it showed; nothing is written unless the file still gives exactly that preview (`ENV_CHANGED`).
+#[tauri::command]
+pub async fn project_env_port_apply(
+    id: String,
+    change: PortChange,
+    launcher: State<'_, ProjectLauncher>,
+) -> Result<EnvFixApplied, LunaError> {
+    let launcher = launcher.inner().clone();
+    blocking(move || launcher.env_port_apply(&id, &change)).await
+}
+
+/// Where the database the `.env` of a project names stands: not there, there, or not checkable (server not running).
+#[tauri::command]
+pub async fn project_database_status(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+) -> Result<DatabaseStatus, LunaError> {
+    let launcher = launcher.inner().clone();
+    blocking(move || launcher.database_status(&id)).await
+}
+
+/// Create the database the `.env` of a project names on the server lunaRun runs for it (`DATABASE_NOT_RUNNING` when it is
+/// not running). Nothing changes when it exists.
+#[tauri::command]
+pub async fn project_database_create(
+    id: String,
+    launcher: State<'_, ProjectLauncher>,
+) -> Result<DatabaseCreated, LunaError> {
+    let launcher = launcher.inner().clone();
+    blocking(move || launcher.database_create(&id)).await
 }
 
 /// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is

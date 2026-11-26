@@ -230,6 +230,10 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `project_start(id)` / `project_stop(id)` | `StartedJob` (job `project:<id>`, labels `Start project <name>` and `Stop project <name>`; a start brings up the database, the PHP pool and Caddy with the project in the Caddyfile, all or none; `NO_SITE` when its PHP is not installed; a stop ends only what the start began and no other started project needs; D-039) |
 | | `project_open(id, target: "browser"\|"folder"\|"editor")` | `()` (the address and the folder are the ones lunaRun stored; the page sends only the id and the target; `NOT_FOUND` with `details.target` `editor` when Visual Studio Code is not installed) |
 | | `project_database(id)` | `DatabaseSettings \| null` (how to connect to the database lunaRun runs for the project: `root`, no password, the port lunaRun gave it) |
+| | `project_env_port_preview(id)` | `PortChange \| null` (the one `DB_PORT` line of the `.env` that would change, its line number and the backup's name; nothing else of the file; `null` when there is nothing to fix; writes nothing; `ENV_CHANGED` for a file that cannot be edited safely; D-041) |
+| | `project_env_port_apply(id, change)` | `EnvFixApplied { backup }` (the backup first, then that one line; `ENV_CHANGED` and nothing written unless the file still gives exactly the preview `change`; the port is lunaRun's own, not the page's; D-041) |
+| | `project_database_status(id)` | `notApplicable \| noName \| invalidName \| notRunning \| exists \| missing` (asks the server only while it runs) |
+| | `project_database_create(id)` | `DatabaseCreated { name, created }` (`DATABASE_NOT_RUNNING`, `INVALID_INPUT`, `DATABASE_COMMAND_FAILED`; nothing changes when it exists) |
 | | `sites_sync()` | `SitesView` (write the Caddyfile and, when Caddy runs, validate and reload it; the page's "Try again") |
 | | `project_start(id)` / `project_stop(id)` | `()` |
 | | `project_open(id, target: "browser"\|"terminal"\|"folder"\|"editor")` | `()` |

@@ -697,3 +697,118 @@ async fn the_database_settings_are_the_ones_lunarun_runs_and_never_hold_a_passwo
         ErrorCode::NotFound
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// The fixes of the database settings (D-041)
+// ---------------------------------------------------------------------------------------------
+
+fn dotenv(project: &Project) -> String {
+    fs::read_to_string(Path::new(&project.path).join(".env")).unwrap()
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_env_port_is_previewed_and_fixed_only_to_the_port_lunarun_runs() {
+    let rig = rig("launch-envport", Os::Windows);
+    install(&rig.bench.home, "php", "8.3.14");
+    let original =
+        "DB_CONNECTION=mysql\r\nDB_PORT=1111\r\nDB_DATABASE=shop\r\nDB_PASSWORD=never-read\r\n";
+    let shop = rig.project("shop", Some(original));
+    let plain = rig.project("plain", None);
+
+    // The database runtime is not installed: lunaRun runs none, so there is no port to compare with.
+    assert_eq!(rig.launcher.env_port_preview(&shop.id).unwrap(), None);
+
+    rig.install_database_for(&shop);
+    let settings = rig.launcher.database_settings(&shop.id).unwrap().unwrap();
+    let preview = rig.launcher.env_port_preview(&shop.id).unwrap().unwrap();
+    assert_eq!(preview.port, settings.port);
+    assert_eq!(preview.line, 2);
+    assert_eq!(preview.before.as_deref(), Some("DB_PORT=1111"));
+    assert_eq!(preview.after, format!("DB_PORT={}", settings.port));
+    assert_eq!(dotenv(&shop), original, "a preview writes nothing");
+    assert!(
+        !format!("{preview:?}").contains("never-read"),
+        "no other line is in the preview"
+    );
+
+    // A preview for another port than the one lunaRun runs is not applied.
+    let mut forged = preview.clone();
+    forged.port = settings.port.wrapping_add(1);
+    forged.after = format!("DB_PORT={}", forged.port);
+    assert_eq!(
+        rig.launcher
+            .env_port_apply(&shop.id, &forged)
+            .unwrap_err()
+            .code,
+        ErrorCode::EnvChanged
+    );
+    assert_eq!(dotenv(&shop), original);
+
+    let done = rig.launcher.env_port_apply(&shop.id, &preview).unwrap();
+    assert_eq!(done.backup, ".env.lunarun-backup");
+    assert_eq!(
+        fs::read_to_string(Path::new(&shop.path).join(&done.backup)).unwrap(),
+        original
+    );
+    assert_eq!(
+        dotenv(&shop),
+        original.replace("DB_PORT=1111", &format!("DB_PORT={}", settings.port))
+    );
+    assert_eq!(rig.launcher.env_port_preview(&shop.id).unwrap(), None);
+
+    // No .env file: nothing to fix, nothing created. An unknown project is not found.
+    assert_eq!(rig.launcher.env_port_preview(&plain.id).unwrap(), None);
+    assert!(!Path::new(&plain.path).join(".env").exists());
+    assert_eq!(
+        rig.launcher.env_port_preview("nope").unwrap_err().code,
+        ErrorCode::NotFound
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn the_database_status_and_create_refuse_what_cannot_be_done_and_say_why() {
+    let rig = rig("launch-dbstatus", Os::Windows);
+    install(&rig.bench.home, "php", "8.3.14");
+    let shop = rig.project("shop", Some(ENV_MYSQL));
+    let unnamed = rig.project("unnamed", Some("DB_CONNECTION=mysql\n"));
+    let odd = rig.project("odd", Some("DB_CONNECTION=mysql\nDB_DATABASE=a;b\n"));
+    let plain = rig.project("plain", None);
+
+    // The runtime is not installed.
+    let status = |id: &str| rig.launcher.database_status(id).unwrap();
+    assert_eq!(
+        status(&shop.id),
+        luna_core::dbadmin::DatabaseStatus::NotApplicable
+    );
+    assert_eq!(
+        rig.launcher.database_create(&shop.id).unwrap_err().code,
+        ErrorCode::InvalidInput
+    );
+
+    rig.install_database_for(&shop);
+    rig.install_database_for(&unnamed);
+    rig.install_database_for(&odd);
+    use luna_core::dbadmin::DatabaseStatus as S;
+    assert_eq!(status(&unnamed.id), S::NoName);
+    assert_eq!(status(&odd.id), S::InvalidName);
+    assert_eq!(status(&plain.id), S::NotApplicable);
+    // Installed and not started: nothing can be asked of it.
+    assert_eq!(status(&shop.id), S::NotRunning);
+    let err = rig.launcher.database_create(&shop.id).unwrap_err();
+    assert_eq!(err.code, ErrorCode::DatabaseNotRunning);
+    assert!(
+        err.details.unwrap()["service"]
+            .as_str()
+            .unwrap()
+            .starts_with("mysql@")
+    );
+    // No name, or one that is not plain: refused before anything is asked of a server.
+    assert_eq!(
+        rig.launcher.database_create(&unnamed.id).unwrap_err().code,
+        ErrorCode::InvalidInput
+    );
+    assert_eq!(
+        rig.launcher.database_create("nope").unwrap_err().code,
+        ErrorCode::NotFound
+    );
+}

@@ -31,6 +31,10 @@ const COMMANDS: &[&str] = &[
     "project_stop",
     "project_open",
     "project_database",
+    "project_env_port_preview",
+    "project_env_port_apply",
+    "project_database_status",
+    "project_database_create",
 ];
 
 fn main() {

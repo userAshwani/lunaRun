@@ -21,10 +21,12 @@ use serde_json::json;
 use tokio_util::sync::CancellationToken;
 use ts_rs::TS;
 
+use crate::dbadmin::{self, DatabaseCreated, DatabaseStatus};
 use crate::diagnostics::Os;
 use crate::error::{ErrorCode, LunaError, Result};
 use crate::jobs::{JobContext, JobManager, StartedJob};
 use crate::projects::ProjectStore;
+use crate::projects::envfix::{self, EnvFixApplied, PortChange};
 use crate::services::{PortAllocator, PortPurpose, ServiceController, job_phase, pool_id};
 use crate::sites::{SiteEntry, SiteManager, SiteState};
 
@@ -360,5 +362,122 @@ impl ProjectLauncher {
             database: report.database.and_then(|hint| hint.database),
             username: "root".to_owned(),
         }))
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // The fixes of the database settings (FR-PJ-05, D-041)
+    // -----------------------------------------------------------------------------------------
+
+    /// The change of `DB_PORT` in the project's `.env` that would make it connect to the database lunaRun runs, as a
+    /// preview: the one line that changes and the backup that would be made. `None` when there is nothing to fix (the
+    /// project expects no database lunaRun runs, has no `.env` file, or its `DB_PORT` is already right). Writes nothing.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` for an unknown project, `ENV_CHANGED` for a `.env` that cannot be edited safely, and what
+    /// [`ProjectLauncher::database_settings`] answers with.
+    pub fn env_port_preview(&self, id: &str) -> Result<Option<PortChange>> {
+        let project = self.store.get(id)?;
+        let Some(settings) = self.database_settings(id)? else {
+            return Ok(None);
+        };
+        envfix::plan_port(Path::new(&project.path), settings.port)
+    }
+
+    /// Make the change the user confirmed: a backup of the `.env` file, then the one line. `expected` is the preview the
+    /// page showed; when the port or the file is not what it showed, nothing is written (`ENV_CHANGED`).
+    ///
+    /// # Errors
+    /// As [`ProjectLauncher::env_port_preview`], and `ENV_CHANGED` for anything that is not the preview.
+    pub fn env_port_apply(&self, id: &str, expected: &PortChange) -> Result<EnvFixApplied> {
+        let project = self.store.get(id)?;
+        // The port is lunaRun's own, not the page's: a preview for another port is not applied.
+        let settings = self
+            .database_settings(id)?
+            .filter(|s| s.port == expected.port);
+        if settings.is_none() {
+            return Err(LunaError::new(
+                ErrorCode::EnvChanged,
+                "the database lunaRun runs for this project is not the one in the preview",
+            )
+            .with_details(json!({ "reason": "changed", "projectId": id })));
+        }
+        envfix::apply_port(Path::new(&project.path), expected)
+    }
+
+    /// The database client of the installed runtime of `settings`.
+    fn database_client(&self, settings: &DatabaseSettings) -> Result<std::path::PathBuf> {
+        let runtime = self.controller.runtime_of(&settings.service)?;
+        crate::runtimes::adapter_for(&runtime.runtime)
+            .and_then(|adapter| {
+                adapter
+                    .binaries(&runtime.dir, self.os)
+                    .into_iter()
+                    .find(|binary| binary.name == settings.runtime)
+                    .map(|binary| binary.path)
+            })
+            .ok_or_else(|| {
+                LunaError::internal(format!("{} has no database client", settings.runtime))
+            })
+    }
+
+    /// Where the database the project's `.env` names stands. Asks the server only when it runs.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` for an unknown project, and what the client answers with (`DATABASE_COMMAND_FAILED`).
+    pub fn database_status(&self, id: &str) -> Result<DatabaseStatus> {
+        let Some(settings) = self.database_settings(id)? else {
+            return Ok(DatabaseStatus::NotApplicable);
+        };
+        let Some(name) = settings.database.clone() else {
+            return Ok(DatabaseStatus::NoName);
+        };
+        if !dbadmin::is_valid_name(&name) {
+            return Ok(DatabaseStatus::InvalidName);
+        }
+        if !self.controller.is_running(&settings.service)? {
+            return Ok(DatabaseStatus::NotRunning);
+        }
+        let client = self.database_client(&settings)?;
+        let present = dbadmin::exists(&client, &settings.runtime, settings.port, &name)?;
+        Ok(if present {
+            DatabaseStatus::Exists
+        } else {
+            DatabaseStatus::Missing
+        })
+    }
+
+    /// Create the database the project's `.env` names, on the server lunaRun runs for it. Nothing is changed when it exists.
+    ///
+    /// # Errors
+    /// `NO_SITE` is not used here: a project with nothing to create answers `INVALID_INPUT` (`details.field` `database`),
+    /// `DATABASE_NOT_RUNNING` when the server is not running, and `DATABASE_COMMAND_FAILED`.
+    pub fn database_create(&self, id: &str) -> Result<DatabaseCreated> {
+        let settings = self.database_settings(id)?.ok_or_else(|| {
+            LunaError::new(
+                ErrorCode::InvalidInput,
+                "this project expects no database that lunaRun runs",
+            )
+            .with_details(json!({ "field": "database" }))
+        })?;
+        let name = settings.database.clone().ok_or_else(|| {
+            LunaError::new(
+                ErrorCode::InvalidInput,
+                "the .env file of this project names no DB_DATABASE",
+            )
+            .with_details(json!({ "field": "database" }))
+        })?;
+        if !self.controller.is_running(&settings.service)? {
+            return Err(LunaError::new(
+                ErrorCode::DatabaseNotRunning,
+                format!(
+                    "{} is not running: start the project first",
+                    settings.service
+                ),
+            )
+            .with_details(json!({ "service": settings.service })));
+        }
+        let client = self.database_client(&settings)?;
+        let created = dbadmin::create(&client, &settings.runtime, settings.port, &name)?;
+        Ok(DatabaseCreated { name, created })
     }
 }

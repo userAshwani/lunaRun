@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-project-env-port-apply"
+description = "Enables the project_env_port_apply command without any pre-configured scope."
+commands.allow = ["project_env_port_apply"]
+
+[[permission]]
+identifier = "deny-project-env-port-apply"
+description = "Denies the project_env_port_apply command without any pre-configured scope."
+commands.deny = ["project_env_port_apply"]

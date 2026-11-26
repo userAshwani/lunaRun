@@ -90,6 +90,14 @@ pub enum ErrorCode {
     /// The project has no site, so there is nothing to start or open: its PHP is not installed or its folder is gone
     /// (`details.reason` is `php` or `folder`).
     NoSite,
+    /// The `.env` file is not what the preview showed (it changed since, or it cannot be edited safely: not UTF-8, a link,
+    /// too large). Nothing was written; `details.reason` says which.
+    EnvChanged,
+    /// A database fix needs the database to be running, and it is not (`details.service`).
+    DatabaseNotRunning,
+    /// The database program ran and the server answered with an error, or the program could not be run
+    /// (`details.tail` has what it said; there is no password in it, lunaRun connects as `root` without one).
+    DatabaseCommandFailed,
     /// A bug or an impossible state inside lunaRun.
     Internal,
 }

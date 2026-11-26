@@ -264,6 +264,18 @@ impl ServiceController {
             .collect()
     }
 
+    /// The installed runtime row `id` runs from (for a database, the newest patch of its line), by the rule the Services
+    /// page uses.
+    ///
+    /// # Errors
+    /// `NOT_FOUND` for a row whose runtime is not installed, and I/O errors reading the installed runtimes.
+    pub fn runtime_of(&self, id: &str) -> Result<InstalledRuntime> {
+        let installed = list_installed(&self.home)?;
+        source_of(&installed, id, self.os)
+            .map(|(_, runtime)| runtime.clone())
+            .ok_or_else(|| not_found(format!("{id} is not installed"), id))
+    }
+
     /// Does every service of row `id` run? `false` for a row that was never started, is starting, stopping or stopped.
     ///
     /// # Errors

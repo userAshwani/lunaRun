@@ -245,6 +245,13 @@ const projectJob = (action, extra = {}) => ({
   error: null,
   ...extra,
 });
+const ENV_PORT = {
+  port: 3306,
+  line: 4,
+  before: "DB_PORT=3307",
+  after: "DB_PORT=3306",
+  backup: ".env.lunarun-backup",
+};
 const SETTINGS = {
   service: "mysql@8.4",
   runtime: "mysql",
@@ -422,6 +429,55 @@ export const SCENARIOS = {
     },
     steps: [{ click: "Open in editor" }, { wait: "That could not be opened" }],
     ready: "Open in editor",
+  },
+  "detail-env-port": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    envPort: ENV_PORT,
+    dbStatus: "missing",
+    ready: "Update DB_PORT in .env",
+  },
+  "detail-env-port-dialog": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    envPort: ENV_PORT,
+    dbStatus: "exists",
+    steps: [{ click: "Update DB_PORT in .env" }, { wait: "Only this line changes" }],
+    ready: "Update DB_PORT in .env",
+  },
+  "detail-env-port-added": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    envPort: { ...ENV_PORT, before: null, line: 3 },
+    dbStatus: "notRunning",
+    steps: [{ click: "Update DB_PORT in .env" }, { wait: "Only this line changes" }],
+    ready: "Update DB_PORT in .env",
+  },
+  "detail-env-port-refused": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    envPortError: {
+      code: "ENV_CHANGED",
+      message: "D:/Work/shop/.env is not UTF-8 text, so it is not edited",
+      details: { reason: "notUtf8" },
+    },
+    dbStatusError: {
+      code: "DATABASE_COMMAND_FAILED",
+      message: "the database client exited with exit code: 1",
+      details: { tail: "ERROR 2002 (HY000): Can't connect to server on '127.0.0.1'" },
+    },
+    ready: "Could not check the .env file",
+  },
+  "detail-db-not-running": {
+    route: "/projects/shop",
+    projects: LIST,
+    scans: SCANS,
+    dbStatus: "notRunning",
+    ready: "Start the project to check whether the database shop exists",
   },
   "detail-terminal-no-php": {
     route: "/projects/shop",
@@ -610,6 +666,32 @@ export const TARGETS = {
     ["problem text", "A terminal needs the PHP version this project uses"],
     ["problem message", "a terminal needs the PHP of the project"],
   ],
+  "detail-env-port": [
+    ["port notice", "does not connect to the database lunaRun runs"],
+    ["fix button", "Update DB_PORT in .env"],
+    ["missing database", "does not exist yet"],
+  ],
+  "detail-env-port-dialog": [
+    ["fix button", "Update DB_PORT in .env"],
+    ["dialog title", "Update DB_PORT in .env?"],
+    ["dialog text", "Only this line changes"],
+    ["diff header", ".env, line 4"],
+    ["database exists", "The database shop exists"],
+  ],
+  "detail-env-port-added": [
+    ["fix button", "Update DB_PORT in .env"],
+    ["dialog title", "Update DB_PORT in .env?"],
+    ["diff header", ".env, line 3"],
+    ["not running note", "Start the project to check whether the database shop exists"],
+  ],
+  "detail-env-port-refused": [
+    ["problem title", "Could not check the .env file"],
+    ["problem advice", "is not UTF-8 text, so lunaRun does not edit it"],
+    ["database problem", "Could not check the database"],
+  ],
+  "detail-db-not-running": [
+    ["not running note", "Start the project to check whether the database shop exists"],
+  ],
   "list-running": [["running badge", "Running"]],
   "detail-site-running": [["running note", "Caddy is running and serves this address"]],
   "detail-site-not-installed": [["not installed note", "Caddy, the web server, is not installed"]],
@@ -709,6 +791,10 @@ export const bridge = (scenario) => `(() => {
       if (cmd === "project_start" || cmd === "project_stop") return Promise.resolve({ id: "job-p1", alreadyRunning: false });
       if (cmd === "project_open") return s.openError ? Promise.reject(s.openError) : Promise.resolve(null);
       if (cmd === "project_database") return Promise.resolve(s.database ?? null);
+      if (cmd === "project_env_port_preview") return s.envPortError ? Promise.reject(s.envPortError) : Promise.resolve(s.envPort ?? null);
+      if (cmd === "project_env_port_apply") return Promise.resolve({ backup: ".env.lunarun-backup" });
+      if (cmd === "project_database_status") return s.dbStatusError ? Promise.reject(s.dbStatusError) : Promise.resolve(s.dbStatus ?? "exists");
+      if (cmd === "project_database_create") return Promise.resolve({ name: "shop", created: true });
       if (cmd === "sites_list") return Promise.resolve(s.sitesView ?? defaultSites);
       if (cmd === "sites_sync") return Promise.resolve({ ...(s.sitesView ?? defaultSites), problem: null });
       if (cmd === "jobs_list") return Promise.resolve(s.jobs ?? []);

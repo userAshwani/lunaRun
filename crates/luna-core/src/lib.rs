@@ -2,6 +2,7 @@
 //! See docs/ARCHITECTURE.md for the module layout.
 
 pub mod constraints;
+pub mod dbadmin;
 pub mod diagnostics;
 pub mod download;
 pub mod error;

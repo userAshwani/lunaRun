@@ -611,3 +611,144 @@ fn the_launcher_is_part_of_the_apps_state() {
     let b = bench();
     let _ = b.app.state::<ProjectLauncher>();
 }
+
+// ---------------------------------------------------------------------------------------------
+// The fixes of the database settings (D-041)
+// ---------------------------------------------------------------------------------------------
+
+macro_rules! run {
+    ($future:expr) => {
+        tauri::async_runtime::block_on($future)
+    };
+}
+
+fn made_up_change() -> luna_core::projects::envfix::PortChange {
+    // What a page could send: the JSON the preview has, as it arrives over the bridge.
+    serde_json::from_value(serde_json::json!({
+        "port": 3306,
+        "line": 1,
+        "before": "DB_PORT=1111",
+        "after": "DB_PORT=3306",
+        "backup": ".env.lunarun-backup"
+    }))
+    .unwrap()
+}
+
+#[test]
+fn the_database_fixes_say_not_found_for_a_project_that_is_not_there() {
+    let b = bench();
+    let codes = [
+        run!(commands::project_env_port_preview(
+            "nope".into(),
+            b.app.state()
+        ))
+        .unwrap_err()
+        .code,
+        run!(commands::project_env_port_apply(
+            "nope".into(),
+            made_up_change(),
+            b.app.state(),
+        ))
+        .unwrap_err()
+        .code,
+        run!(commands::project_database_status(
+            "nope".into(),
+            b.app.state()
+        ))
+        .unwrap_err()
+        .code,
+        run!(commands::project_database_create(
+            "nope".into(),
+            b.app.state()
+        ))
+        .unwrap_err()
+        .code,
+    ];
+    assert_eq!(codes, [ErrorCode::NotFound; 4]);
+}
+
+#[test]
+fn without_a_database_lunarun_runs_there_is_nothing_to_fix_and_nothing_is_written() {
+    let b = bench();
+    let env = "DB_CONNECTION=mysql\nDB_PORT=1111\nDB_DATABASE=shop\nDB_PASSWORD=never-read\n";
+    let dir = b.folder(
+        "no database yet",
+        &[
+            ("composer.json", r#"{"require":{"php":"^8.2"}}"#),
+            ("index.php", "<?php"),
+            (".env", env),
+        ],
+    );
+    let id = project_id(&b.add(&dir).unwrap());
+
+    // MySQL is not installed: lunaRun runs no database for this project, so there is no port to compare with.
+    assert_eq!(
+        run!(commands::project_env_port_preview(
+            id.clone(),
+            b.app.state()
+        ))
+        .unwrap(),
+        None
+    );
+    assert_eq!(
+        serde_json::to_value(
+            run!(commands::project_database_status(id.clone(), b.app.state())).unwrap()
+        )
+        .unwrap(),
+        "notApplicable"
+    );
+    assert_eq!(
+        run!(commands::project_database_create(id.clone(), b.app.state()))
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    // A change the page made up is not applied, and the file is as it was, with no backup next to it.
+    let err = run!(commands::project_env_port_apply(
+        id,
+        made_up_change(),
+        b.app.state(),
+    ))
+    .unwrap_err();
+    assert_eq!(err.code, ErrorCode::EnvChanged, "{}", err.message);
+    assert_eq!(std::fs::read_to_string(dir.join(".env")).unwrap(), env);
+    assert!(!dir.join(".env.lunarun-backup").exists());
+}
+
+#[test]
+fn the_preview_and_the_results_arrive_as_the_json_the_page_reads() {
+    let preview = made_up_change();
+    assert_eq!(
+        serde_json::to_value(&preview).unwrap(),
+        serde_json::json!({
+            "port": 3306,
+            "line": 1,
+            "before": "DB_PORT=1111",
+            "after": "DB_PORT=3306",
+            "backup": ".env.lunarun-backup"
+        })
+    );
+    assert_eq!(
+        serde_json::to_value(luna_core::projects::envfix::EnvFixApplied {
+            backup: ".env.lunarun-backup".into()
+        })
+        .unwrap(),
+        serde_json::json!({ "backup": ".env.lunarun-backup" })
+    );
+    assert_eq!(
+        serde_json::to_value(luna_core::dbadmin::DatabaseCreated {
+            name: "shop".into(),
+            created: true
+        })
+        .unwrap(),
+        serde_json::json!({ "name": "shop", "created": true })
+    );
+    let codes = [
+        (ErrorCode::EnvChanged, "ENV_CHANGED"),
+        (ErrorCode::DatabaseNotRunning, "DATABASE_NOT_RUNNING"),
+        (ErrorCode::DatabaseCommandFailed, "DATABASE_COMMAND_FAILED"),
+    ];
+    for (code, text) in codes {
+        assert_eq!(serde_json::to_value(code).unwrap(), text);
+    }
+}

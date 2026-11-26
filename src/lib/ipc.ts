@@ -5,9 +5,13 @@ import type { AppInfo } from "@/bindings/AppInfo";
 import type { InstalledView } from "@/bindings/InstalledView";
 import type { JobInfo } from "@/bindings/JobInfo";
 import type { Leftover } from "@/bindings/Leftover";
+import type { DatabaseCreated } from "@/bindings/DatabaseCreated";
 import type { DatabaseSettings } from "@/bindings/DatabaseSettings";
+import type { DatabaseStatus } from "@/bindings/DatabaseStatus";
+import type { EnvFixApplied } from "@/bindings/EnvFixApplied";
 import type { LunaError } from "@/bindings/LunaError";
 import type { OpenTarget } from "@/bindings/OpenTarget";
+import type { PortChange } from "@/bindings/PortChange";
 import type { Project } from "@/bindings/Project";
 import type { ProjectDetection } from "@/bindings/ProjectDetection";
 import type { ProjectPatch } from "@/bindings/ProjectPatch";
@@ -146,4 +150,20 @@ export const ipc = {
   projectOpen: (id: string, target: OpenTarget) => call<null>("project_open", { id, target }),
   /** How to connect to the database lunaRun runs for a project (root, no password), or `null`. */
   projectDatabase: (id: string) => call<DatabaseSettings | null>("project_database", { id }),
+  /**
+   * The one line of `DB_PORT` in the project's `.env` that would make it connect to the database lunaRun runs, as a preview
+   * (with the name of the backup that would be made), or `null` when there is nothing to fix. Writes nothing.
+   */
+  projectEnvPortPreview: (id: string) =>
+    call<PortChange | null>("project_env_port_preview", { id }),
+  /**
+   * Make the change the user confirmed: a backup of the `.env`, then that one line. `change` is the preview that was shown;
+   * `ENV_CHANGED` (nothing written) when the file or the port is no longer what it showed.
+   */
+  projectEnvPortApply: (id: string, change: PortChange) =>
+    call<EnvFixApplied>("project_env_port_apply", { id, change }),
+  /** Whether the database the `.env` names exists on the server lunaRun runs (asks it only while it runs). */
+  projectDatabaseStatus: (id: string) => call<DatabaseStatus>("project_database_status", { id }),
+  /** Create the database the `.env` names (`DATABASE_NOT_RUNNING` while the server is down); nothing changes if it exists. */
+  projectDatabaseCreate: (id: string) => call<DatabaseCreated>("project_database_create", { id }),
 } as const;

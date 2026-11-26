@@ -59,7 +59,11 @@ export function callsTo(command: string): unknown[][] {
  * A rejected promise shaped like a backend failure. Tauri rejects `invoke` with the serialised
  * `LunaError` (a plain object, not an `Error`), which is exactly what the code under test must handle.
  */
-export function backendError(code: string, message: string): Promise<never> {
+export function backendError(
+  code: string,
+  message: string,
+  details?: Record<string, unknown>,
+): Promise<never> {
   // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- see above
-  return Promise.reject({ code, message });
+  return Promise.reject(details ? { code, message, details } : { code, message });
 }

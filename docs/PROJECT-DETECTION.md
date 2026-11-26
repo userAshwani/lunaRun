@@ -110,6 +110,8 @@ If `DB_PORT` differs from the port of the bound DB service, show the fix "Update
 explicit confirmation with a diff preview, edits only that line, and keeps a `.env.lunarun-backup` (FR-PJ-05).
 If `DB_DATABASE` does not exist on the bound server, offer "Create database".
 
+**As built (D-041):** the fix shows the one line that changes (nothing else of the file), refuses unless the file still gives that preview, writes `.env.lunarun-backup` (or `-2`, `-3`: never overwritten) first, replaces only the value so quotes, `export`, line endings and a trailing comment stay, adds the line after `DB_HOST` when there is none, and never edits `.env.example`, a link, a file that is not UTF-8 text or one over 1 MiB. "Create database" runs the installed client as `root` without a password, only while the server runs, for a name of letters, digits, `_`, `$` and `-` (64 at most).
+
 ## 5. Framework & document root
 
 | Framework | Evidence | Doc root |

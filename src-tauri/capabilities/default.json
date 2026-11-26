@@ -35,6 +35,10 @@
     "allow-project-start",
     "allow-project-stop",
     "allow-project-open",
-    "allow-project-database"
+    "allow-project-database",
+    "allow-project-env-port-preview",
+    "allow-project-env-port-apply",
+    "allow-project-database-status",
+    "allow-project-database-create"
   ]
 }

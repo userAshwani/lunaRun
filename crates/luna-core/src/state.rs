@@ -143,6 +143,17 @@ pub fn save<T: Persisted>(path: &Path, value: &T) -> Result<()> {
 /// Write `bytes` to `path` so readers see either the old or the new content, never a mix:
 /// temp file in the same directory, fsync, then rename over the target.
 pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
+    write_atomic_with(path, bytes, None)
+}
+
+/// [`write_atomic`] that gives the new file `permissions` **before** it takes the place of the old one: a replaced file
+/// would otherwise get the default mode of a new file, and a `.env` that was readable by its owner only would, for a
+/// moment or for good, be readable by everyone.
+pub fn write_atomic_with(
+    path: &Path,
+    bytes: &[u8],
+    permissions: Option<fs::Permissions>,
+) -> Result<()> {
     static COUNTER: AtomicU64 = AtomicU64::new(0);
 
     let dir = path
@@ -163,6 +174,9 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     let write = || -> std::io::Result<()> {
         let mut file = File::create(&tmp)?;
         file.write_all(bytes)?;
+        if let Some(permissions) = permissions {
+            file.set_permissions(permissions)?;
+        }
         file.sync_all()?;
         drop(file);
         fs::rename(&tmp, path)

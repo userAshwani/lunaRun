@@ -213,6 +213,9 @@ export function backendWith(
           siteEntry("blog", { port: 8102, address: "http://127.0.0.1:8102" }),
         ])),
     project_database: handlers.database ?? (() => null),
+    // The fixes of the database row: nothing to fix, unless a test says so.
+    project_env_port_preview: () => null,
+    project_database_status: () => "notApplicable",
     ...handlers.more,
   });
 }

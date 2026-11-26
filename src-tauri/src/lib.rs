@@ -100,7 +100,11 @@ pub fn run() {
             commands::project_start,
             commands::project_stop,
             commands::project_open,
-            commands::project_database
+            commands::project_database,
+            commands::project_env_port_preview,
+            commands::project_env_port_apply,
+            commands::project_database_status,
+            commands::project_database_create
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

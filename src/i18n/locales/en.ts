@@ -102,6 +102,9 @@ export const en = {
     INVALID_INPUT: "That value cannot be used",
     PROJECT_EXISTS: "Project already added",
     NO_SITE: "The project has no site yet",
+    ENV_CHANGED: "The .env file was not changed",
+    DATABASE_NOT_RUNNING: "The database is not running",
+    DATABASE_COMMAND_FAILED: "The database did not accept the command",
     INTERNAL: "Unexpected error",
   },
   diagnostics: {
@@ -584,6 +587,52 @@ export const en = {
         unknown: "An unknown database",
       },
       from: "Read from {{file}}",
+    },
+    fixes: {
+      checking: "Checking the .env file and the database",
+      retry: "Try again",
+      port: {
+        differs:
+          "The .env file does not connect to the database lunaRun runs, which listens on port {{port}}.",
+        missingLine:
+          "The .env file has no DB_PORT, so Laravel would use port 3306, and lunaRun runs this database on port {{port}}.",
+        button: "Update DB_PORT in .env",
+        dialogTitle: "Update DB_PORT in .env?",
+        dialogText:
+          "Only this line changes. Before that, a copy of the whole file is saved next to it as {{backup}}.",
+        diffLabel: "What changes in .env",
+        file: ".env, line {{line}}",
+        removed: "Removed line",
+        added: "New line",
+        confirm: "Update .env",
+        cancel: "Cancel",
+        done: "DB_PORT updated. The old .env is saved as {{backup}}",
+        checkFailed: "Could not check the .env file",
+        applyFailed: "The .env file was not changed",
+        changed:
+          "The .env file is not what the preview showed, so nothing was written. Look at the new preview and try again.",
+        cannot: {
+          link: "The .env file is a link, which lunaRun does not edit. Change DB_PORT by hand.",
+          notFile: "The .env in this folder is not a file. Change DB_PORT by hand.",
+          tooLarge:
+            "The .env file is too large to be a settings file, so lunaRun does not edit it.",
+          notUtf8:
+            "The .env file is not UTF-8 text, so lunaRun does not edit it. Change DB_PORT by hand.",
+        },
+      },
+      database: {
+        missing: "The database {{name}} does not exist yet.",
+        create: "Create database",
+        exists: "The database {{name}} exists.",
+        notRunning: "Start the project to check whether the database {{name}} exists.",
+        invalidName:
+          "The name {{name}} has characters lunaRun will not put into a statement (letters, digits, _, $ and - only). Create that database yourself.",
+        created: "Created the database {{name}}",
+        alreadyThere: "The database {{name}} was already there",
+        checkFailed: "Could not check the database",
+        createFailed: "Could not create the database",
+        notRunningError: "The database server is not running. Start the project first.",
+      },
     },
     install: {
       button: "Install {{name}} {{version}}",

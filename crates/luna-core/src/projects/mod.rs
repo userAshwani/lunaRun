@@ -16,6 +16,7 @@
 mod data;
 mod detect;
 mod dotenv;
+pub mod envfix;
 mod files;
 mod resolve;
 mod store;

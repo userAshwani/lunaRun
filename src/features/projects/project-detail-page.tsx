@@ -247,7 +247,11 @@ export function ProjectDetailPage() {
                   />
                 )}
                 {resolution.database && (
-                  <DatabaseRow suggestion={resolution.database} hint={report.database} />
+                  <DatabaseRow
+                    projectId={project.id}
+                    suggestion={resolution.database}
+                    hint={report.database}
+                  />
                 )}
               </ul>
             )}

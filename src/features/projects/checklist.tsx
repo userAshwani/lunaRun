@@ -11,6 +11,7 @@ import type { Requirement } from "@/bindings/Requirement";
 import type { RuntimeResolution } from "@/bindings/RuntimeResolution";
 import type { Warning } from "@/bindings/Warning";
 import { cn } from "@/lib/utils";
+import { DatabaseFixes } from "./database-fixes";
 import { InstallRuntime } from "./install-runtime";
 import { runtimeName, runtimeState } from "./project-format";
 
@@ -195,9 +196,11 @@ export function ExtensionsRow({ extensions }: { extensions: readonly ExtensionSt
 
 /** The database the `.env` file expects and what lunaRun suggests for it. */
 export function DatabaseRow({
+  projectId,
   suggestion,
   hint,
 }: {
+  projectId: string;
   suggestion: DatabaseSuggestion;
   hint: DbHint | null;
 }) {
@@ -243,6 +246,7 @@ export function DatabaseRow({
       )}
       {hint?.port != null && <Detail>{t("projects.database.port", { port: hint.port })}</Detail>}
       {hint && <Detail>{t("projects.database.from", { file: hint.file })}</Detail>}
+      {suggestion.installedVersion && <DatabaseFixes projectId={projectId} hint={hint} />}
     </ChecklistRow>
   );
 }
