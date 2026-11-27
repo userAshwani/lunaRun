@@ -56,8 +56,6 @@ pub const WINDOWS_EXTENSIONS: [&str; 20] = [
 /// What the generated `php.ini` needs to know.
 #[derive(Debug, Clone)]
 pub struct PhpSettings<'a> {
-    /// Windows only: the folder with `php_*.dll`, in the **final** install folder (not the staging one).
-    pub extension_dir: &'a Path,
     /// The CA bundle every PHP version shares.
     pub cafile: &'a Path,
     /// An IANA name such as `Europe/Berlin`, or `UTC`.
@@ -212,7 +210,12 @@ fn quoted(path: &Path) -> Result<String> {
 /// The Windows `php.ini`: `base` (the zip's `php.ini-development`) with lunaRun's settings applied.
 pub fn render_windows_ini(base: &str, settings: &PhpSettings<'_>) -> Result<RenderedIni> {
     let mut ini = IniEdit::new(base);
-    ini.set("extension_dir", &quoted(settings.extension_dir)?);
+    // Relative, never the absolute folder: PHP for Windows resolves a relative `extension_dir` against the folder of its
+    // own program (checked for `php.exe` and `php-cgi.exe`, wherever they are started from, with an `ext` folder in the
+    // working directory ignored), and it reads an absolute one in the ANSI code page, so a data folder with a letter such
+    // as `ü` or `é` (a Windows profile called José) loaded no extension at all. With no path in the file there is none to
+    // misread, and the install can be moved.
+    ini.set("extension_dir", "\"ext\"");
     apply_common(&mut ini, settings)?;
 
     // Opcache is a Zend extension.

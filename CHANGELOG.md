@@ -11,6 +11,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - New logo: a crescent moon merged with an `R` and an arrow. It replaces the old icon in the app window, the installer, the sidebar, the browser favicon and the README (which switches between a light and a dark version), and a social preview image is included.
 
 ### Fixed
+- On Windows, PHP installed by lunaRun loaded **none of its extensions** (mbstring, openssl, pdo_mysql and the rest) when the Windows user name, and so lunaRun's data folder, contains a letter such as `é` or `ü`; Laravel could not run. The generated `php.ini` now finds the extensions next to PHP itself and names no folder. Reinstall a PHP version installed before this fix to get the new `php.ini`.
 - The status badges (Running, Starting, Crashed and the rest) were slightly too pale to read comfortably in the light theme; their text is now darker and meets the contrast guideline in both themes.
 - Starting several services at the same moment on Linux and macOS could wrongly refuse a free port as "already in use" when another service was being launched at that instant. Checking a port and launching a program now take turns.
 - Installing a runtime no longer fails on Windows when the folder name has an accented letter (for example a user profile named José): the check that the new program runs threw away its whole answer when it contained a character the system wrote in its older text encoding.

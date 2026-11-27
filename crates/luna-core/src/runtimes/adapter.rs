@@ -28,7 +28,8 @@ pub struct InstallCtx<'a> {
     /// The staging folder the archives were extracted into. Files that stay in the install belong here.
     pub dir: &'a Path,
     /// Where the install will be once it is complete. The staging folder is renamed to it, so anything that
-    /// must contain an absolute path (a php.ini's `extension_dir`) uses this one, not `dir`.
+    /// must name an absolute path inside the install uses this one, not `dir`. (A Windows `php.ini` names none: its
+    /// `extension_dir` is the relative `ext`, see `php_config::render_windows_ini`.)
     pub final_dir: &'a Path,
     /// For files outside the install folder, such as `config/php/<version>/php.ini`.
     pub home: &'a LunaHome,

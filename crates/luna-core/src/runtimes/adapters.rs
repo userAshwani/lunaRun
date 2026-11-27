@@ -119,11 +119,9 @@ pub fn php_post_install(ctx: &InstallCtx<'_>, codesign: &Path, timezone: &str) -
             ))
         })?;
         let available = available_extensions(&ctx.dir.join("ext"));
-        let extension_dir = ctx.final_dir.join("ext");
         render_windows_ini(
             &base,
             &PhpSettings {
-                extension_dir: &extension_dir,
                 cafile: &paths.cacert,
                 timezone,
                 available_extensions: &available,
@@ -133,7 +131,6 @@ pub fn php_post_install(ctx: &InstallCtx<'_>, codesign: &Path, timezone: &str) -
     } else {
         // Static builds: no `ini-development` and no `ext/`, the extensions are compiled in.
         render_static_ini(&PhpSettings {
-            extension_dir: ctx.final_dir,
             cafile: &paths.cacert,
             timezone,
             available_extensions: &Default::default(),

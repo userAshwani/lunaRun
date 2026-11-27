@@ -129,7 +129,8 @@ async fn the_terminal_of_a_project_runs_its_own_php_composer_and_node() {
     }
 
     // What the terminal would run, in a shell that exits: the same environment, the same folder.
-    let report = "php -r \"echo PHP_VERSION, PHP_EOL, php_ini_loaded_file(), PHP_EOL;\"\ncomposer --version --no-ansi\nnode --version\n";
+    // The extensions too: with an absolute `extension_dir` PHP for Windows loaded none of them from a home with `ü`.
+    let report = "php -r \"echo PHP_VERSION, PHP_EOL, php_ini_loaded_file(), PHP_EOL, 'extensions=', json_encode([extension_loaded('mbstring'), extension_loaded('openssl'), extension_loaded('pdo_mysql')]), PHP_EOL;\"\ncomposer --version --no-ansi\nnode --version\n";
     let mut shell = if os == Os::Windows {
         let mut command = Command::new("powershell.exe");
         command
@@ -176,6 +177,18 @@ async fn the_terminal_of_a_project_runs_its_own_php_composer_and_node() {
     eprintln!("{said}\n{}", String::from_utf8_lossy(&output.stderr));
 
     assert!(said.contains(&php_version), "php {php_version}: {said}");
+    let errors = String::from_utf8_lossy(&output.stderr).into_owned();
+    if os == Os::Windows {
+        // Static builds elsewhere have their extensions compiled in; a Windows PHP loads them from `ext`.
+        assert!(
+            said.contains("extensions=[true,true,true]"),
+            "mbstring, openssl and pdo_mysql must load from a home with a non-ASCII letter: {said}"
+        );
+    }
+    assert!(
+        !said.contains("Unable to load") && !errors.contains("Unable to load"),
+        "PHP could not load an extension: {said}\n{errors}"
+    );
     assert!(
         said.contains(&format!("Composer version {composer_version}")),
         "composer {composer_version}: {said}"

@@ -137,7 +137,7 @@ separate override files that lunaRun **never overwrites**.
 ### php.ini
 
 - Base: the version's own `php.ini-development` (shipped in the Windows zips), edited in place so only the lines below change, or our template for static builds (`luna-core::runtimes::php_config`, D-020).
-- lunaRun sets: `extension_dir` (absolute, quoted), Laravel extensions enabled, `memory_limit=512M`,
+- lunaRun sets: `extension_dir = "ext"` (relative: PHP resolves it against its own folder, and an absolute path with a letter such as `ü` is misread, D-042), Laravel extensions enabled, `memory_limit=512M`,
   `upload_max_filesize=128M`, `post_max_size=128M`, `max_execution_time=120`, `date.timezone` = OS timezone,
   `opcache.enable=1`, `opcache.validate_timestamps=1`, `opcache.revalidate_freq=0`, `curl.cainfo`/`openssl.cafile` → a CA bundle we ship
   (Windows PHP has no CA store, without this Composer/HTTP calls fail with SSL errors).

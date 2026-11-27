@@ -33,21 +33,12 @@ fn home() -> (TempDir, LunaHome) {
     (tmp, home)
 }
 
-fn settings<'a>(
-    ext_dir: &'a Path,
-    cafile: &'a Path,
-    available: &'a BTreeSet<String>,
-) -> PhpSettings<'a> {
+fn settings<'a>(cafile: &'a Path, available: &'a BTreeSet<String>) -> PhpSettings<'a> {
     PhpSettings {
-        extension_dir: ext_dir,
         cafile,
         timezone: "Europe/Berlin",
         available_extensions: available,
     }
-}
-
-fn windows_ext_dir() -> PathBuf {
-    PathBuf::from(r"C:\Users\Ünï cödé\lüna home\runtimes\php\8.3.36\ext")
 }
 
 fn windows_cafile() -> PathBuf {
@@ -58,11 +49,7 @@ fn render(
     base: &str,
     available: &BTreeSet<String>,
 ) -> luna_core::runtimes::php_config::RenderedIni {
-    render_windows_ini(
-        base,
-        &settings(&windows_ext_dir(), &windows_cafile(), available),
-    )
-    .unwrap()
+    render_windows_ini(base, &settings(&windows_cafile(), available)).unwrap()
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -89,10 +76,9 @@ fn only_the_intended_lines_of_php_ini_development_change() {
         .collect();
     changed.sort();
 
-    let ext_dir = windows_ext_dir();
     let cafile = windows_cafile();
     let mut expected: Vec<String> = vec![
-        format!("extension_dir = \"{}\"", ext_dir.display()),
+        "extension_dir = \"ext\"".to_owned(),
         "memory_limit = 512M".to_owned(),
         "upload_max_filesize = 128M".to_owned(),
         "post_max_size = 128M".to_owned(),
@@ -205,11 +191,30 @@ fn settings_missing_from_the_base_are_added_and_active_lines_beat_comments() {
 }
 
 #[test]
+fn the_windows_ini_loads_extensions_from_next_to_php_and_names_no_folder_for_them() {
+    // PHP for Windows reads an absolute `extension_dir` in the ANSI code page: with a data folder such as `lüna home` it
+    // loaded no extension at all. The relative `ext` is resolved against PHP's own folder, and names nothing to misread.
+    let rendered = render(BASE, &all_extensions());
+    let lines: Vec<&str> = rendered
+        .text
+        .lines()
+        .filter(|l| l.starts_with("extension_dir"))
+        .collect();
+    assert_eq!(lines, ["extension_dir = \"ext\""]);
+    assert!(
+        !rendered.text.contains("runtimes"),
+        "no folder of an install is named"
+    );
+}
+
+#[test]
 fn paths_are_quoted_and_those_php_would_misread_are_refused() {
     let rendered = render(BASE, &all_extensions());
-    assert!(rendered.text.contains(
-        "extension_dir = \"C:\\Users\\Ünï cödé\\lüna home\\runtimes\\php\\8.3.36\\ext\""
-    ));
+    assert!(
+        rendered
+            .text
+            .contains("curl.cainfo = \"C:\\Users\\Ünï cödé\\lüna home\\config\\php\\cacert.pem\"")
+    );
 
     let available = all_extensions();
     for bad in [
@@ -217,11 +222,7 @@ fn paths_are_quoted_and_those_php_would_misread_are_refused() {
         "/data/${HOME}/ext",
         "/data/line\nbreak/ext",
     ] {
-        let err = render_windows_ini(
-            BASE,
-            &settings(Path::new(bad), &windows_cafile(), &available),
-        )
-        .unwrap_err();
+        let err = render_windows_ini(BASE, &settings(Path::new(bad), &available)).unwrap_err();
         assert_eq!(err.code, ErrorCode::InvalidPath, "{bad:?}");
     }
 }
@@ -235,7 +236,7 @@ fn a_static_build_gets_the_template_with_no_extension_lines() {
     let available = BTreeSet::new();
     let cafile =
         PathBuf::from("/Users/jörg/Library/Application Support/lunaRun/config/php/cacert.pem");
-    let ini = render_static_ini(&settings(Path::new("/unused"), &cafile, &available)).unwrap();
+    let ini = render_static_ini(&settings(&cafile, &available)).unwrap();
 
     assert!(!ini.contains("{{"), "every placeholder was filled");
     assert!(ini.contains("date.timezone = \"Europe/Berlin\""));
@@ -448,10 +449,11 @@ fn a_windows_install_writes_an_ini_that_points_at_the_final_folder_not_the_stagi
 
     let paths = php_config_paths(&home, "8.3.36").unwrap();
     let ini = fs::read_to_string(&paths.ini).unwrap();
-    let ext_dir = final_dir.join("ext");
+    // The extensions are found next to the PHP program: no folder of the install is named in the file.
+    assert!(ini.contains("extension_dir = \"ext\""), "{ini}");
     assert!(
-        ini.contains(&format!("extension_dir = \"{}\"", ext_dir.display())),
-        "{ini}"
+        !ini.contains(&final_dir.display().to_string()),
+        "the install folder is not named in the ini"
     );
     assert!(
         !ini.contains(".staging-job-1"),
