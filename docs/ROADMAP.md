@@ -110,7 +110,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] **UI: Projects list + Project detail** (detection checklist with one-click fixes, bindings, site URL, actions) (sub-step b done: list, add by picker and drag and drop, remove, the detail with the checklist, Install from the page, settings and bindings; the site URL and the quick actions come with sub-steps c and d; the terminal in e; the `.env` fixes in f)
 
 ### M1.8 App shell
-- [ ] Tray / menu bar with menu (FR-AP-01/02); close-to-tray
+- [x] Tray / menu bar with menu (FR-AP-01/02); close-to-tray (`src-tauri/src/tray.rs`, D-043; Start all is PRD Q6, not offered yet)
 - [ ] First-run wizard + "Laravel starter pack" (FR-AP-06)
 - [ ] Settings page (FR-AP-03); launch at login
 - [ ] Diagnostics page + "Copy report" (FR-AP-04)

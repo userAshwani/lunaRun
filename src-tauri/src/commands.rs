@@ -361,29 +361,41 @@ pub async fn project_open(
         projects.inner().clone(),
         sites.inner().clone(),
     );
-    blocking(move || {
-        if target == OpenTarget::Terminal {
-            return terminal::open(&home, Os::current(), &projects, &sites, &id);
-        }
-        let project = projects.get(&id)?;
-        let address = if target == OpenTarget::Browser {
-            sites
-                .plan()?
-                .entries
-                .into_iter()
-                .find(|entry| entry.project_id == id)
-                .and_then(|entry| entry.address)
-        } else {
-            None
-        };
-        let command = opener::command_here(
-            target,
-            address.as_deref(),
-            std::path::Path::new(&project.path),
-        )?;
-        opener::spawn(&command)
-    })
-    .await
+    blocking(move || open_project(&home, &projects, &sites, &id, target)).await
+}
+
+/// What `project_open` does, for the tray too: the address and the folder are the ones lunaRun stored, and the only things
+/// asked for are a project id and what to open.
+///
+/// # Errors
+/// As `project_open`.
+pub fn open_project(
+    home: &LunaHome,
+    projects: &ProjectStore,
+    sites: &SiteManager,
+    id: &str,
+    target: OpenTarget,
+) -> Result<(), LunaError> {
+    if target == OpenTarget::Terminal {
+        return terminal::open(home, Os::current(), projects, sites, id);
+    }
+    let project = projects.get(id)?;
+    let address = if target == OpenTarget::Browser {
+        sites
+            .plan()?
+            .entries
+            .into_iter()
+            .find(|entry| entry.project_id == id)
+            .and_then(|entry| entry.address)
+    } else {
+        None
+    };
+    let command = opener::command_here(
+        target,
+        address.as_deref(),
+        std::path::Path::new(&project.path),
+    )?;
+    opener::spawn(&command)
 }
 
 /// How to connect to the database lunaRun runs for a project (`root`, no password, the port lunaRun gave it), or

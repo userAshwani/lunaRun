@@ -27,6 +27,7 @@ pub const SHUTDOWN_PROGRESS_EVENT: &str = "shutdown:progress";
 /// gone nobody is listening.
 pub fn emit_service_state<R: Runtime>(app: &AppHandle<R>, status: &ServiceStatus) {
     let _ = app.emit(SERVICE_STATE_EVENT, status);
+    crate::tray::refresh(app);
 }
 
 /// Pass on new lines of a service's output.
@@ -66,6 +67,8 @@ impl<R: Runtime> JobEventSink for TauriJobSink<R> {
             JobEvent::Progress(progress) => self.app.emit(JOB_PROGRESS_EVENT, progress),
             JobEvent::Done(done) => {
                 resync_sites_after_runtime_job(&self.app, &done.job_id);
+                // A project started or stopped, a runtime installed: the tray's menu says so.
+                crate::tray::refresh(&self.app);
                 self.app.emit(JOB_DONE_EVENT, done)
             }
         };

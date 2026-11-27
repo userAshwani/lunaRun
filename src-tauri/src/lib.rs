@@ -4,6 +4,7 @@ pub mod commands;
 pub mod events;
 mod registry;
 pub mod services;
+pub mod tray;
 
 use std::sync::Arc;
 
@@ -56,17 +57,29 @@ pub fn run() {
             let runtime = tauri::async_runtime::handle().inner().clone();
             let sink = events::TauriJobSink::new(app.handle().clone());
             app.manage(JobManager::new(runtime, sink, JobOptions::default()));
+
+            // The tray icon (FR-AP-01). Without one (a desktop with no tray), closing the window quits, as before.
+            tray::create(app.handle());
             Ok(())
         })
-        // Closing the window while a service runs keeps it open, so it can show the orderly stop (D-029, D-033).
+        // Closing the window hides it to the tray and the services keep running (FR-AP-01, D-043); the tray's Quit
+        // stops them. With no tray, closing quits: while a service runs the window stays open to show the orderly
+        // stop (D-029, D-033).
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event
-                && let services::CloseDecision::Hold { start_quit } =
-                    services::on_close_requested(window.app_handle())
+            let tauri::WindowEvent::CloseRequested { api, .. } = event else {
+                return;
+            };
+            let app = window.app_handle();
+            if tray::is_present(app) && !app.state::<services::QuitState>().is_quitting() {
+                api.prevent_close();
+                let _ = window.hide();
+                return;
+            }
+            if let services::CloseDecision::Hold { start_quit } = services::on_close_requested(app)
             {
                 api.prevent_close();
                 if start_quit {
-                    services::spawn_quit(window.app_handle(), 0);
+                    services::spawn_quit(app, 0);
                 }
             }
         })
