@@ -39,6 +39,11 @@
     "allow-project-env-port-preview",
     "allow-project-env-port-apply",
     "allow-project-database-status",
-    "allow-project-database-create"
+    "allow-project-database-create",
+    "allow-onboarding-get",
+    "allow-onboarding-complete",
+    "allow-onboarding-check-home",
+    "allow-onboarding-choose-home",
+    "allow-app-restart"
   ]
 }

@@ -111,7 +111,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 
 ### M1.8 App shell
 - [x] Tray / menu bar with menu (FR-AP-01/02); close-to-tray (`src-tauri/src/tray.rs`, D-043; Start all is PRD Q6, not offered yet)
-- [ ] First-run wizard + "Laravel starter pack" (FR-AP-06)
+- [x] First-run wizard + "Laravel starter pack" (FR-AP-06) (`luna_core::onboarding`, `src/features/welcome/`, D-044; the data folder chosen through a pointer file, first run only)
 - [ ] Settings page (FR-AP-03); launch at login
 - [ ] Diagnostics page + "Copy report" (FR-AP-04)
 - [ ] Dashboard: running services, projects quick start, recent errors

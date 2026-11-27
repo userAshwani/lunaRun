@@ -9,7 +9,9 @@ import type { DatabaseCreated } from "@/bindings/DatabaseCreated";
 import type { DatabaseSettings } from "@/bindings/DatabaseSettings";
 import type { DatabaseStatus } from "@/bindings/DatabaseStatus";
 import type { EnvFixApplied } from "@/bindings/EnvFixApplied";
+import type { HomeChoice } from "@/bindings/HomeChoice";
 import type { LunaError } from "@/bindings/LunaError";
+import type { OnboardingView } from "@/bindings/OnboardingView";
 import type { OpenTarget } from "@/bindings/OpenTarget";
 import type { PortChange } from "@/bindings/PortChange";
 import type { Project } from "@/bindings/Project";
@@ -166,4 +168,14 @@ export const ipc = {
   projectDatabaseStatus: (id: string) => call<DatabaseStatus>("project_database_status", { id }),
   /** Create the database the `.env` names (`DATABASE_NOT_RUNNING` while the server is down); nothing changes if it exists. */
   projectDatabaseCreate: (id: string) => call<DatabaseCreated>("project_database_create", { id }),
+  /** What the first-run wizard shows: whether it is the first run, the data folder, the checks and the starter pack. */
+  onboardingGet: () => call<OnboardingView>("onboarding_get"),
+  /** The wizard was finished or skipped: it is not shown again. */
+  onboardingComplete: () => call<null>("onboarding_complete"),
+  /** Whether a folder can be the data folder, and what to know about it. Writes nothing. */
+  onboardingCheckHome: (path: string) => call<HomeChoice>("onboarding_check_home", { path }),
+  /** Use this folder from the next start (first run only). Then `appRestart`. */
+  onboardingChooseHome: (path: string) => call<HomeChoice>("onboarding_choose_home", { path }),
+  /** Start lunaRun again. `BUSY` while a service runs. */
+  appRestart: () => call<null>("app_restart"),
 } as const;

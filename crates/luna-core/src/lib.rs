@@ -9,6 +9,7 @@ pub mod error;
 pub mod extract;
 pub mod jobs;
 pub mod launch;
+pub mod onboarding;
 pub mod opener;
 pub mod paths;
 pub mod projects;

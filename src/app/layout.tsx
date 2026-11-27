@@ -1,14 +1,26 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useNavigate } from "react-router";
 import appIcon from "@/assets/app-icon.png";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { QuitOverlay } from "@/features/services/quit-overlay";
+import { useOnboarding } from "@/features/welcome/use-onboarding";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, NAV_ITEMS } from "./routes";
 
+/** On the first run the app opens on the setup wizard (D-044). An error asking for it just shows the app. */
+function useFirstRunRedirect() {
+  const navigate = useNavigate();
+  const onboarding = useOnboarding();
+  const show = onboarding.data?.show === true;
+  useEffect(() => {
+    if (show) void navigate("/welcome", { replace: true });
+  }, [show, navigate]);
+}
+
 export function Layout() {
   const { t } = useTranslation();
+  useFirstRunRedirect();
   return (
     <div className="flex h-screen bg-background">
       <aside className="flex w-60 shrink-0 flex-col border-r bg-card">

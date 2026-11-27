@@ -6,6 +6,7 @@ import { ProjectsPage } from "@/features/projects/projects-page";
 import { RuntimesPage } from "@/features/runtimes/runtimes-page";
 import { ServicesPage } from "@/features/services/services-page";
 import { SettingsPage } from "@/features/settings/settings-page";
+import { WelcomePage } from "@/features/welcome/welcome-page";
 import { Layout } from "./layout";
 
 /** Exported separately so tests can mount them in a memory router. */
@@ -23,6 +24,8 @@ export const routes: RouteObject[] = [
       { path: "diagnostics", element: <DiagnosticsPage /> },
     ],
   },
+  // The first-run wizard fills the window: no sidebar (D-044).
+  { path: "/welcome", element: <WelcomePage /> },
 ];
 
 // Hash routing: survives dev reloads and needs no server-side fallback (D-011).

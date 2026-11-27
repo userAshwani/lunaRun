@@ -8,6 +8,7 @@ use luna_core::dbadmin::{DatabaseCreated, DatabaseStatus};
 use luna_core::diagnostics::{self, AppInfo, Arch, Os};
 use luna_core::jobs::{JobInfo, JobManager, StartedJob};
 use luna_core::launch::{DatabaseSettings, ProjectAction, ProjectLauncher};
+use luna_core::onboarding::{self, HomeChoice, OnboardingView};
 use luna_core::opener::{self, OpenTarget};
 use luna_core::projects::envfix::{EnvFixApplied, PortChange};
 use luna_core::projects::{
@@ -452,6 +453,104 @@ pub async fn project_database_create(
 ) -> Result<DatabaseCreated, LunaError> {
     let launcher = launcher.inner().clone();
     blocking(move || launcher.database_create(&id)).await
+}
+
+/// Everything the first-run wizard shows (FR-AP-06, D-044): whether it is the first run, the data folder and where it came
+/// from, the checks (Visual C++ on Windows, free space) and the starter pack for this computer.
+#[tauri::command]
+pub async fn onboarding_get(
+    home: State<'_, LunaHome>,
+    registry: State<'_, RegistryHolder>,
+    data: State<'_, Arc<DetectionData>>,
+    projects: State<'_, ProjectStore>,
+) -> Result<OnboardingView, LunaError> {
+    let (home, registry, data, projects) = (
+        home.inner().clone(),
+        registry.inner().clone(),
+        Arc::clone(data.inner()),
+        projects.inner().clone(),
+    );
+    blocking(move || {
+        let today = CalDate::today()
+            .ok_or_else(|| LunaError::internal("the system clock does not give a usable date"))?;
+        let catalog = registry
+            .available(Os::current(), Arch::current(), today)
+            .runtimes;
+        let installed = list_installed(&home)?;
+        onboarding::overview(
+            &home,
+            Os::current(),
+            &catalog,
+            &installed,
+            projects.list().len(),
+            &data,
+            || {
+                luna_core::runtimes::prerequisites::detect_vcredist(
+                    &luna_core::runtimes::prerequisites::default_reg_path(),
+                )
+            },
+            onboarding::free_space,
+        )
+    })
+    .await
+}
+
+/// The wizard was finished or skipped: it is not shown again.
+#[tauri::command]
+pub fn onboarding_complete(home: State<'_, LunaHome>) -> Result<(), LunaError> {
+    onboarding::complete(&home)
+}
+
+/// Whether `path` can be the data folder, and what to know about it (a synchronised folder, an existing lunaRun folder).
+/// Reads only: the page shows this before anything is written.
+#[tauri::command]
+pub async fn onboarding_check_home(path: String) -> Result<HomeChoice, LunaError> {
+    blocking(move || onboarding::check_home(std::path::Path::new(&path))).await
+}
+
+/// Choose the data folder for the next start (first run only, and not when `LUNA_HOME` sets it). The app keeps its
+/// current folder until `app_restart`.
+#[tauri::command]
+pub async fn onboarding_choose_home(
+    path: String,
+    home: State<'_, LunaHome>,
+    projects: State<'_, ProjectStore>,
+) -> Result<HomeChoice, LunaError> {
+    let (home, projects) = (home.inner().clone(), projects.inner().clone());
+    blocking(move || {
+        let pointer = onboarding::pointer_file().ok_or_else(|| {
+            LunaError::internal("this system has no configuration folder to remember the choice in")
+        })?;
+        let installed = list_installed(&home)?.len();
+        onboarding::choose_home_now(
+            &home,
+            installed,
+            projects.list().len(),
+            std::path::Path::new(&path),
+            &pointer,
+        )
+    })
+    .await
+}
+
+/// Start lunaRun again (after a new data folder was chosen). Refused while a service runs: a restart would not stop it in
+/// order.
+#[tauri::command]
+pub fn app_restart(
+    app: tauri::AppHandle,
+    supervisor: State<'_, Supervisor>,
+) -> Result<(), LunaError> {
+    if supervisor
+        .list()
+        .iter()
+        .any(|status| status.state.has_process())
+    {
+        return Err(LunaError::new(
+            luna_core::ErrorCode::Busy,
+            "lunaRun cannot restart while a service runs: stop it first",
+        ));
+    }
+    app.restart()
 }
 
 /// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is

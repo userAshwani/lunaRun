@@ -22,6 +22,8 @@ const LAYOUT: [&str; 6] = ["runtimes", "config", "data", "logs", "run", "cache"]
 pub struct LunaHome {
     root: PathBuf,
     from_env: bool,
+    /// The folder was chosen in the first-run wizard (D-044) and found through the pointer file.
+    chosen: bool,
 }
 
 impl LunaHome {
@@ -53,27 +55,41 @@ impl LunaHome {
         Ok(Self {
             root,
             from_env: false,
+            chosen: false,
         })
     }
 
-    /// `LUNA_HOME` if set and non-empty, otherwise the per-OS default.
+    /// `LUNA_HOME` if set and non-empty, otherwise the folder chosen in the first-run wizard (the pointer file of
+    /// [`crate::onboarding::pointer_file`], D-044), otherwise the per-OS default.
     pub fn resolve() -> Result<Self> {
-        Self::resolve_with(std::env::var_os(HOME_ENV), default_root())
+        let chosen = crate::onboarding::pointer_file()
+            .and_then(|pointer| crate::onboarding::read_pointer(&pointer));
+        Self::resolve_with(std::env::var_os(HOME_ENV), chosen, default_root())
     }
 
     /// Pure core of [`LunaHome::resolve`], separated so it can be tested without touching the environment.
-    fn resolve_with(env_value: Option<OsString>, default: Option<PathBuf>) -> Result<Self> {
-        match env_value.filter(|value| !value.is_empty()) {
-            Some(value) => Self::at(PathBuf::from(value)).map(|home| Self {
+    fn resolve_with(
+        env_value: Option<OsString>,
+        chosen: Option<PathBuf>,
+        default: Option<PathBuf>,
+    ) -> Result<Self> {
+        if let Some(value) = env_value.filter(|value| !value.is_empty()) {
+            return Self::at(PathBuf::from(value)).map(|home| Self {
                 from_env: true,
                 ..home
-            }),
-            None => match default {
-                Some(root) => Self::at(root),
-                None => Err(LunaError::internal(
-                    "cannot determine the user data directory; set the LUNA_HOME environment variable",
-                )),
-            },
+            });
+        }
+        if let Some(root) = chosen {
+            return Self::at(root).map(|home| Self {
+                chosen: true,
+                ..home
+            });
+        }
+        match default {
+            Some(root) => Self::at(root),
+            None => Err(LunaError::internal(
+                "cannot determine the user data directory; set the LUNA_HOME environment variable",
+            )),
         }
     }
 
@@ -84,6 +100,11 @@ impl LunaHome {
     /// Whether the root came from the `LUNA_HOME` environment variable (shown in Diagnostics).
     pub fn from_env(&self) -> bool {
         self.from_env
+    }
+
+    /// Whether the root is the one chosen in the first-run wizard (D-044).
+    pub fn is_chosen(&self) -> bool {
+        self.chosen
     }
 
     /// Create the standard directory layout. Safe to call repeatedly.
@@ -256,20 +277,33 @@ mod tests {
         let from_env = tmp.path().join("from env");
         let fallback = tmp.path().join("fallback");
 
-        let home =
-            LunaHome::resolve_with(Some(from_env.clone().into()), Some(fallback.clone())).unwrap();
+        let chosen = tmp.path().join("chosen é");
+
+        let home = LunaHome::resolve_with(
+            Some(from_env.clone().into()),
+            Some(chosen.clone()),
+            Some(fallback.clone()),
+        )
+        .unwrap();
         assert_eq!(home.root(), from_env);
-        assert!(home.from_env());
+        assert!(home.from_env() && !home.is_chosen());
 
-        let home = LunaHome::resolve_with(Some(OsString::new()), Some(fallback.clone())).unwrap();
+        let home =
+            LunaHome::resolve_with(Some(OsString::new()), None, Some(fallback.clone())).unwrap();
         assert_eq!(home.root(), fallback);
 
-        let home = LunaHome::resolve_with(None, Some(fallback.clone())).unwrap();
+        // The folder chosen in the wizard comes after the environment and before the default.
+        let home =
+            LunaHome::resolve_with(None, Some(chosen.clone()), Some(fallback.clone())).unwrap();
+        assert_eq!(home.root(), chosen);
+        assert!(home.is_chosen() && !home.from_env());
+
+        let home = LunaHome::resolve_with(None, None, Some(fallback.clone())).unwrap();
         assert_eq!(home.root(), fallback);
-        assert!(!home.from_env());
+        assert!(!home.from_env() && !home.is_chosen());
 
         assert_eq!(
-            LunaHome::resolve_with(None, None).unwrap_err().code,
+            LunaHome::resolve_with(None, None, None).unwrap_err().code,
             ErrorCode::Internal
         );
     }

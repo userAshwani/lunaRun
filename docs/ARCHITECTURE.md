@@ -266,3 +266,5 @@ two sides cannot drift.
 - When writing paths into config files (Caddyfile, php.ini, my.cnf), use the format each tool expects. Windows paths in Caddyfile/my.cnf use forward slashes, and every path is quoted.
 - Test every path-handling function with a path containing a space and a non-ASCII character.
 - Executable names: append `.exe` on Windows through one helper.
+
+**Where LUNA_HOME comes from (D-044):** the `LUNA_HOME` environment variable, else the folder chosen in the first-run wizard (remembered in a pointer file in the OS configuration folder: `%APPDATA%\lunaRun-home.json`, `~/Library/Application Support/lunaRun-home.json`, `~/.config/lunarun-home.json`), else the per-OS default (`%LOCALAPPDATA%\lunaRun`, `~/Library/Application Support/lunaRun`, `~/.local/share/lunarun`). The pointer is the only file lunaRun writes outside LUNA_HOME, and only when the user chooses a folder.

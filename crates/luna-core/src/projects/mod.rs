@@ -28,7 +28,7 @@ use crate::constraints::VersionReq;
 
 pub use data::DetectionData;
 pub use detect::detect;
-pub use resolve::{ResolvePrefs, resolve};
+pub use resolve::{DEFAULT_MYSQL_LINE, ResolvePrefs, resolve};
 pub use store::{
     BindingChoice, Bindings, DocRootChoice, LastDetection, Project, ProjectDetection, ProjectPatch,
     ProjectStore, Surroundings, resolve_project,

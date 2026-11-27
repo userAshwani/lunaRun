@@ -16,7 +16,8 @@ use crate::registry::{AvailableVersion, Channel, RuntimeCatalog, RuntimeVersion}
 use crate::runtimes::InstalledRuntime;
 
 /// The MySQL line suggested for a project that uses MySQL (SERVICES: the first long-term-support line).
-const DEFAULT_MYSQL_LINE: &str = "8.4";
+/// The MySQL line suggested for `DB_CONNECTION=mysql` (and installed by the first-run starter pack, D-044).
+pub const DEFAULT_MYSQL_LINE: &str = "8.4";
 
 /// What the user prefers, and what they chose for this project.
 #[derive(Debug, Clone)]

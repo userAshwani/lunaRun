@@ -35,6 +35,11 @@ const COMMANDS: &[&str] = &[
     "project_env_port_apply",
     "project_database_status",
     "project_database_create",
+    "onboarding_get",
+    "onboarding_complete",
+    "onboarding_check_home",
+    "onboarding_choose_home",
+    "app_restart",
 ];
 
 fn main() {

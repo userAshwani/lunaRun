@@ -34,6 +34,10 @@ export function runtimeName(runtime: string): string {
       return "MySQL";
     case "mariadb":
       return "MariaDB";
+    case "composer":
+      return "Composer";
+    case "caddy":
+      return "Caddy";
     default:
       return runtime;
   }
