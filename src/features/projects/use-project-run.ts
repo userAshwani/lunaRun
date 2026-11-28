@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { JobInfo } from "@/bindings/JobInfo";
 import type { LunaError } from "@/bindings/LunaError";
 import type { OpenTarget } from "@/bindings/OpenTarget";
+import type { SiteEntry } from "@/bindings/SiteEntry";
 import { JOBS_KEY, useCancelJob, useJobs } from "@/features/jobs/use-jobs";
 import { IpcError, ipc, toLunaError } from "@/lib/ipc";
 import { SITES_KEY } from "./use-sites";
@@ -92,6 +93,17 @@ export function useProjectRun(projectId: string): ProjectRun {
       setDismissedJob(job?.id ?? null);
     },
   };
+}
+
+export type Shown = "running" | "stopped" | "starting" | "stopping" | "notAnswering";
+
+/** What the badge says: the services decide, and a job under way says what it is doing. */
+export function shownState(entry: SiteEntry | undefined, run: ProjectRun): Shown {
+  if (run.job?.state === "running")
+    return runActionOf(run.job) === "stop" ? "stopping" : "starting";
+  if (entry?.running) return "running";
+  if (entry?.served) return "notAnswering";
+  return "stopped";
 }
 
 /** Open the site, the folder or the editor of a project. */

@@ -30,22 +30,12 @@ import { useErrorCategory } from "@/lib/errors";
 import { IpcError, toLunaError } from "@/lib/ipc";
 import {
   runActionOf,
+  shownState,
   useOpenProject,
   useProjectDatabase,
   useProjectRun,
-  type ProjectRun,
+  type Shown,
 } from "./use-project-run";
-
-type Shown = "running" | "stopped" | "starting" | "stopping" | "notAnswering";
-
-/** What the badge says: the services decide, and a job under way says what it is doing. */
-function shownState(entry: SiteEntry | undefined, run: ProjectRun): Shown {
-  if (run.job?.state === "running")
-    return runActionOf(run.job) === "stop" ? "stopping" : "starting";
-  if (entry?.running) return "running";
-  if (entry?.served) return "notAnswering";
-  return "stopped";
-}
 
 const LOOK = {
   running: { icon: CircleCheck, variant: "success" },

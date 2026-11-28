@@ -114,7 +114,7 @@ Goal: an empty app that builds, tests and **releases installers for all 3 OSes f
 - [x] First-run wizard + "Laravel starter pack" (FR-AP-06) (`luna_core::onboarding`, `src/features/welcome/`, D-044; the data folder chosen through a pointer file, first run only)
 - [x] Settings page (FR-AP-03); launch at login (`luna_core::settings`, `tauri-plugin-autostart`, `src/features/settings/`, D-045)
 - [x] Diagnostics page + "Copy report" (FR-AP-04) (`luna_core::report`, `diagnostics_get`, D-046; the report is scrubbed of the user name and of secrets)
-- [ ] Dashboard: running services, projects quick start, recent errors
+- [x] Dashboard: running services, projects quick start, recent errors (`src/features/dashboard/`, D-047; no new command: it follows the same events as the other pages and never polls)
 
 ### M1.9 MVP hardening → `v0.1.0`
 - [ ] Manual test matrix: fresh Windows 11 VM, macOS arm64, macOS x64 (if available), Ubuntu 22.04
