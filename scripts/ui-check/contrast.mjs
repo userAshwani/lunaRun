@@ -5,18 +5,27 @@
 //   node scripts/ui-check/contrast.mjs                  # the Services page
 //   node scripts/ui-check/contrast.mjs --page projects  # the Projects pages
 //   node scripts/ui-check/contrast.mjs --page welcome   # the first-run wizard
+//   node scripts/ui-check/contrast.mjs --page settings  # the Settings page
 //
 // Needs the dev server and PLAYWRIGHT_CORE (README.md). To check another page, add its scenarios and targets.
 import { launch, openPage, runSteps } from "./browser.mjs";
 import * as projectsPage from "./projects-scenarios.mjs";
 import * as servicesPage from "./services-scenarios.mjs";
+import * as settingsPage from "./settings-scenarios.mjs";
 import * as welcomePage from "./welcome-scenarios.mjs";
 
 const pageArg = process.argv.indexOf("--page");
 const pageName = pageArg >= 0 ? process.argv[pageArg + 1] : "services";
 const onProjects = pageName === "projects";
 const onWelcome = pageName === "welcome";
-const { SCENARIOS, bridge } = onProjects ? projectsPage : onWelcome ? welcomePage : servicesPage;
+const onSettings = pageName === "settings";
+const { SCENARIOS, bridge } = onProjects
+  ? projectsPage
+  : onWelcome
+    ? welcomePage
+    : onSettings
+      ? settingsPage
+      : servicesPage;
 
 /** Per scenario: [label, text on the page whose colours are measured]. */
 const SERVICES_TARGETS = {
@@ -89,7 +98,9 @@ const TARGETS = onProjects
   ? projectsPage.TARGETS
   : onWelcome
     ? welcomePage.TARGETS
-    : SERVICES_TARGETS;
+    : onSettings
+      ? settingsPage.TARGETS
+      : SERVICES_TARGETS;
 
 /** Runs in the page. Returns a function from a piece of text to the contrast ratio of the text node that holds it. */
 const measurer = () => {

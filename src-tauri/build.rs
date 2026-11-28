@@ -40,6 +40,10 @@ const COMMANDS: &[&str] = &[
     "onboarding_check_home",
     "onboarding_choose_home",
     "app_restart",
+    "settings_get",
+    "settings_set",
+    "launch_at_login_get",
+    "launch_at_login_set",
 ];
 
 fn main() {

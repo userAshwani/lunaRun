@@ -752,3 +752,36 @@ fn the_preview_and_the_results_arrive_as_the_json_the_page_reads() {
         assert_eq!(serde_json::to_value(code).unwrap(), text);
     }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Settings (D-045)
+// ---------------------------------------------------------------------------------------------
+
+#[test]
+fn the_settings_are_read_checked_and_stored_as_the_page_sends_them() {
+    let b = bench();
+    let view = commands::settings_get(b.app.state()).unwrap();
+    assert_eq!(view.current, view.defaults);
+    assert!(view.default_registry_url.starts_with("https://"));
+
+    // What the page sends, as JSON.
+    let mut sent: luna_core::settings::Settings =
+        serde_json::from_value(serde_json::to_value(&view.current).unwrap()).unwrap();
+    sent.default_php_line = Some("8.4".to_owned());
+    let saved = commands::settings_set(sent.clone(), b.app.state()).unwrap();
+    assert_eq!(saved.current.default_php_line.as_deref(), Some("8.4"));
+    assert_eq!(
+        commands::settings_get(b.app.state()).unwrap().current,
+        saved.current
+    );
+
+    // A refused value names its field and changes nothing.
+    sent.registry_url = Some("http://plain.example/r.json".to_owned());
+    let err = commands::settings_set(sent, b.app.state()).unwrap_err();
+    assert_eq!(err.code, ErrorCode::InvalidUrl);
+    assert_eq!(err.details.unwrap()["field"], "registryUrl");
+    assert_eq!(
+        commands::settings_get(b.app.state()).unwrap().current,
+        saved.current
+    );
+}

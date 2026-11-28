@@ -24,6 +24,12 @@ pub fn run() {
     let app = tauri::Builder::default()
         // The native folder picker of the Projects page (and nothing else: only `dialog:allow-open` is granted).
         .plugin(tauri_plugin_dialog::init())
+        // Launch at login (FR-AP-03, D-045): started with `--hidden`, lunaRun opens in the tray, not as a window. Used from
+        // Rust only (`launch_at_login_*`): the page gets no permission of this plugin.
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![tray::HIDDEN_ARG]),
+        ))
         .setup(|app| {
             let home = LunaHome::resolve()?;
             home.ensure_layout()?;
@@ -59,7 +65,13 @@ pub fn run() {
             app.manage(JobManager::new(runtime, sink, JobOptions::default()));
 
             // The tray icon (FR-AP-01). Without one (a desktop with no tray), closing the window quits, as before.
-            tray::create(app.handle());
+            let has_tray = tray::create(app.handle());
+            // The window starts hidden (tauri.conf.json) and is shown here, unless lunaRun was started at login with
+            // `--hidden` and there is a tray to open it from (D-045): then it waits in the tray.
+            let started_hidden = std::env::args().any(|arg| arg == tray::HIDDEN_ARG);
+            if !(started_hidden && has_tray) {
+                tray::show_window(app.handle());
+            }
             Ok(())
         })
         // Closing the window hides it to the tray and the services keep running (FR-AP-01, D-043); the tray's Quit
@@ -122,7 +134,11 @@ pub fn run() {
             commands::onboarding_complete,
             commands::onboarding_check_home,
             commands::onboarding_choose_home,
-            commands::app_restart
+            commands::app_restart,
+            commands::settings_get,
+            commands::settings_set,
+            commands::launch_at_login_get,
+            commands::launch_at_login_set
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

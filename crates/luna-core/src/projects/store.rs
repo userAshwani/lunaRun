@@ -132,6 +132,8 @@ pub struct Surroundings<'a> {
     pub installed: &'a [InstalledRuntime],
     pub available: &'a [RuntimeCatalog],
     pub os: Os,
+    /// The lines a project gets when it does not say (Settings, D-045). `&RuntimeDefaults::NONE` for none.
+    pub defaults: &'a crate::settings::RuntimeDefaults,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -381,6 +383,8 @@ pub fn resolve_project(
     around: &Surroundings<'_>,
 ) -> Resolution {
     let mut prefs = ResolvePrefs::new(around.os);
+    prefs.default_php_line = around.defaults.php_line.clone();
+    prefs.default_node_line = around.defaults.node_line.clone();
     prefs.php_override = project.bindings.php.as_ref().map(|b| b.value.clone());
     prefs.node_override = project.bindings.node.as_ref().map(|b| b.value.clone());
     resolve(report, around.installed, around.available, data, &prefs)

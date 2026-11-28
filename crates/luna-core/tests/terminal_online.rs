@@ -106,6 +106,7 @@ async fn the_terminal_of_a_project_runs_its_own_php_composer_and_node() {
                 installed: &[],
                 available: &[],
                 os,
+                defaults: &luna_core::settings::RuntimeDefaults::NONE,
             },
         )
         .unwrap()

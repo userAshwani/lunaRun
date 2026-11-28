@@ -95,7 +95,11 @@ pub fn manage<R: Runtime>(
         move |status| emit_service_state(&state_app, &status),
     )
     .with_log_sink(move |batch| emit_service_log(&log_app, &batch));
-    let ports = PortAllocator::new(home.clone());
+    // New ports come from the ranges in the settings (D-045); a port already given stays where it is.
+    let ranges = luna_core::settings::load(home)
+        .map(|settings| settings.ports.ranges())
+        .unwrap_or_default();
+    let ports = PortAllocator::new(home.clone()).with_ranges(ranges);
 
     app.manage(Leftovers::new(supervisor.scan_leftovers()));
     app.manage(QuitState::default());

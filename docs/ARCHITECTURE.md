@@ -238,7 +238,9 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `project_start(id)` / `project_stop(id)` | `()` |
 | | `project_open(id, target: "browser"\|"terminal"\|"folder"\|"editor")` | `()` |
 | | `project_apply_fix(id, fixId)` | `jobId` (e.g. install + bind recommended PHP) |
-| Settings | `settings_get()` / `settings_set(patch)` | `Settings` |
+| Settings | `settings_get()` / `settings_set(settings)` | `SettingsView { current, defaults, home, homeSource, defaultRegistryUrl }` (only what differs from the defaults is stored in `config/settings.json`; a refused value writes nothing; D-045) |
+| | `launch_at_login_get()` / `launch_at_login_set(enabled)` | `bool` (the system is asked; started at login with `--hidden`, lunaRun opens in the tray) |
+| | `onboarding_get()`, `onboarding_complete()`, `onboarding_check_home(path)`, `onboarding_choose_home(path)`, `app_restart()` | the first-run wizard (D-044) |
 | System | `ports_check(ports[])` | `PortStatus[]` |
 | | `diagnostics()` | `DiagnosticsReport` |
 

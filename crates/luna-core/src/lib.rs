@@ -16,6 +16,7 @@ pub mod projects;
 pub mod registry;
 pub mod runtimes;
 pub mod services;
+pub mod settings;
 pub mod sites;
 pub mod state;
 pub mod terminal;

@@ -139,6 +139,7 @@ async fn real_caddy_serves_the_sites_of_the_projects_and_takes_a_change_without_
         installed: &[],
         available: &[],
         os,
+        defaults: &luna_core::settings::RuntimeDefaults::NONE,
     };
     let shop = store.add(&shop_dir, &data, &around).unwrap().project;
 

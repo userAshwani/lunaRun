@@ -38,11 +38,12 @@ export async function openPage(browser, { scenario, bridge, theme, width, height
 }
 
 /**
- * Runs the steps of a scenario after its page is ready: click a button by name, push a backend event
- * (`window.__emit`, see services-scenarios.mjs) or wait for some text.
+ * Runs the steps of a scenario after its page is ready: click a button by name, type into a field by its label
+ * (`fill: [label, text]`), push a backend event (`window.__emit`, see services-scenarios.mjs) or wait for some text.
  */
 export async function runSteps(page, scenario) {
   for (const step of scenario.steps ?? []) {
+    if (step.fill) await page.getByLabel(step.fill[0], { exact: true }).fill(step.fill[1]);
     if (step.click) await page.getByRole("button", { name: step.click }).click();
     if (step.emit) {
       await page.evaluate(([event, payload]) => window.__emit(event, payload), step.emit);

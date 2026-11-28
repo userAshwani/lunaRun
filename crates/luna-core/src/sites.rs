@@ -234,10 +234,12 @@ impl SiteManager {
     /// I/O errors from listing what is installed.
     pub fn evaluate(&self, project: &Project) -> Result<(DetectionReport, Resolution)> {
         let (installed, available) = self.world()?;
+        let defaults = crate::settings::load(&self.home)?.runtime_defaults();
         let around = Surroundings {
             installed: &installed,
             available: &available,
             os: self.os,
+            defaults: &defaults,
         };
         let report = crate::projects::detect(Path::new(&project.path), &self.data);
         let resolution = resolve_project(project, &report, &self.data, &around);
@@ -276,10 +278,12 @@ impl SiteManager {
     /// carries warnings and it simply has no PHP requirement).
     pub fn plan(&self) -> Result<SitePlan> {
         let (installed, available) = self.world()?;
+        let defaults = crate::settings::load(&self.home)?.runtime_defaults();
         let around = Surroundings {
             installed: &installed,
             available: &available,
             os: self.os,
+            defaults: &defaults,
         };
 
         let caddy_up = self

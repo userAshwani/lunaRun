@@ -21,6 +21,8 @@ import type { RegistryStatus } from "@/bindings/RegistryStatus";
 import type { RuntimesAvailable } from "@/bindings/RuntimesAvailable";
 import type { ServiceLogs } from "@/bindings/ServiceLogs";
 import type { ServiceRow } from "@/bindings/ServiceRow";
+import type { Settings } from "@/bindings/Settings";
+import type { SettingsView } from "@/bindings/SettingsView";
 import type { SitesView } from "@/bindings/SitesView";
 import type { StartedJob } from "@/bindings/StartedJob";
 import type { UsageReport } from "@/bindings/UsageReport";
@@ -178,4 +180,12 @@ export const ipc = {
   onboardingChooseHome: (path: string) => call<HomeChoice>("onboarding_choose_home", { path }),
   /** Start lunaRun again. `BUSY` while a service runs. */
   appRestart: () => call<null>("app_restart"),
+  /** The settings, their defaults and the data folder. */
+  settingsGet: () => call<SettingsView>("settings_get"),
+  /** Check and store the settings (`INVALID_INPUT` with `details.field`, `INVALID_URL`: nothing written). */
+  settingsSet: (settings: Settings) => call<SettingsView>("settings_set", { settings }),
+  /** Whether lunaRun starts at login (the system is asked). */
+  launchAtLoginGet: () => call<boolean>("launch_at_login_get"),
+  /** Start lunaRun at login (hidden, in the tray) or not; returns what the system says afterwards. */
+  launchAtLoginSet: (enabled: boolean) => call<boolean>("launch_at_login_set", { enabled }),
 } as const;

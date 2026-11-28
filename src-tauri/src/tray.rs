@@ -25,6 +25,9 @@ use tauri::{AppHandle, Manager, Runtime};
 
 use crate::services::{QuitState, spawn_quit};
 
+/// The argument lunaRun is started with at login: it opens in the tray, with no window (D-045).
+pub const HIDDEN_ARG: &str = "--hidden";
+
 /// The id of lunaRun's one tray icon.
 pub const TRAY_ID: &str = "lunarun";
 

@@ -61,6 +61,15 @@ pub fn registry_location() -> String {
 }
 
 /// Separate from the environment lookup so tests need not change the process environment.
+/// The address with a setting (D-045): `LUNA_REGISTRY_URL` if set, else `setting` if there is one, else the default.
+pub fn registry_location_with(setting: Option<&str>) -> String {
+    let env = std::env::var(REGISTRY_URL_ENV).ok();
+    match env.as_deref().map(str::trim).filter(|v| !v.is_empty()) {
+        Some(value) => value.to_owned(),
+        None => location_from(setting),
+    }
+}
+
 fn location_from(value: Option<&str>) -> String {
     match value.map(str::trim) {
         Some(value) if !value.is_empty() => value.to_owned(),

@@ -44,6 +44,10 @@
     "allow-onboarding-complete",
     "allow-onboarding-check-home",
     "allow-onboarding-choose-home",
-    "allow-app-restart"
+    "allow-app-restart",
+    "allow-settings-get",
+    "allow-settings-set",
+    "allow-launch-at-login-get",
+    "allow-launch-at-login-set"
   ]
 }

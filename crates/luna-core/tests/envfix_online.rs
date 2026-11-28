@@ -115,6 +115,7 @@ async fn real_mariadb_a_wrong_port_is_fixed_in_one_line_and_a_missing_database_i
                 installed: &[],
                 available: &[],
                 os,
+                defaults: &luna_core::settings::RuntimeDefaults::NONE,
             },
         )
         .unwrap()

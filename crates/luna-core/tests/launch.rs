@@ -179,6 +179,7 @@ impl Rig {
             installed: &[],
             available: &[],
             os: self.os,
+            defaults: &luna_core::settings::RuntimeDefaults::NONE,
         };
         self.store
             .add(&dir, &DetectionData::bundled().unwrap(), &around)

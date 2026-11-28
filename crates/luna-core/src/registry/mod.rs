@@ -31,7 +31,7 @@ use crate::paths::component;
 pub use holder::{RegistryHolder, RegistrySourceKind, RegistryStatus, RuntimesAvailable};
 pub use load::{
     DEFAULT_REGISTRY_URL, LoadedRegistry, MAX_REGISTRY_BYTES, REGISTRY_URL_ENV, RegistrySource,
-    bundled_registry, cache_path, load_registry, registry_location,
+    bundled_registry, cache_path, load_registry, registry_location, registry_location_with,
 };
 pub use version::{CalDate, RuntimeVersion};
 

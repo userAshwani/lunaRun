@@ -80,25 +80,36 @@ function DiffLine({ kind, text }: { kind: "removed" | "added"; text: string }) {
   );
 }
 
-/** What the page tells about a `.env` that lunaRun cannot (or will not) edit, or that changed under the preview. */
-function envAdvice(error: LunaError, t: ReturnType<typeof useTranslation>["t"]): string | null {
+type EnvAdvice =
+  | "projects.fixes.port.cannot.link"
+  | "projects.fixes.port.cannot.notFile"
+  | "projects.fixes.port.cannot.tooLarge"
+  | "projects.fixes.port.cannot.notUtf8"
+  | "projects.fixes.port.changed";
+
+/**
+ * What the page tells about a `.env` that lunaRun cannot (or will not) edit, or that changed under the preview: the key of
+ * the sentence (a key, not the text: passing `t` around makes its types too deep for the compiler).
+ */
+function envAdvice(error: LunaError): EnvAdvice | null {
   if (error.code !== "ENV_CHANGED") return null;
   switch (reasonOf(error)) {
     case "link":
-      return t("projects.fixes.port.cannot.link");
+      return "projects.fixes.port.cannot.link";
     case "notFile":
-      return t("projects.fixes.port.cannot.notFile");
+      return "projects.fixes.port.cannot.notFile";
     case "tooLarge":
-      return t("projects.fixes.port.cannot.tooLarge");
+      return "projects.fixes.port.cannot.tooLarge";
     case "notUtf8":
-      return t("projects.fixes.port.cannot.notUtf8");
+      return "projects.fixes.port.cannot.notUtf8";
     default:
-      return t("projects.fixes.port.changed");
+      return "projects.fixes.port.changed";
   }
 }
 
 function PortFix({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
+  const adviceText = (key: EnvAdvice | null) => (key ? t(key) : null);
   const toast = useToast();
   const query = useEnvPortChange(projectId);
   const apply = useApplyEnvPort(projectId);
@@ -111,7 +122,7 @@ function PortFix({ projectId }: { projectId: string }) {
     return (
       <FixProblem
         title={t("projects.fixes.port.checkFailed")}
-        advice={envAdvice(error, t)}
+        advice={adviceText(envAdvice(error))}
         error={error}
         onRetry={() => {
           void query.refetch();
@@ -148,7 +159,7 @@ function PortFix({ projectId }: { projectId: string }) {
       {applyError && (
         <FixProblem
           title={t("projects.fixes.port.applyFailed")}
-          advice={envAdvice(applyError, t)}
+          advice={adviceText(envAdvice(applyError))}
           error={applyError}
         />
       )}

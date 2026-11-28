@@ -22,6 +22,7 @@ use luna_core::services::{
     Leftover, PortAllocator, ServiceAction, ServiceController, ServiceLogs, ServiceRow, Supervisor,
     list_services,
 };
+use luna_core::settings::{self, Settings, SettingsView};
 use luna_core::sites::{SiteManager, SitesView};
 use luna_core::terminal;
 use luna_core::{LunaError, LunaHome};
@@ -238,11 +239,13 @@ pub async fn project_add(
 ) -> Result<ProjectDetection, LunaError> {
     let (store, data) = (projects.inner().clone(), data.inner().clone());
     let (installed, available) = world(&home, &registry)?;
+    let defaults = settings::load(&home)?.runtime_defaults();
     let added = blocking(move || {
         let around = Surroundings {
             installed: &installed,
             available: &available,
             os: Os::current(),
+            defaults: &defaults,
         };
         store.add(std::path::Path::new(&path), &data, &around)
     })
@@ -263,11 +266,13 @@ pub async fn project_detect(
 ) -> Result<ProjectDetection, LunaError> {
     let (store, data) = (projects.inner().clone(), data.inner().clone());
     let (installed, available) = world(&home, &registry)?;
+    let defaults = settings::load(&home)?.runtime_defaults();
     let scanned = blocking(move || {
         let around = Surroundings {
             installed: &installed,
             available: &available,
             os: Os::current(),
+            defaults: &defaults,
         };
         store.inspect(&id, &data, &around)
     })
@@ -551,6 +556,58 @@ pub fn app_restart(
         ));
     }
     app.restart()
+}
+
+/// The settings, their defaults and the data folder (FR-AP-03, D-045).
+#[tauri::command]
+pub fn settings_get(home: State<'_, LunaHome>) -> Result<SettingsView, LunaError> {
+    settings::view(&home)
+}
+
+/// Check and store the settings. A refused value writes nothing (`INVALID_INPUT` with `details.field`, `INVALID_URL`).
+/// The defaults of new projects apply at once, new port ranges after a restart, a new address on the next refresh.
+#[tauri::command]
+pub fn settings_set(
+    settings: Settings,
+    home: State<'_, LunaHome>,
+) -> Result<SettingsView, LunaError> {
+    settings::save(&home, &settings)?;
+    settings::view(&home)
+}
+
+/// Whether lunaRun starts when the user logs in. The operating system is asked (a Run key, a LaunchAgent, an autostart
+/// file): nothing is stored by lunaRun.
+#[tauri::command]
+pub fn launch_at_login_get(app: tauri::AppHandle) -> Result<bool, LunaError> {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch().is_enabled().map_err(|err| {
+        LunaError::internal(format!(
+            "could not ask the system about launch at login: {err}"
+        ))
+    })
+}
+
+/// Start lunaRun at login (hidden, in the tray, D-043) or not. Returns what the system says afterwards.
+#[tauri::command]
+pub fn launch_at_login_set(enabled: bool, app: tauri::AppHandle) -> Result<bool, LunaError> {
+    use tauri_plugin_autostart::ManagerExt;
+    let autolaunch = app.autolaunch();
+    let changed = if enabled {
+        autolaunch.enable()
+    } else {
+        autolaunch.disable()
+    };
+    changed.map_err(|err| {
+        LunaError::new(
+            luna_core::ErrorCode::PermissionDenied,
+            format!("the system did not accept the change to launch at login: {err}"),
+        )
+    })?;
+    autolaunch.is_enabled().map_err(|err| {
+        LunaError::internal(format!(
+            "could not ask the system about launch at login: {err}"
+        ))
+    })
 }
 
 /// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is

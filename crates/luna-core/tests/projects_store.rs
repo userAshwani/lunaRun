@@ -57,6 +57,7 @@ impl Bench {
             installed: &installed,
             available: &available,
             os: Os::Windows,
+            defaults: &luna_core::settings::RuntimeDefaults::NONE,
         };
         self.store.add(dir, &data(), &around)
     }
@@ -67,6 +68,7 @@ impl Bench {
             installed: &installed,
             available: &available,
             os: Os::Windows,
+            defaults: &luna_core::settings::RuntimeDefaults::NONE,
         };
         self.store.inspect(id, &data(), &around).unwrap()
     }
@@ -647,6 +649,7 @@ fn inspecting_an_unknown_project_is_not_found() {
         installed: &installed,
         available: &available,
         os: Os::Windows,
+        defaults: &luna_core::settings::RuntimeDefaults::NONE,
     };
     assert_eq!(
         b.store.inspect("nope", &data(), &around).unwrap_err().code,
@@ -683,4 +686,42 @@ fn a_version_is_bound_by_a_line_that_names_it_or_by_exact_version_and_not_by_wha
     assert!(b.store.bound_to("node", "2.1.0").is_empty());
     assert!(b.store.bound_to("mysql", "8.4.3").is_empty());
     assert!(b.store.bound_to("php", "garbage").is_empty());
+}
+
+#[test]
+fn a_project_that_says_nothing_gets_the_default_line_from_the_settings() {
+    // D-045: the default PHP line of the Settings page is what a project gets when its files ask for no version. As
+    // D-035 says, an installed version still comes first; the default decides what to install, so nothing is installed here.
+    let b = bench();
+    let dir = b.project("rien de spécial", &[("index.php", "<?php")]);
+    let id = b.add(&dir).project.id;
+    let available = catalogs(Os::Windows);
+    let resolve = |defaults: &luna_core::settings::RuntimeDefaults| {
+        let around = Surroundings {
+            installed: &[],
+            available: &available,
+            os: Os::Windows,
+            defaults,
+        };
+        b.store
+            .inspect(&id, &data(), &around)
+            .unwrap()
+            .resolution
+            .php
+    };
+
+    let newest = resolve(&luna_core::settings::RuntimeDefaults::NONE);
+    assert_eq!(newest.basis, Basis::NoRequirement);
+    assert_ne!(
+        newest.recommended.unwrap().line,
+        "8.4",
+        "the default must change the answer"
+    );
+
+    let with_default = resolve(&luna_core::settings::RuntimeDefaults {
+        php_line: Some("8.4".to_owned()),
+        node_line: None,
+    });
+    assert_eq!(with_default.basis, Basis::NoRequirement);
+    assert_eq!(with_default.recommended.unwrap().line, "8.4");
 }
