@@ -603,19 +603,32 @@ mod tests {
 
     #[test]
     fn a_port_held_by_lunaruns_own_program_is_told_apart() {
-        let home = Path::new(r"C:\Users\x\AppData\Local\lunaRun");
+        // Built with `join`, as the system gives them: `\` separates folders only on Windows (TRACKER trap 12).
+        let home = std::env::temp_dir().join("lunaRun");
         let ours = PortOwner {
             pid: 1,
             process_name: Some("caddy.exe".to_owned()),
             process_path: Some(
-                r"C:\Users\x\AppData\Local\lunaRun\runtimes\caddy\2.11.9\caddy.exe".to_owned(),
+                home.join("runtimes")
+                    .join("caddy")
+                    .join("2.11.9")
+                    .join("caddy.exe")
+                    .display()
+                    .to_string(),
             ),
         };
         let theirs = PortOwner {
             pid: 2,
             process_name: Some("httpd.exe".to_owned()),
-            process_path: Some(r"C:\xampp\apache\bin\httpd.exe".to_owned()),
+            process_path: Some(
+                std::env::temp_dir()
+                    .join("xampp")
+                    .join("httpd.exe")
+                    .display()
+                    .to_string(),
+            ),
         };
+        let home = home.as_path();
         let mine = port_check(8101, Some("site@a".to_owned()), &[ours], home);
         assert!(mine.held && mine.by_lunarun);
         let other = port_check(80, None, &[theirs], home);
