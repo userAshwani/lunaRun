@@ -44,6 +44,7 @@ const COMMANDS: &[&str] = &[
     "settings_set",
     "launch_at_login_get",
     "launch_at_login_set",
+    "diagnostics_get",
 ];
 
 fn main() {

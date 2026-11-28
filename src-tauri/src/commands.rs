@@ -15,6 +15,7 @@ use luna_core::projects::{
     DetectionData, Project, ProjectDetection, ProjectPatch, ProjectStore, Surroundings,
 };
 use luna_core::registry::{CalDate, RegistryHolder, RegistryStatus, RuntimesAvailable};
+use luna_core::report::{self, DiagnosticsView};
 use luna_core::runtimes::{
     InstalledView, Installer, UninstallOptions, Uninstaller, UsageReport, list_installed,
 };
@@ -608,6 +609,97 @@ pub fn launch_at_login_set(enabled: bool, app: tauri::AppHandle) -> Result<bool,
             "could not ask the system about launch at login: {err}"
         ))
     })
+}
+
+/// Everything the Diagnostics page shows, and the report to copy (FR-AP-04, D-046): gathered now, scrubbed of the user's
+/// name and of anything that looks like a secret. Nothing is sent anywhere.
+#[allow(clippy::too_many_arguments)]
+#[tauri::command]
+pub async fn diagnostics_get(
+    home: State<'_, LunaHome>,
+    projects: State<'_, ProjectStore>,
+    ports: State<'_, PortAllocator>,
+    supervisor: State<'_, Supervisor>,
+    jobs: State<'_, JobManager>,
+    registry: State<'_, RegistryHolder>,
+) -> Result<DiagnosticsView, LunaError> {
+    let (home, projects, ports, supervisor, jobs, registry) = (
+        home.inner().clone(),
+        projects.inner().clone(),
+        ports.inner().clone(),
+        supervisor.inner().clone(),
+        jobs.inner().clone(),
+        registry.inner().clone(),
+    );
+    blocking(move || {
+        let os = Os::current();
+        let settings = settings::load(&home)?;
+        let free_bytes = onboarding::free_space(home.root());
+        let vc = if os == Os::Windows {
+            luna_core::runtimes::prerequisites::detect_vcredist(
+                &luna_core::runtimes::prerequisites::default_reg_path(),
+            )
+        } else {
+            Ok(None)
+        };
+        let vc_redist = onboarding::checks(os, vc, free_bytes, 0).vc_redist;
+        let mut installed: Vec<String> = list_installed(&home)?
+            .iter()
+            .map(|r| format!("{} {}", r.runtime, r.version))
+            .collect();
+        installed.sort();
+        let mut checks = Vec::new();
+        for (id, assignment) in ports.all()? {
+            for port in assignment.ports() {
+                checks.push(report::port_check(
+                    port,
+                    Some(id.clone()),
+                    &luna_core::services::port_owners(port),
+                    home.root(),
+                ));
+            }
+        }
+        for port in report::COMMON_PORTS {
+            if !checks.iter().any(|c| c.port == port) {
+                checks.push(report::port_check(
+                    port,
+                    None,
+                    &luna_core::services::port_owners(port),
+                    home.root(),
+                ));
+            }
+        }
+        checks.sort_by_key(|c| c.port);
+        let source = if home.from_env() {
+            onboarding::HomeSource::Env
+        } else if home.is_chosen() {
+            onboarding::HomeSource::Chosen
+        } else {
+            onboarding::HomeSource::Default
+        };
+        let mut facts = report::DiagnosticsReport {
+            app: diagnostics::app_info(env!("CARGO_PKG_VERSION"), &home),
+            home_source: source,
+            free_bytes,
+            vc_redist,
+            installed,
+            projects: u32::try_from(projects.list().len()).unwrap_or(u32::MAX),
+            ports: checks,
+            services: report::service_lines(&supervisor.list()),
+            failed_jobs: report::failed_jobs(&jobs.list()),
+            registry: report::registry_line(&registry.status(), settings.registry_url.as_deref()),
+            changed_settings: report::changed_settings(&settings),
+        };
+        let user_home = report::user_home();
+        // The page's data is scrubbed too, not only the text to copy (D-046).
+        report::scrub_facts(&mut facts, user_home.as_deref());
+        let text = report::report_text(&facts, user_home.as_deref());
+        Ok(DiagnosticsView {
+            report: facts,
+            text,
+        })
+    })
+    .await
 }
 
 /// After a change to a project: give Caddy the sites. A problem does not fail the change the user made (the project is

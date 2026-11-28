@@ -785,3 +785,58 @@ fn the_settings_are_read_checked_and_stored_as_the_page_sends_them() {
         saved.current
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// Diagnostics (D-046)
+// ---------------------------------------------------------------------------------------------
+
+#[test]
+fn the_diagnostics_report_names_the_common_ports_and_leaves_secrets_out() {
+    let b = bench();
+    // A custom address with a token in it: the report may name its host, never the token.
+    let mut settings = commands::settings_get(b.app.state()).unwrap().current;
+    settings.registry_url =
+        Some("https://mirror.example.org/r.json?token=planted-secret-123".to_owned());
+    commands::settings_set(settings, b.app.state()).unwrap();
+
+    let view = tauri::async_runtime::block_on(commands::diagnostics_get(
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+        b.app.state(),
+    ))
+    .unwrap();
+
+    let ports: Vec<u16> = view.report.ports.iter().map(|p| p.port).collect();
+    for common in luna_core::report::COMMON_PORTS {
+        assert!(ports.contains(&common), "{common} missing from {ports:?}");
+    }
+    assert_eq!(view.report.projects, 0);
+    assert_eq!(
+        view.report.registry.custom_host.as_deref(),
+        Some("mirror.example.org")
+    );
+    assert!(
+        view.text.starts_with("## lunaRun diagnostics"),
+        "{}",
+        view.text
+    );
+    assert!(view.text.contains("mirror.example.org"), "{}", view.text);
+    assert!(!view.text.contains("planted-secret-123"), "{}", view.text);
+    assert!(
+        !serde_json::to_string(&view)
+            .unwrap()
+            .contains("planted-secret-123"),
+        "the page's data has no token either"
+    );
+    // The user's name (in the home folder) is shortened to ~ wherever a path under it appears.
+    if let Some(user_home) = luna_core::report::user_home() {
+        assert!(
+            !view.text.contains(&user_home.display().to_string()),
+            "{}",
+            view.text
+        );
+    }
+}

@@ -11,3 +11,10 @@ export function useAppInfo() {
     staleTime: Infinity,
   });
 }
+
+export const DIAGNOSTICS_KEY = ["diagnostics"] as const;
+
+/** Everything the Diagnostics page shows, and the scrubbed report. Gathered on each visit and on "Check again". */
+export function useDiagnostics() {
+  return useQuery({ queryKey: DIAGNOSTICS_KEY, queryFn: ipc.diagnosticsGet, staleTime: 0 });
+}

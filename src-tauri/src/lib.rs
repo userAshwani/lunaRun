@@ -138,7 +138,8 @@ pub fn run() {
             commands::settings_get,
             commands::settings_set,
             commands::launch_at_login_get,
-            commands::launch_at_login_set
+            commands::launch_at_login_set,
+            commands::diagnostics_get
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

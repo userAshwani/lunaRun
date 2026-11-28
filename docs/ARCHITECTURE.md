@@ -242,7 +242,7 @@ that the UI maps to a translated message. Long work returns a `jobId` straight a
 | | `launch_at_login_get()` / `launch_at_login_set(enabled)` | `bool` (the system is asked; started at login with `--hidden`, lunaRun opens in the tray) |
 | | `onboarding_get()`, `onboarding_complete()`, `onboarding_check_home(path)`, `onboarding_choose_home(path)`, `app_restart()` | the first-run wizard (D-044) |
 | System | `ports_check(ports[])` | `PortStatus[]` |
-| | `diagnostics()` | `DiagnosticsReport` |
+| | `diagnostics_get()` | `DiagnosticsView { report: DiagnosticsReport, text }` (the facts gathered now, and the report text built and scrubbed by the backend: no user name, no secrets, no project names; D-046) |
 
 **Events** (backend → UI, via `emit`):
 `job:progress {jobId, phase, bytesDone, bytesTotal, message}`, `job:done {jobId, ok, error?}`,

@@ -14,6 +14,7 @@ pub mod opener;
 pub mod paths;
 pub mod projects;
 pub mod registry;
+pub mod report;
 pub mod runtimes;
 pub mod services;
 pub mod settings;

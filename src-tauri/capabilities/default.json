@@ -48,6 +48,7 @@
     "allow-settings-get",
     "allow-settings-set",
     "allow-launch-at-login-get",
-    "allow-launch-at-login-set"
+    "allow-launch-at-login-set",
+    "allow-diagnostics-get"
   ]
 }

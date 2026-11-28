@@ -8,6 +8,7 @@ import type { Leftover } from "@/bindings/Leftover";
 import type { DatabaseCreated } from "@/bindings/DatabaseCreated";
 import type { DatabaseSettings } from "@/bindings/DatabaseSettings";
 import type { DatabaseStatus } from "@/bindings/DatabaseStatus";
+import type { DiagnosticsView } from "@/bindings/DiagnosticsView";
 import type { EnvFixApplied } from "@/bindings/EnvFixApplied";
 import type { HomeChoice } from "@/bindings/HomeChoice";
 import type { LunaError } from "@/bindings/LunaError";
@@ -188,4 +189,6 @@ export const ipc = {
   launchAtLoginGet: () => call<boolean>("launch_at_login_get"),
   /** Start lunaRun at login (hidden, in the tray) or not; returns what the system says afterwards. */
   launchAtLoginSet: (enabled: boolean) => call<boolean>("launch_at_login_set", { enabled }),
+  /** What the Diagnostics page shows, and the report to copy (scrubbed of the user name and of secrets). */
+  diagnosticsGet: () => call<DiagnosticsView>("diagnostics_get"),
 } as const;
